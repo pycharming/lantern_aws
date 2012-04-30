@@ -33,7 +33,7 @@ cd ${REPO_COPY}
 
 # perform push
 echo "Pushing to ${INSTANCE_ADDRESS}"
-git push ${GIT_PUPPET_USER}@${INSTANCE_ADDRESS}:${GIT_PUPPET_REPO} ${BRANCH}
+git push ${GIT_PUPPET_USER}@${INSTANCE_ADDRESS}:${GIT_PUPPET_REPO} ${BRANCH}:master
 echo "done."
 
 rm -rf ${REPO_COPY}

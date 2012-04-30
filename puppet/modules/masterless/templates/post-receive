@@ -15,7 +15,7 @@ umask 027
 # puppet folder in this repository 
 #
 logger "gitmaster puppet repo updated, replacing ${PUPPET_DIR}."
-/usr/bin/git archive --format=tar HEAD puppet | (cd ${PUPPET_DIR} && rm -rf * && /bin/tar xf- --strip-components 1) || die "Failed to replace config"
+/usr/bin/git archive --format=tar HEAD puppet | (cd ${PUPPET_DIR} && rm -rf * && /bin/tar xf - --strip-components 1) || die "Failed to replace config"
 # signal need to update config due to push
 touch ${DIRTY_FILE}
 logger "finished replacing puppet configuration."
