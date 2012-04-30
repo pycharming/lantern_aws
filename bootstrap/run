@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+##############################################
+#
+# This script is run on a created instance 
+# to initialize it as a masterless git-based 
+# puppet node. It's job is to: 
+# 
+#   * install puppet 
+#   * directly apply the 'masterless' module.
+#
+##############################################
+
+LOGFILE=/root/bootstrap.log
+DATE_FMT="+%Y-%m-%d %H:%M:%S%z"
+
+function log() {
+    NOW=$(date "${DATE_FMT}")
+    echo "${NOW}: $*" | tee -a ${LOGFILE}
+}
+
+log "begin bootstrap."
+
+log "updating package information..."
+apt-get --assume-yes update | tee -a ${LOGFILE}
+
+log "installing puppet..."
+apt-get --assume-yes install facter puppet | tee -a ${LOGFILE}
+
+log "bootstrapping puppet masterless configuration..."
+puppet apply --onetime --logdest syslog --verbose --modulepath $(dirname $0) -e "include masterless" | tee -a ${LOGFILE}
+log "boostrapping administrative accounts..."
+puppet apply --onetime --logdest syslog --verbose --modulepath $(dirname $0) -e "include lantern_administrators" | tee -a ${LOGFILE}

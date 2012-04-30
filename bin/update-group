@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+######################################
+#
+# pushes configuration to a set of 
+# nodes defined by a security group
+#
+######################################
+
+if [[ -z $1 || -z $2 ]]; then
+    die "usage $0 <security group> <branch>"
+fi
+
+NODEGROUP=${1}
+BRANCH=${2}
+GIT_PUPPET_USER=gitpuppet
+GIT_PUPPET_REPO=configure
+REPO_ROOT=$(dirname $0)/..
+
+# check out a bare copy of the repo referenced so that 
+# all pushes will be the same if something happens
+# to the referenced repository during the cycle of 
+# updates.
+REPO_COPY=$(mktemp -d /tmp/update-nodes.XXXXXX)
+echo "cloning repository into \"${REPO_COPY}\""
+git clone --bare ${REPO_ROOT} ${REPO_COPY} || die "failed to clone repository."
+cd ${REPO_COPY}
+
+echo "Looking up nodes in the group \"${NODEGROUP}\""
+ec2-describe-instances --filter group-id=${NODEGROUP} | while read LINE
+do
+    if [[ ${LINE} == INSTANCE* ]]; then
+        INSTANCE_ID=$(echo "${LINE}" | awk 'BEGIN { FS = "\t" } ; {print $2}')
+        INSTANCE_ADDRESS=$(echo "${LINE}" | awk 'BEGIN { FS = "\t" } ; {print $4}')
+        INSTANCE_STATUS=$(echo "${LINE}" | awk 'BEGIN { FS = "\t" } ; {print $6}')
+        
+        if [[ ${INSTANCE_STATUS} == "running" ]]; then
+            # perform push
+            echo "Pushing to instance ${INSTANCE_ID} ${INSTANCE_ADDRESS}"
+            git push ${GIT_PUPPET_USER}@${INSTANCE_ADDRESS}:${GIT_PUPPET_REPO} ${BRANCH}:master
+            echo "done."
+        else
+            echo "Skipping instance ${INSTANCE_ID}: status is \"${INSTANCE_STATUS}\"."
+        fi
+    fi
+done
+echo "Finished pushing to nodes in the group \"${NODEGROUP}\"."
+rm -rf ${REPO_COPY}
