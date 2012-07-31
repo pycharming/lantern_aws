@@ -80,13 +80,13 @@
   
   "Mappings" : {
     "RegionMap" : {
-      "ap-northeast-1" : { "AMI" : "ami-44328345"},
-      "ap-southeast-1" : { "AMI" : "ami-8e6027dc"},
-      "eu-west-1" : { "AMI" : "ami-81c5fdf5"},
-      "sa-east-1" : { "AMI" : "ami-30b56b2d"},
-      "us-east-1" : { "AMI" : "ami-4dad7424"},
-      "us-west-1" : { "AMI" : "ami-11c59d54"},
-      "us-west-2" : { "AMI" : "ami-a8ec6098"}
+      "ap-northeast-1" : { "AMI" : "ami-60c77761"},
+      "ap-southeast-1" : { "AMI" : "ami-a4ca8df6"},
+      "eu-west-1" : { "AMI" : "ami-e7e8d393"},
+      "sa-east-1" : { "AMI" : "ami-8cd80691"},
+      "us-east-1" : { "AMI" : "ami-a29943cb"},
+      "us-west-1" : { "AMI" : "ami-87712ac2"},
+      "us-west-2" : { "AMI" : "ami-20800c10"}
     }
   },
   
