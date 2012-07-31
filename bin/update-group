@@ -37,7 +37,7 @@ do
         if [[ ${INSTANCE_STATUS} == "running" ]]; then
             # perform push
             echo "Pushing to instance ${INSTANCE_ID} ${INSTANCE_ADDRESS}"
-            git push ${GIT_PUPPET_USER}@${INSTANCE_ADDRESS}:${GIT_PUPPET_REPO} ${BRANCH}:master
+            git push -f ${GIT_PUPPET_USER}@${INSTANCE_ADDRESS}:${GIT_PUPPET_REPO} ${BRANCH}:master
             echo "done."
         else
             echo "Skipping instance ${INSTANCE_ID}: status is \"${INSTANCE_STATUS}\"."
