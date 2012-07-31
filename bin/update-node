@@ -13,7 +13,7 @@ die() {
 }
 
 if [[ -z $1 || -z $2 ]]; then
-    die "usage $0 <security group> <branch>"
+    die "usage $0 <instance address> <branch>"
 fi
 
 INSTANCE_ADDRESS=${1}
