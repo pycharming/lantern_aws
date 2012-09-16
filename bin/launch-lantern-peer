@@ -34,7 +34,7 @@ fi
 BOOTSTRAP_GZ=$(mktemp /tmp/bbs-XXXXXX)
 BOOTSTRAP_B64=$(mktemp /tmp/b64-XXXXXX)
 $BUILDBOOTSTRAP ${BOOTSTRAP_DIR} ${BOOTSTRAP_GZ} || exit 1
-base64 -i ${BOOTSTRAP_GZ} -o ${BOOTSTRAP_B64} || exit 1
+base64 < ${BOOTSTRAP_GZ} > ${BOOTSTRAP_B64} || exit 1
 
 # assemble parameters. The boostrap is broken into parts 
 # because each cloudformation template parameter has a max

@@ -43,7 +43,7 @@ exit 0
 __ARCHIVE_BELOW__
 EOF
 # archived contents
-tar -cLf - -C ${PAYLOAD_DIR} . >> ${BUILD_FILE}
+tar -chf - -C ${PAYLOAD_DIR} . >> ${BUILD_FILE}
 
 # gzip entire script
 gzip -c ${BUILD_FILE} > ${OUTPUT_FILE}
