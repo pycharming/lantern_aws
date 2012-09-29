@@ -16,6 +16,11 @@ class lantern_administrators {
     ensure => 'present',
     uid    => '4002',
   }
+
+  lantern_admin { "aranhoide":
+    ensure => 'present',
+    uid    => '4003',
+  }
   
   # # also nuke the default ubuntu user
   # user { "ubuntu": 
