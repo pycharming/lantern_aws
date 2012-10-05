@@ -39,14 +39,13 @@ template = file(os.path.join(here, 'unpack_template.py')).read()
 # DRY warning: placeholder string.
 self_extractable = template.replace("<PUT_BLOB_HERE>", sanitized_blob)
 
-#gzipped_b64 = base64.b64encode(zlib.compress(self_extractable, 9))
-gzipped_b64 = base64.b64encode(self_extractable)
+b64_se = base64.b64encode(self_extractable)
 
 # The blob is broken into parts because each cloudformation template parameter
 # has a size limit.  This blob is reassembled inside the template to become
 # the user-data.
 sizelimit = 4096
-parts = [gzipped_b64[i*sizelimit:(i+1)*sizelimit]
+parts = [b64_se[i*sizelimit:(i+1)*sizelimit]
          for i in xrange(4)]
 
 ssl_proxy_port = random.randint(1024, 61024)
