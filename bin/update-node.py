@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
 import os
-import shutil
 import sys
-import tempfile
 
 
 if not (2 <= len(sys.argv) <= 3):
