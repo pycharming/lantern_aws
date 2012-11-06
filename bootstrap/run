@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
 
-##############################################
 #
-# This script is run on a created instance 
-# to initialize it as a masterless git-based 
-# puppet node. It's job is to: 
+# This script is run on a created instance to initialize it as a masterless
+# git-based salt node. It's job is to: 
 # 
-#   * install puppet 
-#   * directly apply the 'masterless' module.
+#   * install salt, and 
+#   * set up this instance as a self-managed salt minion. 
 #
-##############################################
 
 LOGFILE=/root/bootstrap.log
 DATE_FMT="+%Y-%m-%d %H:%M:%S%z"
@@ -21,13 +18,19 @@ function log() {
 
 log "begin bootstrap."
 
+log "adding salt ppa."
+add-apt-repository ppa:saltstack/salt -y
+
 log "updating package information..."
 apt-get --assume-yes update | tee -a ${LOGFILE}
 
-log "installing puppet..."
-apt-get --assume-yes install facter puppet | tee -a ${LOGFILE}
+log "installing salt..."
+apt-get --assume-yes install salt-minion | tee -a ${LOGFILE}
 
-log "bootstrapping puppet masterless configuration..."
-puppet apply --onetime --logdest syslog --verbose --modulepath $(dirname $0) -e "include masterless" | tee -a ${LOGFILE}
-log "boostrapping administrative accounts..."
-puppet apply --onetime --logdest syslog --verbose --modulepath $(dirname $0) -e "include lantern_administrators" | tee -a ${LOGFILE}
+log "configuring salt..."
+sed -i "s/<PUT HOSTNAME-SEEDED RANDOM MINUTE HERE>/$($(dirname $0)/random_minute.py)/" $(dirname $0)/modules/masterless/init.sls | tee -a ${LOGFILE}
+mv $(dirname $0)/minion-config /etc/salt/minion | tee -a ${LOGFILE}
+mv $(dirname $0)/modules /srv/salt | tee -a ${LOGFILE}
+
+log "bootstrapping salt masterless configuration..."
+salt-call state.highstate | tee -a ${LOGFILE}
