@@ -1,4 +1,4 @@
 base:
   '*':
     - masterless
-#    - lantern_administrators
+    - lantern_administrators
