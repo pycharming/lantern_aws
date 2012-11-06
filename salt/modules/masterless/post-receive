@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+PUPPET_DIR=<%= puppet_config_dir %>
+DIRTY_FILE=${PUPPET_DIR}/.dirty
+
+function die() {
+    logger $*
+    exit 1
+}
+
+umask 027
+
+#
+# Overwrite the system puppet folder with the contents of the 
+# puppet folder in this repository 
+#
+logger "gitmaster puppet repo updated, replacing ${PUPPET_DIR}."
+/usr/bin/git archive --format=tar HEAD puppet | (cd ${PUPPET_DIR} && rm -rf * && /bin/tar xf - --strip-components 1) || die "Failed to replace config"
+# signal need to update config due to push
+touch ${DIRTY_FILE}
+logger "finished replacing puppet configuration."
