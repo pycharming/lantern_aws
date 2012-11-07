@@ -19,7 +19,7 @@ else:
 print "Pushing to", address, "..."
 repo_root = os.path.join(here, '..')
 os.chdir(repo_root)
-if os.system("git push -f gitpuppet@%s:configure %s:master"
+if os.system("git push -f gitsalt@%s:config %s:master"
              % (address, branch)):
     print "Something went wrong."
 else:
