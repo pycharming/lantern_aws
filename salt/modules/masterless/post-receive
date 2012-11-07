@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-PUPPET_DIR=<%= puppet_config_dir %>
-DIRTY_FILE=${PUPPET_DIR}/.dirty
+SALT_DIR=/srv/salt
+DIRTY_FILE=${SALT_DIR}/.dirty
 
 function die() {
     logger $*
@@ -11,11 +11,11 @@ function die() {
 umask 027
 
 #
-# Overwrite the system puppet folder with the contents of the 
-# puppet folder in this repository 
+# Overwrite the system salt folder with the contents of the puppet folder in
+# this repository
 #
-logger "gitmaster puppet repo updated, replacing ${PUPPET_DIR}."
-/usr/bin/git archive --format=tar HEAD puppet | (cd ${PUPPET_DIR} && rm -rf * && /bin/tar xf - --strip-components 1) || die "Failed to replace config"
+logger "gitsalt repo updated, replacing ${SALT_DIR}."
+/usr/bin/git archive --format=tar HEAD salt/modules | (cd ${SALT_DIR} && rm -rf * && /bin/tar xf - --strip-components 1) || die "Failed to replace config"
 # signal need to update config due to push
 touch ${DIRTY_FILE}
-logger "finished replacing puppet configuration."
+logger "finished replacing salt configuration."
