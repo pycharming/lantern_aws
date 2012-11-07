@@ -1,3 +1,7 @@
+include:
+    forced-apply-config
+
+
 git:
     pkg.installed
 
