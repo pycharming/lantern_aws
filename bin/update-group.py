@@ -25,7 +25,7 @@ else:
 if len(sys.argv) > 2:
     branch = sys.argv[2]
 else:
-    branch = 'lantern-peer'
+    branch = 'master'
 
 repo_root = os.path.join(here, "..")
 repo_copy = tempfile.mkdtemp(prefix='update-group')
