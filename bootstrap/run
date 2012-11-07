@@ -28,9 +28,9 @@ log "installing salt..."
 apt-get --assume-yes install salt-minion | tee -a ${LOGFILE}
 
 log "configuring salt..."
-sed -i "s/<PUT HOSTNAME-SEEDED RANDOM MINUTE HERE>/$($(dirname $0)/random_minute.py)/" $(dirname $0)/modules/masterless/init.sls | tee -a ${LOGFILE}
-mv $(dirname $0)/minion-config /etc/salt/minion | tee -a ${LOGFILE}
-mv $(dirname $0)/modules /srv/salt | tee -a ${LOGFILE}
+sed -i "s/<PUT HOSTNAME-SEEDED RANDOM MINUTE HERE>/$($(dirname $0)/random_minute.py)/" $(dirname $0)/salt/masterless/init.sls | tee -a ${LOGFILE}
+mv $(dirname $0)/salt/minion-config /etc/salt/minion | tee -a ${LOGFILE}
+mv $(dirname $0)/salt /srv/salt | tee -a ${LOGFILE}
 
 log "bootstrapping salt masterless configuration..."
 salt-call state.highstate | tee -a ${LOGFILE}
