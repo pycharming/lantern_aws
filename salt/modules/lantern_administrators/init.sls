@@ -4,6 +4,7 @@
     user.present:
       - gid_from_name: yes
       - home: /home/{{ name }}
+      - shell: /bin/bash
       - optional_groups:
         - adm
         - admin
@@ -24,6 +25,16 @@
       - require:
         - user: {{ name }}
         - file: /home/{{ name }}
+
+/etc/sudoers.d/90-{{ name }}:
+    file.managed:
+      - source: salt://lantern_administrators/nopw_sudoers
+      - user: root
+      - gid: root
+      - mode: 440
+      - template: jinja
+      - context:
+        username: {{ name }}
 
 {% for auth_name in name,'gitsalt' %}
 {{ auth_name }}_ssh:
