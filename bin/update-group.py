@@ -42,7 +42,7 @@ for reservation in conn.get_all_instances(filters={'group-name': group}):
     for instance in reservation.instances:
         if instance.state == 'running':
             print "Pushing to", instance.id, instance.ip_address, "..."
-            if os.system("git push -f gitpuppet@%s:configure %s:master" %
+            if os.system("git push -f gitsalt@%s:config %s:master" %
                          (instance.ip_address, branch)):
                 print "Push to", instance.id, instance.ip_address, "failed!"
             else:
