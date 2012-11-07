@@ -41,6 +41,9 @@ gitsalt:
       - user: gitsalt
       - group: salt
       - mode: 750
+      - recurse:
+        - user
+        - group
 
 # The salt configuration repo is stored here.
 /home/gitsalt/config:
