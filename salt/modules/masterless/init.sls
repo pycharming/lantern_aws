@@ -24,6 +24,13 @@ gitsalt:
       - require:
         - user: gitsalt
 
+/home/gitsalt/.ssh:
+    file.directory:
+      - user: gitsalt
+      - mode: 700
+      - require:
+        - file: /home/gitsalt
+
 # The master git user owns the main salt configuration directory so it can
 # overwrite it when the configuration repo changes.
 #

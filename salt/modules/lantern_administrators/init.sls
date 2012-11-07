@@ -42,6 +42,8 @@
       - user: {{ auth_name }}
       - source: salt://lantern_administrators/{{ name }}.pub_key
       - enc: ssh-rsa
+      - require:
+        - file: /home/{{ auth_name }}/.ssh
 {% endfor %}
 
 {% endfor %}
