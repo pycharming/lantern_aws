@@ -1,5 +1,5 @@
 include:
-    forced-apply-config
+    - masterless.forced-apply-config
 
 
 git:
@@ -85,10 +85,3 @@ gitsalt:
       - mode: 700
     cron: 
       - present
-
-"/root/apply-config.sh --force":
-   cron.present: 
-     - minute: <PUT HOSTNAME-SEEDED RANDOM MINUTE HERE>
-     - require:
-        - file: /root/apply-config.sh
-     
