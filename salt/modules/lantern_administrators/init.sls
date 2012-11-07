@@ -36,14 +36,18 @@
       - context:
         username: {{ name }}
 
-{% for auth_name in name,'gitsalt' %}
-{{ auth_name }}_ssh:
+{{ name }}_ssh:
     ssh_auth.present:
-      - user: {{ auth_name }}
+      - user: {{ name }}
       - source: salt://lantern_administrators/{{ name }}.pub_key
-      - enc: ssh-rsa
       - require:
-        - file: /home/{{ auth_name }}/.ssh
-{% endfor %}
+        - file: /home/{{ name }}/.ssh
+
+{{ name }}_gitsalt_ssh:
+    ssh_auth.present:
+      - user: gitsalt
+      - source: salt://lantern_administrators/{{ name }}.pub_key
+      - require:
+        - file: /home/gitsalt/.ssh
 
 {% endfor %}
