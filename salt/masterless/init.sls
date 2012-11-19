@@ -1,7 +1,3 @@
-include:
-    - masterless.forced-apply-config
-
-
 git:
     pkg.installed
 
@@ -15,7 +11,7 @@ salt:
 # is stored.
 gitsalt:
     user.present:
-      - gid: salt
+      - group: {{ salt['file.group_to_gid']('salt') }}
       - shell: /usr/bin/git-shell
       - require:
         - pkg: git
@@ -86,3 +82,10 @@ gitsalt:
     cron: 
       - present
 
+{% set minute = salt['cmd.run']("python -c 'import random, socket; random.seed(socket.gethostname()); print (random.randint(1, 59)-2),'") %}
+
+"/root/apply-config.sh --force":
+    cron.present:
+        - minute: {{ minute }}
+        - require:
+            - file: /root/apply-config.sh
