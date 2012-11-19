@@ -102,7 +102,7 @@ dummy-cronjob:
         - file: /root/apply-config.sh
         - cron: dummy-cronjob
 
-{% set minute = salt['cmd.run']("python -c 'import random, socket; random.seed(socket.gethostname()); print (random.randint(1, 59)-2),'") %}
+{% set minute = salt['cmd.run']("python -c 'import random, socket; random.seed(socket.gethostname()); print random.randint(1, 59),'") %}
 
 "/root/apply-config.sh --force":
     cron.present:
