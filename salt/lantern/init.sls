@@ -13,6 +13,7 @@ apt-update:
     cmd.wait:
         - name: "apt-get --assume-yes update"
         - user: root
+        - stateful: no
         - watch:
             - apt_repository: java-repo
 
