@@ -14,7 +14,7 @@ address = sys.argv[1]
 if len(sys.argv) > 2:
     branch = sys.argv[2]
 else:
-    branch = 'master'
+    branch = 'lantern-peer'
 
 print "Pushing to", address, "..."
 repo_root = os.path.join(here, '..')
