@@ -3,6 +3,24 @@ lantern:
         - home: /home/lantern
         - shell: /bin/bash
 
+java-repo:
+    apt_repository.ubuntu_ppa:
+        - user: webupd8team
+        - name: java
+        - key: EEA14886
+
+apt-update:
+    cmd.wait:
+        - name: "apt-get --assume-yes update"
+        - user: root
+        - watch:
+            - apt_repository: java-repo
+
+oracle-java7-installer:
+    pkg.installed:
+        - require:
+            - cmd: apt-update
+
 /home/lantern:
     file.directory:
         - user: lantern
