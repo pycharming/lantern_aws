@@ -1,0 +1,3 @@
+# This file is what currently separates different configurations.  Instruct
+# git to keep its overeager hands off it on merges. 
+top.sls merge=ours
