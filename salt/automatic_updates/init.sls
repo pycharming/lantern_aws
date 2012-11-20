@@ -9,6 +9,6 @@ unattended-upgrades:
       - gid: root
       - mode: 600
       - require:
-        - package: unattended-upgrades
+        - pkg: unattended-upgrades
 
 {% endfor %}
