@@ -74,6 +74,8 @@ lantern-repo:
         - rev: master
         - target: /home/lantern/repo
         - runas: lantern
+        - require:
+            - file: /home/lantern/repo
 
 # Chatty Maven makes salt logs unreadable.  I'm fine with just
 # a success/failure indication for this step.
