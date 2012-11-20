@@ -4,10 +4,11 @@ lantern:
         - shell: /bin/bash
 
 /home/lantern:
-    - user: lantern
-    - mode: 700
-    - require:
+    file.directory:
         - user: lantern
+        - mode: 700
+        - require:
+            - user: lantern
 
 /home/lantern/repo:
     file.directory:
