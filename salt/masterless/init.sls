@@ -73,6 +73,10 @@ gitsalt:
       - mode: 700
       - require:
         - git: /home/gitsalt/config
+        # Make sure we don't prevent the cron jobs from being installed by
+        # overwriting the salt config too early.
+        - cron: /root/apply-config.sh
+        - cron: /root/apply-config.sh --force
 
 # Dummy crontab entry to work around a bug in Salt.  First crontab entry that
 # Salt adds will not be recognized by it as being managed, because it appears
