@@ -33,14 +33,6 @@ maven:
         - require:
             - pkg: oracle-java7-installer
 
-/home/lantern/repo/install.sh:
-    cmd.run:
-        - user: lantern
-        - group: lantern
-        - cwd: /home/lantern/repo
-        - require:
-            - apt_repository: java-repo
-
 /home/lantern:
     file.directory:
         - user: lantern
@@ -76,9 +68,22 @@ maven:
         - require:
             - file: /etc/lantern
 
-git://github.com/getlantern/lantern.git:
+lantern-repo:
     git.latest:
+        - name: git://github.com/getlantern/lantern.git
         - rev: master
         - target: /home/lantern/repo
         - runas: lantern
 
+/home/lantern/repo/install.bash:
+    cmd.run:
+        - user: lantern
+        - group: lantern
+        - cwd: /home/lantern/repo
+        - require:
+            - pkg: maven
+        # XXX: this means any push to lantern master will get all EC2 instances
+        # rebuilt!  In actual deployment we may want to manage a separate
+        # branch for this instead.
+        - watch:
+            - git: lantern-repo
