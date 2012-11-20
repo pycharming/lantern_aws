@@ -75,7 +75,9 @@ lantern-repo:
         - target: /home/lantern/repo
         - runas: lantern
 
-/home/lantern/repo/install.bash:
+# Chatty Maven makes salt logs unreadable.  I'm fine with just
+# a success/failure indication for this step.
+"/home/lantern/repo/install.bash > /dev/null":
     cmd.run:
         - user: lantern
         - group: lantern
