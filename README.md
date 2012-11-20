@@ -1,11 +1,23 @@
 Introduction
 ============
 
-This package will contain utility scripts and configuration for launching and
+This package contains utility scripts and configuration for launching and
 maintaining lantern components that run on Amazon Web Services. 
 
-At the moment only the infrastructure to launch, configure, and update cloud
-instances is there.  There is nothing lantern-specific to this code so far.
+At the moment you can launch a generic node using
+
+  bin/launch-lantern-peer.py <node-name>
+
+You can initialize all launched nodes as lantern instances using
+
+  bin/update-group.py
+
+This will create a lantern user, install Oracle Java 7, maven 3, check out latest lantern and build it.
+
+Still to do:
+
+ - run lantern as a service, and
+ - build and serve Lantern installers.
 
 Before you Start
 ================
