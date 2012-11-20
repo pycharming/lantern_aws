@@ -1,5 +1,6 @@
 base:
   '*':
-    - bootstrap
     - masterless
     - lantern_administrators
+    - automatic_updates
+    - lantern
