@@ -1,6 +1,6 @@
 lantern:
     user.present:
-        - home: /home/{{ lantern }}
+        - home: /home/lantern
         - shell: /bin/bash
 
 /home/lantern:
