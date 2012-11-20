@@ -7,7 +7,7 @@ java-repo:
     apt_repository.ubuntu_ppa:
         - user: webupd8team
         - name: java
-        - key: EEA14886
+        - key_id: EEA14886
 
 apt-update:
     cmd.wait:
@@ -16,10 +16,16 @@ apt-update:
         - watch:
             - apt_repository: java-repo
 
+accept-oracle-license:
+    cmd.run:
+        - name: "echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections"
+        - user: root
+
 oracle-java7-installer:
     pkg.installed:
         - require:
             - cmd: apt-update
+            - cmd: accept-oracle-license
 
 /home/lantern:
     file.directory:
