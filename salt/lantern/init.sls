@@ -6,6 +6,7 @@ lantern:
 /home/lantern:
     file.directory:
         - user: lantern
+        - group: lantern
         - mode: 700
         - require:
             - user: lantern
@@ -22,10 +23,20 @@ lantern:
 /etc/lantern:
     file.directory:
         - user: lantern
+        - group: lantern
         - mode: 700
-        - recurse: yes
         - require:
             - user: lantern
+
+# I have created this on bootstrap; manage owner and permissions.
+/etc/lantern/public-proxy-port:
+    file.managed:
+        - replace: no
+        - user: lantern
+        - group: lantern
+        - mode: 600
+        - require:
+            - file: /etc/lantern
 
 git://github.com/getlantern/lantern.git:
     git.latest:
