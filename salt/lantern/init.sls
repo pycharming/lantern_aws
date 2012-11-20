@@ -28,6 +28,19 @@ oracle-java7-installer:
             - cmd: apt-update
             - cmd: accept-oracle-license
 
+maven:
+    pkg.installed:
+        - require:
+            - pkg: oracle-java7-installer
+
+/home/lantern/repo/install.sh:
+    cmd.run:
+        - user: lantern
+        - group: lantern
+        - cwd: /home/lantern/repo
+        - require:
+            - apt_repository: java-repo
+
 /home/lantern:
     file.directory:
         - user: lantern
