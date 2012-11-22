@@ -61,11 +61,18 @@ maven:
 lantern-repo:
     git.latest:
         - name: git://github.com/getlantern/lantern.git
-        - rev: master
+        - rev: oauth2
         - target: /home/lantern/repo
         - runas: lantern
         - require:
             - file: /home/lantern/repo
+
+"dd if=/dev/urandom bs=12 count=1 | base64 > /home/lantern/password":
+    cmd.run:
+        - user: lantern
+        - unless: "test -f /home/lantern/password"
+        - require:
+            - file: /home/lantern
 
 # Chatty Maven makes salt logs unreadable.  I'm fine with just
 # a success/failure indication for this step.
