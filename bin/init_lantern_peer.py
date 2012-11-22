@@ -85,12 +85,12 @@ def run(which, client_secrets, user_credentials):
                         (user_credentials, 'user_credentials.json'),
                         (ip_path, 'ip'),
                         (port_path, 'public-proxy-port')]:
-                    if os.system(
-                            "scp %s lantern@%s:%s" % (path, ip, remote_filename)):
-                        print "ERROR: couldn't copy %s to %s" % (
-                                path, remote_filename)
-                        print "You probably want to troubleshoot this and retry.  Aborting."
-                        sys.exit(1)
+                    for command in [("scp %s lantern@%s:%s" % (path, ip, remote_filename)),
+                                    ("ssh lantern@%s 'chmod 600 %s'" % (ip, remote_filename))]:
+                        if os.system(command):
+                            print "ERROR trying to copy/chmod %s to %s" % (path, remote_filename)
+                            print "You probably want to troubleshoot this and retry.  Aborting."
+                            sys.exit(1)
                 print "Successfully initialized peer '%s' at %s." % (stack.stack_name, ip)
             finally:
                 shutil.rmtree(tmpdir)
