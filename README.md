@@ -8,11 +8,19 @@ At the moment you can launch a generic node using
 
   bin/launch-lantern-peer.py <node-name>
 
+You initialize instance-specific data using
+
+  bin/init-lantern-peer.py <client-secrets> <user-credentials>
+
+Besides the data you explicitly provide, this tells the instance its public IP address and the port where it should listen for proxy requests.
+
+Why is this step necessary?  The IP address is not known at the time of launch, so it cannot be provided when you run `launch-lantern-peer.py`.  Since it's also specific to each instance, there's no elegant way to provide it via a git push, so we can't do it in `update-group.py` either.  The other data could be provided on launch, but that would add one hack saving us nothing.
+
 You can initialize all launched nodes as lantern instances using
 
   bin/update-group.py
 
-This will create a lantern user, install Oracle Java 7, maven 3, check out latest lantern and build it.
+The first time you run this, Oracle Java 7 and maven 3 will be installed, and the git HEAD of lantern will be checked out and built.  Subsequent updates will apply any changes in the salt configuration.
 
 Still to do:
 
@@ -43,5 +51,4 @@ or provide them through some of [boto's configuration files][botoconfig].
 [boto]: https://github.com/boto/boto 
 
 [botoconfig]: http://code.google.com/p/boto/wiki/BotoConfig
-
 

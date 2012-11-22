@@ -27,22 +27,12 @@ stack_name = sys.argv[1]
 
 sio = StringIO()
 
-ssl_proxy_port = random.randint(1024, 61024)
-
 # DRY warning: mode.
 with tarfile.open(fileobj=sio, mode='w:bz2', dereference=True) as tf:
 
     #DRY warning: bootstrap directory name.
     tf.add(os.path.join(here, '..', 'bootstrap'),
            arcname='bootstrap')
-
-    _, tmp_name = tempfile.mkstemp()
-    file(tmp_name, 'w').write(str(ssl_proxy_port))
-    #DRY warning:
-    #    - bootstrap directory name,
-    #    - path of bootstrap salt module, and
-    #    - proxy port filename.
-    tf.add(tmp_name, arcname="bootstrap/salt/bootstrap/public-proxy-port")
 
 blob = sio.getvalue()
 sanitized_blob = base64.b64encode(blob)
@@ -54,13 +44,14 @@ self_extractable = template.replace("<PUT_BLOB_HERE>", sanitized_blob)
 
 b64_se = base64.b64encode(self_extractable)
 
+ssl_proxy_port = random.randint(1024, 61024)
+
 # The blob is broken into parts because each cloudformation template parameter
 # has a size limit.  This blob is reassembled inside the template to become
 # the user-data.
 sizelimit = 4096
 parts = [b64_se[i*sizelimit:(i+1)*sizelimit]
          for i in xrange(4)]
-
 
 parameters = ([("LanternSSLProxyPort", ssl_proxy_port)]
               + zip(["Bootstrap", "Bootstrap2", "Bootstrap3", "Bootstrap4"],
