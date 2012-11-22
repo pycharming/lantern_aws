@@ -19,7 +19,7 @@ DESC="Lantern censorship circunvention tool"
 NAME=lantern
 LANTERN_REPO_DIR=/home/lantern/repo
 DAEMON=$LANTERN_REPO_DIR/quickRun.bash
-DAEMON_ARGS="--disable-ui --force-give --oauth2-client-secrets-file ../client_secrets.json --oauth2-user-credentials-file ../user_credentials.json --password-file ../password --server-port $(cat ../public-proxy-port)"
+DAEMON_ARGS="--disable-ui --force-give --oauth2-client-secrets-file $LANTERN_REPO_DIR/../client_secrets.json --oauth2-user-credentials-file $LANTERN_REPO_DIR/../user_credentials.json --password-file $LANTERN_REPO_DIR/../password --server-port $(cat $LANTERN_REPO_DIR/../public-proxy-port)"
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
