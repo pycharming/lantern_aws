@@ -67,8 +67,9 @@ lantern-repo:
         - require:
             - file: /home/lantern/repo
 
-"dd if=/dev/urandom bs=12 count=1 | base64 > /home/lantern/password":
+generate-password-file:
     cmd.run:
+        - name: "dd if=/dev/urandom bs=12 count=1 | base64 > /home/lantern/password"
         - user: lantern
         - unless: "test -f /home/lantern/password"
         - require:
@@ -76,15 +77,28 @@ lantern-repo:
 
 # Chatty Maven makes salt logs unreadable.  I'm fine with just
 # a success/failure indication for this step.
-"/home/lantern/repo/install.bash > /dev/null":
+build-lantern:
     cmd.run:
+        # Make sure we only ever build once.
+        - name: "if (umask 222; echo x > ../.started-building-lantern) ./install.bash > /dev/null; fi"
         - user: lantern
         - group: lantern
         - cwd: /home/lantern/repo
         - require:
             - pkg: maven
-        # XXX: this means any push to lantern master will get all EC2 instances
-        # rebuilt!  In actual deployment we may want to manage a separate
-        # branch for this instead.
-        - watch:
             - git: lantern-repo
+
+init-script:
+    file.managed:
+        - name: /etc/init.d/lantern
+        - user: root
+        - group: root
+        - mode: 700
+        - source: salt://lantern/init-script
+
+lantern:
+    service.running:
+        - requires:
+            - file: init-script
+            - cmd: build-lantern
+            - cmd: generate-password-file
