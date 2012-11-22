@@ -20,6 +20,12 @@ Launch, configure and start up a lantern node by running:
      "access_token": "ya29.AHES6ZT ... ",
      "refresh_token": "1/G_aZr6_tIR ... "}
 
+### *Really* short version
+
+This will launch an instance with client secrets and user credentials associated to some lanterncyborg@gmail.com:
+
+    example/spawn <node-name>
+ 
 ## For finer control
 
 There are separate scripts to launch, configure, and start up lantern nodes.
