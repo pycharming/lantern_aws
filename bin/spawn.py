@@ -47,7 +47,7 @@ init_lantern_peer.run(stack_name, client_secrets, user_credentials)
 print "Installing lantern and dependencies..."
 update_node.run(ip)
 
-print "Waiting for lantern to be installed..."
+print "Waiting for lantern to be built and launched..."
 print "(This may take a while!)"
 while True:
     time.sleep(60)

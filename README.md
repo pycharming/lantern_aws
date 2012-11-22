@@ -48,7 +48,6 @@ The first time you run either update script, Oracle Java 7 and maven 3 will be i
 
 Still to do:
 
- - run lantern as a service, and
  - build and serve Lantern installers.
 
 Before you Start
