@@ -10,6 +10,8 @@
 
 LOGFILE=/root/bootstrap.log
 DATE_FMT="+%Y-%m-%d %H:%M:%S%z"
+HERE=$(dirname $0)
+SALT_CONFIG=$HERE/minion
 
 function log() {
     NOW=$(date "${DATE_FMT}")
@@ -28,8 +30,14 @@ log "installing salt..."
 apt-get --assume-yes install salt-minion=0.10.5-0precise | tee -a ${LOGFILE}
 
 log "configuring salt..."
-mv $(dirname $0)/salt/minion-config /etc/salt/minion | tee -a ${LOGFILE}
-mv $(dirname $0)/salt /srv/salt | tee -a ${LOGFILE}
+
+# We'll use this configuration now to bootstrap this instance.
+echo "master: localhost" > $SALT_CONFIG
+echo "file_client: local" >> $SALT_CONFIG
+echo "file_roots: {base: [${HERE}/salt]}" >> $SALT_CONFIG
+
+# This configuration will be used from the first update onwards.
+mv ${HERE}/minion-config /etc/salt/minion | tee -a ${LOGFILE}
 
 log "bootstrapping salt masterless configuration..."
-salt-call state.highstate | tee -a ${LOGFILE}
+salt-call -c $HERE state.highstate | tee -a ${LOGFILE}
