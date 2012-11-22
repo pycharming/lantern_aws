@@ -80,7 +80,7 @@ generate-password-file:
 build-lantern:
     cmd.run:
         # Make sure we only ever build once.
-        - name: "if (umask 222; echo x > ../.started-building-lantern) ./install.bash > /dev/null; fi"
+        - name: "if (umask 222; echo x > ../.started-building-lantern) 2> /dev/null; then ./install.bash > /dev/null; fi"
         - user: lantern
         - group: lantern
         - cwd: /home/lantern/repo
@@ -98,6 +98,7 @@ init-script:
 
 lantern-service:
     service.running:
+        - name: lantern
         - requires:
             - file: init-script
             - cmd: build-lantern
