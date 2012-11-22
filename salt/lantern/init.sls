@@ -1,7 +1,5 @@
-lantern:
-    user.present:
-        - home: /home/lantern
-        - shell: /bin/bash
+# Note that lantern user and home directory have been created in
+# lantern_administrators.
 
 java-repo:
     apt_repository.ubuntu_ppa:
@@ -32,14 +30,6 @@ maven:
     pkg.installed:
         - require:
             - pkg: oracle-java7-installer
-
-/home/lantern:
-    file.directory:
-        - user: lantern
-        - group: lantern
-        - mode: 700
-        - require:
-            - user: lantern
 
 /home/lantern/repo:
     file.directory:

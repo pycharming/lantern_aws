@@ -1,4 +1,4 @@
-{% for name in 'myles','pants','aranhoide' %}
+{% for name in 'lantern', 'myles','pants','aranhoide' %}
 
 {{ name }}:
     user.present:
@@ -26,6 +26,10 @@
         - user: {{ name }}
         - file: /home/{{ name }}
 
+{% endfor %}
+
+{% for name in 'myles','pants','aranhoide' %}
+
 /etc/sudoers.d/90-{{ name }}:
     file.managed:
       - source: salt://lantern_administrators/nopw_sudoers
@@ -49,5 +53,12 @@
       - source: salt://lantern_administrators/{{ name }}.pub_key
       - require:
         - file: /home/gitsalt/.ssh
+
+{{ name }}_lantern_ssh:
+    ssh_auth.present:
+      - user: lantern
+      - source: salt://lantern_administrators/{{ name }}.pub_key
+      - require:
+        - file: /home/lantern/.ssh
 
 {% endfor %}
