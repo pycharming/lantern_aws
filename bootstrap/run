@@ -43,4 +43,4 @@ log "bootstrapping salt masterless configuration..."
 salt-call -c $HERE state.highstate | tee -a ${LOGFILE}
 
 log "done."
-sudo -u lantern touch /home/lantern/bootstrap-done
+sudo -u lantern touch /home/lantern/.bootstrap-done

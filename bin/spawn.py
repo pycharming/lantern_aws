@@ -37,7 +37,7 @@ ip = init_lantern_peer.get_ip(stack.list_resources())
 print "Waiting for instance to be bootstrapped..."
 while True:
     time.sleep(20)
-    if not os.system("ssh -o 'StrictHostKeyChecking no' lantern@%s 'cat bootstrap-done' > /dev/null 2>&1" % ip):
+    if not os.system("ssh -o 'StrictHostKeyChecking no' lantern@%s 'rm .bootstrap-done' 2> /dev/null" % ip):
         break
     print "(Still waiting...)"
 
@@ -51,7 +51,7 @@ print "Waiting for lantern to be installed..."
 print "(This may take a while!)"
 while True:
     time.sleep(60)
-    if not os.system("ssh lantern@%s 'rm update-done' > /dev/null 2>&1" % ip):
+    if not os.system("ssh lantern@%s 'rm .update-done' 2> /dev/null" % ip):
         break
     print "(Still waiting...)"
 
