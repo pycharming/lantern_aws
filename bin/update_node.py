@@ -3,24 +3,22 @@
 import os
 import sys
 
+from bin_dir import bin_dir
 
-if not (2 <= len(sys.argv) <= 3):
-    print "Usage: %s <instance address> [<branch>]" % sys.argv[0]
-    sys.exit(1)
 
-here = os.path.dirname(sys.argv[0])
+def run(address):
+    here = bin_dir()
+    print "Pushing to", address, "..."
+    repo_root = os.path.join(here, '..')
+    os.chdir(repo_root)
+    if os.system("git push -f gitsalt@%s:config master"
+                 % address):
+        print "Something went wrong."
+    else:
+        print "Done."
 
-address = sys.argv[1]
-if len(sys.argv) > 2:
-    branch = sys.argv[2]
-else:
-    branch = 'master'
-
-print "Pushing to", address, "..."
-repo_root = os.path.join(here, '..')
-os.chdir(repo_root)
-if os.system("git push -f gitsalt@%s:config %s:master"
-             % (address, branch)):
-    print "Something went wrong."
-else:
-    print "Done."
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print "Usage: %s <instance address>" % sys.argv[0]
+        sys.exit(1)
+    run(sys.argv[1])
