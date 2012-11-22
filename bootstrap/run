@@ -41,3 +41,6 @@ mv ${HERE}/minion-config /etc/salt/minion | tee -a ${LOGFILE}
 
 log "bootstrapping salt masterless configuration..."
 salt-call -c $HERE state.highstate | tee -a ${LOGFILE}
+
+log "done."
+sudo -u lantern touch /home/lantern/bootstrap-done
