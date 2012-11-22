@@ -50,7 +50,7 @@ Alternatively, initialize/update a specific node using
 
     bin/update_node.py <address>
 
-The first time you run either update script, Oracle Java 7 and maven 3 will be installed, and the git HEAD of lantern will be checked out and built.  Subsequent updates will apply any changes in the [salt][salt] configuration.
+The first time you run either update script, Oracle Java 7 and maven 3 will be installed, and the 'oauth2' branch of lantern will be checked out and built.  Subsequent updates will apply any changes in the [salt][salt] configuration.
 
 Still to do:
 
