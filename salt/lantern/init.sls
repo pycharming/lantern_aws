@@ -96,7 +96,7 @@ init-script:
         - mode: 700
         - source: salt://lantern/init-script
 
-lantern:
+lantern-service:
     service.running:
         - requires:
             - file: init-script
