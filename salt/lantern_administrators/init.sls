@@ -26,10 +26,6 @@
         - user: {{ name }}
         - file: /home/{{ name }}
 
-{% endfor %}
-
-{% for name in 'myles','pants','aranhoide' %}
-
 /etc/sudoers.d/90-{{ name }}:
     file.managed:
       - source: salt://lantern_administrators/nopw_sudoers
@@ -39,6 +35,10 @@
       - template: jinja
       - context:
         username: {{ name }}
+
+{% endfor %}
+
+{% for name in 'myles','pants','aranhoide' %}
 
 {{ name }}_ssh:
     ssh_auth.present:
