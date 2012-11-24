@@ -8,7 +8,7 @@ maintaining lantern components that run on Amazon Web Services.
 
 Launch, configure and start up a lantern node by running:
 
-    bin/spawn.py <node-name> <client-secrets-file> <user-credentials-file>
+    bin/spawn.py <node-name> <client-secrets-file> <user-credentials-file> <install4j-env-vars> <install4j-windows-key> <install4j-osx-key>
 
 `node-name` will be the name of the CloudFormation stack created for this node.  You can use this name to refer to this node in some of the finer grained scripts described in the next section.  This also allows you to identify the stack in any other interface to CloudFormation (e.g. the AWS web console).
 
@@ -20,11 +20,15 @@ Launch, configure and start up a lantern node by running:
      "access_token": "ya29.AHES6ZT ... ",
      "refresh_token": "1/G_aZr6_tIR ... "}
 
-### *Really* short version
+The `install4j-*` files contain licensing information required by the program that builds the installers.
 
-This will launch an instance with client secrets and user credentials associated to some lanterncyborg@gmail.com:
+### Shorter version
+
+If you copy the install4j files to the examples folder, the following command will launch an instance with client secrets and user credentials associated to some lanterncyborg@gmail.com:
 
     example/spawn <node-name>
+
+*Update:* This user is not in beta, though.
  
 ## For finer control
 
@@ -36,9 +40,9 @@ Launch a generic node running
 
 Configure instance-specific data running
 
-    bin/init_lantern_peer.py <client-secrets> <user-credentials>
+    bin/init_lantern_peer.py <client-secrets> <user-credentials> <install4j-env-vars> <install4j-windows-key> <install4j-osx-key>
 
-Besides the data you explicitly provide, this tells the instance its public IP address and the port where it should listen for proxy requests. [1]
+Besides the data you explicitly provide, this tells the instance its public IP address and the port where it should listen for proxy requests.
 
 Setup/update all launched nodes as lantern instances using
 
@@ -50,11 +54,11 @@ Alternatively, initialize/update a specific node using
 
     bin/update_node.py <address>
 
-The first time you run either update script, Oracle Java 7 and maven 3 will be installed, the 'oauth2' branch of Lantern will be checked out and built, and Lantern will be launched as a service.  Subsequent updates will apply any changes in the [salt][salt] configuration.
+The first time you run either update script, Oracle Java 7, maven 3 and install4j will be installed, installers will be built, the 'oauth2' branch of Lantern will be checked out and built, and Lantern will be launched as a service.  Subsequent updates will apply any changes in the [salt][salt] configuration.
 
-## To do
+## To Do
 
- - Build and serve Lantern installers.
+Better dependency management.  At the moment everything gets set up alright in first place, but if you want to apply hotfixes you will need to rebuild/restart some stuff manually.  More details coming soon (TM).
 
 Before you Start
 ================
@@ -77,8 +81,6 @@ your .bashrc:
 
 or provide them through some of [boto's configuration files][botoconfig].
 
-
-<small>[1] Why is this step necessary?  The IP address is not known at the time of launch, so it cannot be provided when you run `launch-lantern-peer.py`.  Since it's also specific to each instance, there's no clean way to provide it via a git push, so we can't do it in `update-group.py` either.  The other data could be provided on launch, but that would add one hack for no benefit.</small>
 
 [boto]: https://github.com/boto/boto 
 

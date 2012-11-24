@@ -1,4 +1,7 @@
 #!/bin/bash
 
 if test -z $1; then echo "Usage: spawn <node name>" >&2 ; exit 1; fi
-$(dirname $0)/../bin/spawn.py $1 $(dirname $0)/client_secrets.json $(dirname $0)/user_credentials.json
+
+cd $(dirname $0)
+
+../bin/spawn.py $1 client_secrets.json user_credentials.json env-vars.txt bns_cert.p12 bns-osx-cert-developer-id-application.p12
