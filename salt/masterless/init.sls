@@ -76,7 +76,7 @@ gitsalt:
         # Make sure we don't prevent the cron jobs from being installed by
         # overwriting the salt config too early.
         - cron: /root/apply-config.sh
-        - cron: /root/apply-config.sh --force
+        #- cron: /root/apply-config.sh --force
 
 # Dummy crontab entry to work around a bug in Salt.  First crontab entry that
 # Salt adds will not be recognized by it as being managed, because it appears
@@ -108,8 +108,9 @@ dummy-cronjob:
 
 {% set minute = salt['cmd.run']("python -c 'import random, socket; random.seed(socket.gethostname()); print random.randint(1, 59),'") %}
 
-"/root/apply-config.sh --force":
-    cron.present:
-        - minute: {{ minute }}
-        - require:
-            - cron: /root/apply-config.sh
+#XXX We're not yet at the point where this is useful and safe.
+#"/root/apply-config.sh --force":
+#    cron.present:
+#        - minute: {{ minute }}
+#        - require:
+#            - cron: /root/apply-config.sh
