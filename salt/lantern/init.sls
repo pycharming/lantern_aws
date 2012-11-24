@@ -57,6 +57,27 @@ installers-repo:
         - require:
             - file: /home/lantern/installers-repo
 
+/root/install4j_linux_5_1_3.deb:
+    file.managed:
+        - source: http://download-aws.ej-technologies.com/install4j/install4j_linux_5_1_3.deb
+
+install4j:
+    cmd.run:
+        - name: "dpkg -i /root/install4j_linux_5_1_3.deb":
+        - unless: "which install4jc > /dev/null"
+        - user: root
+        - group: root
+        - requires:
+            - file: /root/install4j_linux_5_1_3.deb
+
+windows-jre:
+    file.managed:
+        - name: "/home/lantern/installers-repo/windows-x86-1.7.0_03.tar.gz"
+        - source: http://cdn.getlantern.org/windows-x86-1.7.0_03.tar.gz
+        - user: lantern
+        - group: lantern
+        - mode: 400
+
 /home/lantern/build-installers.bash:
     file.managed:
         - source: salt://lantern/build-installers.bash
@@ -71,6 +92,8 @@ installers-repo:
         - require:
             - file: /home/lantern/build-installers.bash
             - git: installers-repo
+            - cmd: install4j
+            - file: windows-jre
 
 # Copy repo after first build to avoid downloading and building twice.
 copy-repo:

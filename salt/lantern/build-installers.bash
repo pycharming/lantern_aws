@@ -1,6 +1,7 @@
 #!/bin/bash
 
 if (umask 222; echo x > ../.started-building-installers) 2> /dev/null; then
+
 VERSION=0.20.2
 HERE=$(dirname $0)
 # Maven is too chatty for syslog.
