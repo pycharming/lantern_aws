@@ -71,7 +71,7 @@ install4j:
         - unless: "which install4jc > /dev/null"
         - user: root
         - group: root
-        - requires:
+        - require:
             cmd: download-install4j-deb
 
 windows-jre:
@@ -81,7 +81,7 @@ windows-jre:
         - user: lantern
         - group: lantern
         - cwd: "/home/lantern/installers-repo"
-        - requires:
+        - require:
             - git: installers-repo
 
 /home/lantern/build-installers.bash:
@@ -151,7 +151,7 @@ init-script:
 lantern-service:
     service.running:
         - name: lantern
-        - requires:
+        - require:
             - file: init-script
             - cmd: build-lantern
             - cmd: generate-password-file
