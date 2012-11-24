@@ -85,29 +85,11 @@ def run(which, *paths):
             if verbose:
                 print "(Ignoring non-lantern stack '%s'.)" % stack.stack_name
             continue
-        port = get_port(resources)
-        print "Found live stack '%s' at %s:%s." % (stack.stack_name,
-                                                   ip,
-                                                   port)
         if which in ['all', stack.stack_name, ip]:
-            tmpdir = tempfile.mkdtemp()
-            try:
-                host_path = os.path.join(tmpdir, 'host')
-                port_path = os.path.join(tmpdir, 'port')
-                file(host_path, 'w').write(ip)
-                file(port_path, 'w').write(port)
-                for (_, remote_filename), path \
-                    in zip(expected_files, paths) + [((None, 'host'), host_path),
-                                                     ((None, 'public-proxy-port'), port_path)]:
-                    for command in [("scp %s lantern@%s:%s" % (path, ip, remote_filename)),
-                                    ("ssh lantern@%s 'chmod 600 %s'" % (ip, remote_filename))]:
-                        run_critical(command,
-                                     "trying to copy/chmod %s to %s" % (path, remote_filename))
-                print "Successfully initialized peer '%s' at %s." % (stack.stack_name, ip)
-                run_critical("ssh lantern@%s 'mkdir secure; chmod 700 secure; mv *.p12 secure'" % ip,
-                             "trying to relocate .p12 files at host %s." % ip)
-            finally:
-                shutil.rmtree(tmpdir)
+            port = get_port(resources)
+            print "Found live stack '%s' at %s:%s." % (stack.stack_name, ip, port)
+            push_files(ip, port, paths)
+            print "Successfully initialized peer '%s' at %s." % (stack.stack_name, ip)
             any_inited = True
         elif verbose:
             print "(Ignoring unselected peer '%s' at %s.)" % (stack.stack_name, ip)
@@ -118,6 +100,31 @@ def run(which, *paths):
         else:
             print ("No `lantern-peer` stack found, with name or ip '%s'."
                    % which)
+
+def push_files(ip, port, paths):
+    tmpdir = tempfile.mkdtemp()
+    try:
+        secure = os.path.join(tmpdir, 'secure')
+        os.mkdir(secure, 0700)
+        host_path = os.path.join(tmpdir, 'host')
+        port_path = os.path.join(tmpdir, 'port')
+        file(host_path, 'w').write(ip)
+        file(port_path, 'w').write(port)
+        for (_, remote_filename), path in zip(expected_files, paths):
+            d = secure if remote_filename.endswith(".p12") else tmpdir
+            shutil.copyfile(path, os.path.join(d, remote_filename))
+        for root, dirs, files in os.walk(tmpdir):
+            for filename in files:
+                os.chmod(os.path.join(root, filename), 0600)
+        tbz = shutil.make_archive(os.path.join(tmpdir, 'init-data'),
+                                  'bztar', tmpdir, '.')
+        run_critical("scp %s lantern@%s:" % (tbz, ip),
+                     "trying to copy files.")
+        bn = os.path.basename(tbz)
+        run_critical("ssh lantern@%s 'tar xvfj %s && rm %s'" % (ip, bn, bn),
+                     "trying to extract files.")
+    finally:
+        shutil.rmtree(tmpdir)
 
 def files_usage():
     return " ".join("<%s: %s>" % (filename, desc)
