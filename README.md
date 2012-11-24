@@ -8,7 +8,7 @@ maintaining lantern components that run on Amazon Web Services.
 
 Launch, configure and start up a lantern node by running:
 
-    bin/spawn.py <node-name> <client-secrets-file> <user-credentials-file> <install4j-env-vars> <install4j-windows-key> <install4j-osx-key>
+    bin/spawn.py <node-name> <client-secrets-file> <user-credentials-file> <getexceptional-key> <install4j-env-vars> <install4j-windows-key> <install4j-osx-key>
 
 `node-name` will be the name of the CloudFormation stack created for this node.  You can use this name to refer to this node in some of the finer grained scripts described in the next section.  This also allows you to identify the stack in any other interface to CloudFormation (e.g. the AWS web console).
 
@@ -20,7 +20,7 @@ Launch, configure and start up a lantern node by running:
      "access_token": "ya29.AHES6ZT ... ",
      "refresh_token": "1/G_aZr6_tIR ... "}
 
-The `install4j-*` files contain licensing information required by the program that builds the installers.
+`getexceptional-key` and the `install4j-*` files contain various licensing information required to build the installers.
 
 ### Shorter version
 

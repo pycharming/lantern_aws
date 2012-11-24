@@ -10,6 +10,7 @@ import boto
 expected_files = [
     ("client secrets", 'client_secrets.json'),
     ("user credentials", 'user_credentials.json'),
+    ("getexceptional key", 'lantern_getexceptional.txt'),
     ("installer environment variables", 'env-vars.txt'),
     ("windows certificate", 'bns_cert.p12'),
     ("OS X certificate", 'bns-osx-cert-developer-id-application.p12')]
@@ -63,9 +64,6 @@ def run(which, *paths):
                 sys.exit(0)
             else:
                 print "OK, nevermind."
-
-    (client_secrets, user_credentials,
-     installer_env_vars, windows_cert, osx_cert) = paths
 
     cf_conn = boto.connect_cloudformation()
 
