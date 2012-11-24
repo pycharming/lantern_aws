@@ -100,6 +100,7 @@ windows-jre:
             - git: installers-repo
             - cmd: install4j
             - cmd: windows-jre
+            - pkg: maven
 
 # Copy repo after first build to avoid downloading and building twice.
 copy-repo:
