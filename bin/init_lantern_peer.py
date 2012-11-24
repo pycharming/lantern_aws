@@ -107,7 +107,7 @@ def push_files(ip, port, paths):
         secure = os.path.join(tmpdir, 'secure')
         os.mkdir(secure, 0700)
         host_path = os.path.join(tmpdir, 'host')
-        port_path = os.path.join(tmpdir, 'port')
+        port_path = os.path.join(tmpdir, 'public-proxy-port')
         file(host_path, 'w').write(ip)
         file(port_path, 'w').write(port)
         for (_, remote_filename), path in zip(expected_files, paths):
