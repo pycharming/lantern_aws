@@ -72,7 +72,7 @@ install4j:
         - user: root
         - group: root
         - require:
-            cmd: download-install4j-deb
+            - cmd: download-install4j-deb
 
 windows-jre:
     cmd.run:
