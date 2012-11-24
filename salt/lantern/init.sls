@@ -31,14 +31,6 @@ maven:
         - require:
             - pkg: oracle-java7-installer
 
-/home/lantern/repo:
-    file.directory:
-        - user: lantern
-        - group: salt
-        - mode: 700
-        - require:
-            - file: /home/lantern
-
 # I have created this on bootstrap; manage owner and permissions.
 /etc/lantern:
     file.directory:
@@ -48,32 +40,55 @@ maven:
         - require:
             - user: lantern
 
-# I have created this on bootstrap; manage owner and permissions.
-/etc/lantern/public-proxy-port:
-    file.managed:
-        - replace: no
+/home/lantern/installers-repo:
+    file.directory:
         - user: lantern
         - group: lantern
-        - mode: 600
+        - mode: 700
         - require:
-            - file: /etc/lantern
+            - file: /home/lantern
 
-lantern-repo:
+installers-repo:
+    git.latest:
+        - name: git://github.com/getlantern/lantern.git
+        - rev: aws_installer
+        - target: /home/lantern/installers-repo
+        - runas: lantern
+        - require:
+            - file: /home/lantern/installers-repo
+
+/home/lantern/build-installers.bash:
+    file.managed:
+        - source: salt://lantern/build-installers.bash
+        - user: lantern
+        - group: lantern
+        - mode: 700
+    cmd.run:
+        - name: /home/lantern/build-installers.bash
+        - user: lantern
+        - group: lantern
+        - cwd: /home/lantern/installers-repo
+        - require:
+            - file: /home/lantern/build-installers.bash
+            - git: installers-repo
+
+# Copy repo after first build to avoid downloading and building twice.
+copy-repo:
+    cmd.run:
+        - name: "cp -r /home/lantern/installers-repo /home/lantern/run-repo"
+        - user: lantern
+        - unless: "test -f /home/lantern/installers-repo"
+        - require:
+            - cmd: /home/lantern/build-installers.bash
+
+run-repo:
     git.latest:
         - name: git://github.com/getlantern/lantern.git
         - rev: oauth2
-        - target: /home/lantern/repo
+        - target: /home/lantern/run-repo
         - runas: lantern
         - require:
-            - file: /home/lantern/repo
-
-generate-password-file:
-    cmd.run:
-        - name: "dd if=/dev/urandom bs=12 count=1 | base64 > /home/lantern/password"
-        - user: lantern
-        - unless: "test -f /home/lantern/password"
-        - require:
-            - file: /home/lantern
+            - cmd: copy-repo
 
 # Chatty Maven makes salt logs unreadable.  I'm fine with just
 # a success/failure indication for this step.
@@ -83,10 +98,18 @@ build-lantern:
         - name: "if (umask 222; echo x > ../.started-building-lantern) 2> /dev/null; then ./install.bash > /dev/null; fi"
         - user: lantern
         - group: lantern
-        - cwd: /home/lantern/repo
+        - cwd: /home/lantern/run-repo
         - require:
             - pkg: maven
-            - git: lantern-repo
+            - git: run-repo
+
+generate-password-file:
+    cmd.run:
+        - name: "dd if=/dev/urandom bs=12 count=1 | base64 > /home/lantern/password"
+        - user: lantern
+        - unless: "test -f /home/lantern/password"
+        - require:
+            - file: /home/lantern
 
 init-script:
     file.managed:
