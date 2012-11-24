@@ -9,6 +9,9 @@ source $HERE/env-vars.txt
 SERVER_HOST=$(cat $HERE/host)
 SERVER_PORT=$(cat $HERE/public-proxy-port)
 
+#XXX debug
+echo "Path when running under cron is $PATH ." > /home/lantern/path.log
+
 # Make sure we find install4jc; processes spawned by cron jobs have narrow
 # PATHs...
 PATH=$PATH:/usr/local/bin
