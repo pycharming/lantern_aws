@@ -16,9 +16,9 @@ PATH=$PATH:/usr/local/bin
 mv $HERE/lantern_getexceptional.txt . 2> /dev/null
 
 ./winInstall.bash $VERSION false  > $LOGFILE 2>&1
-./osxInstall.bash $VERSION  > $LOGFILE 2>&1
-./debInstall32Bit.bash $VERSION  > $LOGFILE 2>&1
-./debInstall64Bit.bash $VERSION  > $LOGFILE 2>&1
+./osxInstall.bash $VERSION  >> $LOGFILE 2>&1
+./debInstall32Bit.bash $VERSION  >> $LOGFILE 2>&1
+./debInstall64Bit.bash $VERSION  >> $LOGFILE 2>&1
 
 # XXX: rename the installers and move them to the directory from which we'll
 # serve them.
