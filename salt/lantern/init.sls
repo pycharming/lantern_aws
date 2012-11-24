@@ -59,7 +59,7 @@ installers-repo:
 
 download-install4j-deb:
     cmd.run:
-        - name: "wget http://download-aws.ej-technologies.com/install4j/install4j_linux_5_1_3.deb"
+        - name: "wget -q http://download-aws.ej-technologies.com/install4j/install4j_linux_5_1_3.deb"
         - unless: "test -f /root/install4j_linux_5_1_3.deb"
         - user: root
         - group: root
@@ -76,7 +76,7 @@ install4j:
 
 windows-jre:
     cmd.run:
-        - name: "wget http://cdn.getlantern.org/windows-x86-1.7.0_03.tar.gz"
+        - name: "wget -q http://cdn.getlantern.org/windows-x86-1.7.0_03.tar.gz"
         - unless: "test -f /home/lantern/installers-repo/windows-x86-1.7.0_03.tar.gz"
         - user: lantern
         - group: lantern
