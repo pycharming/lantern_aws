@@ -7,6 +7,12 @@ import tempfile
 
 import boto
 
+expected_files = [
+    ("client secrets", 'client_secrets.json'),
+    ("user credentials", 'user_credentials.json'),
+    ("installer environment variables", 'env-vars.txt'),
+    ("windows certificate", 'bns_cert.p12'),
+    ("OS X certificate", 'bns-osx-cert-developer-id-application.p12')]
 
 verbose = False
 
@@ -39,17 +45,27 @@ def get_port(resources):
     assert rule.from_port == rule.to_port
     return rule.from_port
 
-def run(which, client_secrets, user_credentials):
-    if not client_secrets.endswith('client_secrets.json'):
-        print usage
-        print "WARNING: I was kind of expecting the client secrets file to be called 'client_secrets.json'."
-        print "Are you sure you provided them in the right order (client secrets, user credentials)?"
-        print "[y/N]:",
-        if raw_input().strip().lower() != 'y':
-            print "OK, try again with the right order."
-            sys.exit(0)
-        else:
-            print "Ah, OK, sorry."
+def run_critical(command, details):
+    if os.system(command):
+        print "FATAL ERROR:", details
+        print "You probably want to troubleshoot this and retry.  Aborting."
+        sys.exit(1)
+
+def run(which, *paths):
+    for (desc, expected_name), filename in zip(expected_files, paths):
+        if not filename.endswith(expected_name):
+            print "WARNING: I was kind of expecting the %s file to be called '%s'." % (desc, expected_name)
+            print "Are you sure you provided them in the right order?"
+            print "(%s)" % ", ".join(desc_ for (desc_, _) in expected_files)
+            print "[y/N]:",
+            if raw_input().strip().lower() != 'y':
+                print "OK, try again with the right order."
+                sys.exit(0)
+            else:
+                print "OK, nevermind."
+
+    (client_secrets, user_credentials,
+     installer_env_vars, windows_cert, osx_cert) = paths
 
     cf_conn = boto.connect_cloudformation()
 
@@ -76,22 +92,20 @@ def run(which, client_secrets, user_credentials):
         if which in ['all', stack.stack_name, ip]:
             tmpdir = tempfile.mkdtemp()
             try:
-                ip_path = os.path.join(tmpdir, 'ip')
+                host_path = os.path.join(tmpdir, 'host')
                 port_path = os.path.join(tmpdir, 'port')
-                file(ip_path, 'w').write(ip)
+                file(host_path, 'w').write(ip)
                 file(port_path, 'w').write(port)
-                for path, remote_filename in [
-                        (client_secrets, 'client_secrets.json'),
-                        (user_credentials, 'user_credentials.json'),
-                        (ip_path, 'ip'),
-                        (port_path, 'public-proxy-port')]:
+                for (_, remote_filename), path \
+                    in zip(expected_files, paths) + [((None, 'host'), host_path),
+                                                     ((None, 'public-proxy-port'), port_path)]:
                     for command in [("scp %s lantern@%s:%s" % (path, ip, remote_filename)),
                                     ("ssh lantern@%s 'chmod 600 %s'" % (ip, remote_filename))]:
-                        if os.system(command):
-                            print "ERROR trying to copy/chmod %s to %s" % (path, remote_filename)
-                            print "You probably want to troubleshoot this and retry.  Aborting."
-                            sys.exit(1)
+                        run_critical(command,
+                                     "trying to copy/chmod %s to %s" % (path, remote_filename))
                 print "Successfully initialized peer '%s' at %s." % (stack.stack_name, ip)
+                run_critical("ssh lantern@%s 'mkdir secure; chmod 700 secure; mv *.p12 secure'" % ip,
+                             "trying to relocate .p12 files at host %s." % ip)
             finally:
                 shutil.rmtree(tmpdir)
             any_inited = True
@@ -105,10 +119,12 @@ def run(which, client_secrets, user_credentials):
             print ("No `lantern-peer` stack found, with name or ip '%s'."
                    % which)
 
+def files_usage():
+    return " ".join("<%s: %s>" % (filename, desc)
+                    for desc, filename in expected_files)
+
 if __name__ == '__main__':
-    usage = ("Usage: %s <name|ip|'all'> <client_secrets> <oauth data>"
-            % sys.argv[0])
-    if len(sys.argv) != 4:
-        print usage
+    if len(sys.argv) != len(expected_files) + 2:
+        print "Usage:", sys.argv[0], "<ip|stack_name|'all>", files_usage()
         sys.exit(1)
     run(*sys.argv[1:])

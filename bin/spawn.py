@@ -13,11 +13,12 @@ import launch_stack
 import init_lantern_peer
 import update_node
 
-try:
-    _, stack_name, client_secrets, user_credentials = sys.argv
-except ValueError:
-    print "Usage: %s <name> <client-secrets> <user-credentials>" % sys.argv[0]
+
+if len(sys.argv) != len(init_lantern_peer.expected_files) + 2:
+    print "Usage:", sys.argv[0], "<stack name>", init_lantern_peer.file_usage()
     sys.exit(0)
+
+stack_name = sys.argv[1]
 
 conn = boto.connect_cloudformation()
 
@@ -42,10 +43,18 @@ while True:
     print "(Still waiting...)"
 
 print "Configuring instance..."
-init_lantern_peer.run(stack_name, client_secrets, user_credentials)
+init_lantern_peer.run(stack_name, *sys.argv[2:])
 
 print "Installing lantern and dependencies..."
 update_node.run(ip)
+
+print "Waiting for installers to be built..."
+print "(This may take a while!)"
+while True:
+    time.sleep(60)
+    if not os.system("ssh lantern@%s 'cat .installers-built' > /dev/null 2>&1" % ip):
+        break
+    print "(Still waiting...)"
 
 print "Waiting for lantern to be built and launched..."
 print "(This may take a while!)"
