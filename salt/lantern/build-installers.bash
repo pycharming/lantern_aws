@@ -9,16 +9,13 @@ source $HERE/env-vars.txt
 SERVER_HOST=$(cat $HERE/host)
 SERVER_PORT=$(cat $HERE/public-proxy-port)
 
-ls > $HERE/ls-before-maven
-mvn clean > $HERE/mvn-clean-output 2>&1
-ls > $HERE/ls-after-maven
-rm -rf target 2> $HERE/rm-error
-
 # Make sure we find install4jc; processes spawned by cron jobs have narrow
 # PATHs...
 PATH=$PATH:/usr/local/bin
 
 mv $HERE/lantern_getexceptional.txt . 2> /dev/null
+
+./installDeps.bash
 
 ./winInstall.bash $VERSION false  > $LOGFILE 2>&1
 ./osxInstall.bash $VERSION  >> $LOGFILE 2>&1
