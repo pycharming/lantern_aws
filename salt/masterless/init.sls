@@ -7,6 +7,10 @@ cron:
 salt:
     group.present
 
+salt-minion:
+    service.dead:
+        - enable: no
+
 # The master git user controls the git repository where the salt configuration
 # is stored.
 gitsalt:
