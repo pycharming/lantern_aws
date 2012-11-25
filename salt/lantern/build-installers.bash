@@ -9,8 +9,10 @@ source $HERE/env-vars.txt
 SERVER_HOST=$(cat $HERE/host)
 SERVER_PORT=$(cat $HERE/public-proxy-port)
 
-#XXX debug
-echo "Path when running under cron is $PATH ." > /home/lantern/path.log
+ls > $HERE/ls-before-maven
+mvn clean > $HERE/mvn-clean-output 2>&1
+ls > $HERE/ls-after-maven
+rm -rf target 2> $HERE/rm-error
 
 # Make sure we find install4jc; processes spawned by cron jobs have narrow
 # PATHs...
