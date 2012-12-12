@@ -11,11 +11,13 @@ import boto
 
 import launch_stack
 import init_lantern_peer
+import init_files
 import update_node
 
 
 if len(sys.argv) != len(init_lantern_peer.expected_files) + 2:
-    print "Usage:", sys.argv[0], "<stack name>", init_lantern_peer.file_usage()
+    print "Usage:", sys.argv[0], "<stack name>",
+    print init_files.file_usage(init_lantern_peer.expected_files)
     sys.exit(0)
 
 stack_name = sys.argv[1]
@@ -33,7 +35,7 @@ while True:
         break
     print "(Still waiting...)"
 
-ip = init_lantern_peer.get_ip(stack.list_resources())
+ip = init_files.get_ip(stack.list_resources())
 
 print "Waiting for instance to be bootstrapped..."
 while True:
@@ -43,7 +45,10 @@ while True:
     print "(Still waiting...)"
 
 print "Configuring instance..."
-init_lantern_peer.run(stack_name, *sys.argv[2:])
+init_files.run('lantern',
+               init_lantern_peer.expected_files,
+               stack_name,
+               *sys.argv[2:])
 
 print "Installing lantern and dependencies..."
 update_node.run(ip)

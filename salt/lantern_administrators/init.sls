@@ -1,4 +1,4 @@
-{% for name in 'lantern', 'myles','pants','aranhoide' %}
+{% for name in 'myles','pants','aranhoide','lantern','invsrvlauncher' %}
 
 {{ name }}:
     user.present:
@@ -38,27 +38,16 @@
 
 {% endfor %}
 
-{% for name in 'myles','pants','aranhoide' %}
+{% for admin in 'myles','pants','aranhoide' %}
+{% for role in admin,'gitsalt','lantern','invsrvlauncher' %}
 
-{{ name }}_ssh:
+{{ admin }}_{{ role }}_ssh:
     ssh_auth.present:
-      - user: {{ name }}
-      - source: salt://lantern_administrators/{{ name }}.pub_key
+      - user: {{ role }}
+      - source: salt://lantern_administrators/{{ admin }}.pub_key
       - require:
-        - file: /home/{{ name }}/.ssh
+        - file: /home/{{ role }}/.ssh
 
-{{ name }}_gitsalt_ssh:
-    ssh_auth.present:
-      - user: gitsalt
-      - source: salt://lantern_administrators/{{ name }}.pub_key
-      - require:
-        - file: /home/gitsalt/.ssh
 
-{{ name }}_lantern_ssh:
-    ssh_auth.present:
-      - user: lantern
-      - source: salt://lantern_administrators/{{ name }}.pub_key
-      - require:
-        - file: /home/lantern/.ssh
-
+{% endfor %}
 {% endfor %}
