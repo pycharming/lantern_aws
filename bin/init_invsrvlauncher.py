@@ -5,7 +5,9 @@ import sys
 import init_files
 
 
-expected_files = [("AWS credentials", '.aws_credentials')]
+expected_files = [("AWS credentials", '.aws_credentials'),
+                  ("OAuth2 client secrets", 'client_secrets.json'),
+                  ("OAuth2 refresh token", 'refresh_token')]
 
 
 if __name__ == '__main__':
