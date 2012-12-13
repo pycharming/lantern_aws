@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-# Note: you can't use this to target the invitee server launcher,
-# because it only has a per-instance security group.
-
 import os
 import shutil
 import sys

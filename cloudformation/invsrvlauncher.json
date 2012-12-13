@@ -74,24 +74,11 @@
   },
   
   "Resources" : {
-    "ISLSecurityGroup" : {
-      "Type" : "AWS::EC2::SecurityGroup", 
-      "Properties" : {
-        "GroupDescription" : "Security group for the invitee server launcher.",
-        "SecurityGroupIngress" : [
-        {
-          "IpProtocol" : "tcp", 
-          "FromPort" : "22",
-          "ToPort" : "22",
-          "CidrIp" : "0.0.0.0/0"
-        }]
-      }
-    },
 
     "Ec2Instance" : {
       "Type" : "AWS::EC2::Instance",
       "Properties" : {
-        "SecurityGroups" : [ {"Ref": "ISLSecurityGroup"} ],
+        "SecurityGroups" : [ "invsrvlauncher" ],
         "KeyName" : { "Ref" : "KeyPair" },
         "ImageId" : { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "AMI" ]}, 
         "InstanceType": {"Ref": "InstanceType"},

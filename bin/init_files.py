@@ -26,8 +26,7 @@ def find_resource_id(resources, res_type):
 
 def get_ip(resources):
     res_id = find_resource_id(resources, u'AWS::EC2::Instance')
-    reservations = ec2_conn().get_all_instances(
-                        instance_ids=[res_id])
+    reservations = ec2_conn().get_all_instances(instance_ids=[res_id])
     if not reservations:
         return None
     instance, = reservations[0].instances
@@ -46,8 +45,9 @@ def run_critical(command, details):
         print "You probably want to troubleshoot this and retry.  Aborting."
         sys.exit(1)
 
-def run(user, expected_files, which, *paths):
-    for (desc, expected_name), filename in zip(expected_files, paths):
+def run(user, expected_files, computed_files, which, *paths):
+    for (desc, expected_path), filename in zip(expected_files, paths):
+        expected_name = os.path.basename(expected_path)
         if not filename.endswith(expected_name):
             print "WARNING: I was kind of expecting the %s file to be called '%s'." % (desc, expected_name)
             print "Are you sure you provided them in the right order?"
@@ -78,9 +78,9 @@ def run(user, expected_files, which, *paths):
                 print "(Ignoring non-lantern stack '%s'.)" % stack.stack_name
             continue
         if which in [stack.stack_name, ip]:
-            port = get_port(resources)
-            print "Found live stack '%s' at %s:%s." % (stack.stack_name, ip, port)
-            push_files(user, expected_files, ip, port, paths)
+            print "Found live stack '%s' at %s." % (stack.stack_name, ip)
+            computed = [(name, fn(resources)) for name, fn in computed_files]
+            push_files(user, ip, expected_files, computed, paths)
             print "Successfully initialized peer '%s' at %s." % (stack.stack_name, ip)
             any_inited = True
         elif verbose:
@@ -90,18 +90,26 @@ def run(user, expected_files, which, *paths):
         print ("No `lantern-peer` stack found, with name or ip '%s'."
                % which)
 
-def push_files(user, expected_files, ip, port, paths):
+def push_files(user, ip, expected_files, computed, paths):
     tmpdir = tempfile.mkdtemp()
     try:
-        secure = os.path.join(tmpdir, 'secure')
-        os.mkdir(secure, 0700)
-        host_path = os.path.join(tmpdir, 'host')
-        port_path = os.path.join(tmpdir, 'public-proxy-port')
-        file(host_path, 'w').write(ip)
-        file(port_path, 'w').write(port)
+        for filename, contents in computed:
+            path = os.path.join(tmpdir, filename)
+            file(path, 'w').write(contents)
         for (_, remote_filename), path in zip(expected_files, paths):
-            d = secure if remote_filename.endswith(".p12") else tmpdir
-            shutil.copyfile(path, os.path.join(d, remote_filename))
+            reldir, basename = os.path.split(remote_filename)
+            if reldir:
+                assert "/" not in reldir, "Deep paths not implemented yet."
+                absdir = os.path.join(tmpdir, reldir)
+                try:
+                    os.mkdir(absdir, 0700)
+                except OSError, e:
+                    # Directory exists; ignore
+                    if e.errno != 17:
+                        raise
+            else:
+                absdir = tmpdir
+            shutil.copyfile(path, os.path.join(absdir, basename))
         for root, dirs, files in os.walk(tmpdir):
             for filename in files:
                 os.chmod(os.path.join(root, filename), 0600)
@@ -117,5 +125,5 @@ def push_files(user, expected_files, ip, port, paths):
         shutil.rmtree(tmpdir)
 
 def files_usage(expected_files):
-    return " ".join("<%s: %s>" % (filename, desc)
+    return " ".join("<%s: %s>" % (os.path.basename(filename), desc)
                     for desc, filename in expected_files)
