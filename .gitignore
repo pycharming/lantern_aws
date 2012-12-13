@@ -2,3 +2,6 @@
 tmp
 *.swp
 *.pyc
+example/*.txt
+example/*.p12
+
