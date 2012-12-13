@@ -7,5 +7,5 @@ git clone git://github.com/boto/boto.git
 cd boto
 git checkout 1371e06e5bf2b40f3ef0977f6f1991c6cdc48cb6
 sudo python setup.py install
-
+cd /
 sudo rm -rf $TMPDIR
