@@ -11,7 +11,7 @@ def run(address, node_type):
     print "Pushing to", address, "..."
     repo_root = os.path.join(here, '..')
     os.chdir(repo_root)
-    if os.system("git push -f gitsalt@%s:config %s"
+    if os.system("git push -f gitsalt@%s:config %s:master"
                  % (address, node_type)):
         print "Something went wrong."
     else:
