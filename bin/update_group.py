@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# Note: you can't use this to target the invitee server launcher,
+# because it only has a per-instance security group.
+
 import os
 import shutil
 import sys
@@ -25,7 +28,7 @@ else:
 if len(sys.argv) > 2:
     branch = sys.argv[2]
 else:
-    branch = 'master'
+    branch = group
 
 repo_root = os.path.join(here, "..")
 repo_copy = tempfile.mkdtemp(prefix='update-group')

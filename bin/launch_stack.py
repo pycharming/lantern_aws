@@ -17,7 +17,7 @@ import boto
 from bin_dir import bin_dir
 
 
-def run(stack_name, conn=None):
+def run(stack_name, node_type, conn=None):
     here = bin_dir()
 
     sio = StringIO()
@@ -39,7 +39,6 @@ def run(stack_name, conn=None):
 
     b64_se = base64.b64encode(self_extractable)
 
-    ssl_proxy_port = random.randint(1024, 61024)
 
     # The blob is broken into parts because each cloudformation template parameter
     # has a size limit.  This blob is reassembled inside the template to become
@@ -48,16 +47,18 @@ def run(stack_name, conn=None):
     parts = [b64_se[i*sizelimit:(i+1)*sizelimit]
              for i in xrange(4)]
 
-    parameters = ([("LanternSSLProxyPort", ssl_proxy_port)]
-                  + zip(["Bootstrap", "Bootstrap2", "Bootstrap3", "Bootstrap4"],
-                        # Omit empty parts.
-                        filter(None, parts)))
+    parameters = zip(["Bootstrap", "Bootstrap2", "Bootstrap3", "Bootstrap4"],
+                     # Omit empty parts.
+                     filter(None, parts))
+
+    if node_type == 'lantern-peer':
+        ssl_proxy_port = random.randint(1024, 61024)
+        parameters.append(("LanternSSLProxyPort", ssl_proxy_port))
 
     template = file(os.path.join(here,
                                  '..',
                                  'cloudformation',
-                                 'lantern-peer.json')).read()
-
+                                 node_type + '.json')).read()
 
     conn = conn or boto.connect_cloudformation()
     return conn.create_stack(stack_name,
@@ -65,8 +66,14 @@ def run(stack_name, conn=None):
                              parameters=parameters)
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 3:
         print "Launch a new lanter-peer node."
-        print "Usage: %s <node name>" % sys.argv[0]
+        print "Usage: %s <node name> <node type>" % sys.argv[0]
+        print "Valid node types are:"
+        for filename in os.listdir(os.path.join(bin_dir(),
+                                                '..',
+                                                'cloudformation')):
+            if filename.endswith('.json'):
+                print "   ", filename[:-len('.json')]
         sys.exit(1)
-    print run(sys.argv[1])
+    print run(*sys.argv[1:])

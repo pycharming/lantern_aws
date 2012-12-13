@@ -25,20 +25,15 @@ def find_resource_id(resources, res_type):
             return res.physical_resource_id
 
 def get_ip(resources):
-    # XXX: this stuff is specific to lantern peers.  It doesn't
-    # hurt for other instances, but I'd better factor it out.
     res_id = find_resource_id(resources, u'AWS::EC2::Instance')
     reservations = ec2_conn().get_all_instances(
-                        instance_ids=[res_id],
-                        filters={'group-name': 'lantern-peer'})
+                        instance_ids=[res_id])
     if not reservations:
         return None
     instance, = reservations[0].instances
     return instance.ip_address
 
 def get_port(resources):
-    # XXX: this stuff is specific to lantern peers.  It doesn't
-    # hurt for other instances, but I'd better factor it out.
     res_id = find_resource_id(resources, u'AWS::EC2::SecurityGroup')
     group, = ec2_conn().get_all_security_groups(groupnames=[res_id])
     rule, = group.rules
@@ -82,7 +77,7 @@ def run(user, expected_files, which, *paths):
             if verbose:
                 print "(Ignoring non-lantern stack '%s'.)" % stack.stack_name
             continue
-        if which in ['all', stack.stack_name, ip]:
+        if which in [stack.stack_name, ip]:
             port = get_port(resources)
             print "Found live stack '%s' at %s:%s." % (stack.stack_name, ip, port)
             push_files(user, expected_files, ip, port, paths)
@@ -92,11 +87,8 @@ def run(user, expected_files, which, *paths):
             print "(Ignoring unselected peer '%s' at %s.)" % (stack.stack_name, ip)
 
     if not any_inited:
-        if which == 'all':
-            print "No `lantern-peer` stacks found."
-        else:
-            print ("No `lantern-peer` stack found, with name or ip '%s'."
-                   % which)
+        print ("No `lantern-peer` stack found, with name or ip '%s'."
+               % which)
 
 def push_files(user, expected_files, ip, port, paths):
     tmpdir = tempfile.mkdtemp()

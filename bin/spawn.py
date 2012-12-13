@@ -25,7 +25,7 @@ stack_name = sys.argv[1]
 conn = boto.connect_cloudformation()
 
 print "Launching stack..."
-stack_id = launch_stack.run(stack_name, conn)
+stack_id = launch_stack.run(stack_name, 'lantern-peer', conn)
 
 print "Waiting for stack to be created..."
 while True:
