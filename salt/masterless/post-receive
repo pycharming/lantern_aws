@@ -15,7 +15,7 @@ umask 027
 # this repository
 #
 logger "gitsalt repo updated, replacing ${SALT_DIR}."
-/usr/bin/git archive --format=tar HEAD salt | (cd ${SALT_DIR} && rm -rf * && /bin/tar xf - --strip-components 1) || die "Failed to replace config"
+/usr/bin/git archive --format=tar $(/usr/bin/git branch) salt | (cd ${SALT_DIR} && rm -rf * && /bin/tar xf - --strip-components 1) || die "Failed to replace config"
 # signal need to update config due to push
 touch ${DIRTY_FILE}
 logger "finished replacing salt configuration."
