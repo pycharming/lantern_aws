@@ -1,7 +1,7 @@
 include:
     - pip
 
-{% for module in 'dnspython','sleekxmpp','requests','pyasn1','pyasn1-modules' %}
+{% for module in 'dnspython','sleekxmpp','pyasn1','pyasn1-modules' %}
 
 {{ module }}:
     cmd.run:
