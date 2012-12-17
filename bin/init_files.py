@@ -1,7 +1,10 @@
+#!/usr/bin/env python
+
 # XXX: There is stuff here that is specific to lantern peers (specifically,
 # feeding ip and port in addition to the given files).  It doesn't hurt for
 # other instances, but I'd better factor it out for clarity.
 
+import logging
 import os
 import shutil
 import sys
@@ -9,20 +12,6 @@ import tempfile
 
 import boto
 
-
-verbose = False
-
-def ec2_conn():
-    try:
-        return ec2_conn.conn
-    except AttributeError:
-        ec2_conn.conn = boto.connect_ec2()
-        return ec2_conn.conn
-
-def find_resource_id(resources, res_type):
-    for res in resources:
-        if res.resource_type == res_type:
-            return res.physical_resource_id
 
 def get_ip(resources):
     res_id = find_resource_id(resources, u'AWS::EC2::Instance')
@@ -39,25 +28,53 @@ def get_port(resources):
     assert rule.from_port == rule.to_port
     return rule.from_port
 
+configs = {
+    'lantern-peer': {
+        'user': 'lantern',
+        'expected_files': [
+            ("client secrets", 'client_secrets.json'),
+            ("user credentials", 'user_credentials.json'),
+            ("getexceptional key", 'lantern_getexceptional.txt'),
+            ("installer environment variables", 'env-vars.txt'),
+            ("windows certificate", 'secure/bns_cert.p12'),
+            ("OS X certificate",
+             'secure/bns-osx-cert-developer-id-application.p12')],
+        'computed_files': [
+            ('host', get_ip),
+            ('public-proxy-port', get_port)]},
+
+    'invsrvlauncher': {
+        'user': 'invsrvlauncher',
+        'expected_files': [
+            ("AWS credentials", '.aws_credentials'),
+            ("OAuth2 client secrets", 'client_secrets.json'),
+            ("OAuth2 refresh token", 'refresh_token')],
+        'computed_files': []}}
+
+def ec2_conn():
+    try:
+        return ec2_conn.conn
+    except AttributeError:
+        ec2_conn.conn = boto.connect_ec2()
+        return ec2_conn.conn
+
+def find_resource_id(resources, res_type):
+    for res in resources:
+        if res.resource_type == res_type:
+            return res.physical_resource_id
+
+
 def run_critical(command, details):
     if os.system(command):
-        print "FATAL ERROR:", details
-        print "You probably want to troubleshoot this and retry.  Aborting."
-        sys.exit(1)
+        logging.critical(details)
+        raise RuntimeError
 
-def run(user, expected_files, computed_files, which, *paths):
-    for (desc, expected_path), filename in zip(expected_files, paths):
+def run(stack_type, which, *paths):
+    conf = configs[stack_type]
+    for (desc, expected_path), filename in zip(conf['expected_files'], paths):
         expected_name = os.path.basename(expected_path)
         if not filename.endswith(expected_name):
-            print "WARNING: I was kind of expecting the %s file to be called '%s'." % (desc, expected_name)
-            print "Are you sure you provided them in the right order?"
-            print "(%s)" % ", ".join(desc_ for (desc_, _) in expected_files)
-            print "[y/N]:",
-            if raw_input().strip().lower() != 'y':
-                print "OK, try again with the right order."
-                sys.exit(0)
-            else:
-                print "OK, nevermind."
+            logging.warning("WARNING: I was kind of expecting the %s file to be called '%s'." % (desc, expected_name))
 
     cf_conn = boto.connect_cloudformation()
 
@@ -65,38 +82,31 @@ def run(user, expected_files, computed_files, which, *paths):
 
     for stack in cf_conn.list_stacks():
         if stack.stack_status != 'CREATE_COMPLETE':
-            if verbose:
-                print ("(Ignoring stack '%s' with status %s.)"
-                       % (stack.stack_name, stack.stack_status))
             continue
         resources = cf_conn.describe_stack_resources(stack.stack_id)
         ip = get_ip(resources)
         if ip is None:
             # There is no EC2 instance in this stack that belongs to the
             # `lantern-peer` security group, so this is not a lantern stack.
-            if verbose:
-                print "(Ignoring non-lantern stack '%s'.)" % stack.stack_name
             continue
         if which in [stack.stack_name, ip]:
-            print "Found live stack '%s' at %s." % (stack.stack_name, ip)
-            computed = [(name, fn(resources)) for name, fn in computed_files]
-            push_files(user, ip, expected_files, computed, paths)
-            print "Successfully initialized peer '%s' at %s." % (stack.stack_name, ip)
+            logging.info("Found live stack '%s' at %s."
+                         % (stack.stack_name, ip))
+            push_files(conf, ip, paths, resources)
+            logging.info("Successfully initialized peer '%s' at %s."
+                         % (stack.stack_name, ip))
             any_inited = True
-        elif verbose:
-            print "(Ignoring unselected peer '%s' at %s.)" % (stack.stack_name, ip)
-
     if not any_inited:
-        print ("No `lantern-peer` stack found, with name or ip '%s'."
-               % which)
+        logging.warning(
+            "No `lantern-peer` stack found, with name or ip '%s'." % which)
 
-def push_files(user, ip, expected_files, computed, paths):
+def push_files(conf, ip, paths, resources):
     tmpdir = tempfile.mkdtemp()
     try:
-        for filename, contents in computed:
+        for filename, fn in conf['computed_files']:
             path = os.path.join(tmpdir, filename)
-            file(path, 'w').write(contents)
-        for (_, remote_filename), path in zip(expected_files, paths):
+            file(path, 'w').write(str(fn(resources)))
+        for (_, remote_filename), path in zip(conf['expected_files'], paths):
             reldir, basename = os.path.split(remote_filename)
             if reldir:
                 assert "/" not in reldir, "Deep paths not implemented yet."
@@ -113,6 +123,7 @@ def push_files(user, ip, expected_files, computed, paths):
         for root, dirs, files in os.walk(tmpdir):
             for filename in files:
                 os.chmod(os.path.join(root, filename), 0600)
+        user = conf['user']
         tbz = shutil.make_archive(os.path.join(tmpdir, 'init-data'),
                                   'bztar', tmpdir, '.')
         run_critical("scp -o 'StrictHostKeyChecking no' %s %s@%s:"
@@ -127,3 +138,18 @@ def push_files(user, ip, expected_files, computed, paths):
 def files_usage(expected_files):
     return " ".join("<%s: %s>" % (os.path.basename(filename), desc)
                     for desc, filename in expected_files)
+
+if __name__ == '__main__':
+    min_args = 3
+    def error(tail):
+        print "Usage:", sys.argv[0], "<instance-type> <ip|stack_name>", tail
+        sys.exit(1)
+    if len(sys.argv) < min_args:
+        error("<required_file> [<required_file> ...]")
+    instance_type = sys.argv[1]
+    expected_files = configs[instance_type]['expected_files']
+    if len(sys.argv) != len(expected_files) + min_args:
+        error(files_usage(expected_files))
+    logging.basicConfig(level=logging.INFO,
+                        format='%(levelname)-8s %(message)s')
+    run(instance_type, *sys.argv[2:])

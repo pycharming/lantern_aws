@@ -1,24 +1,21 @@
 #!/usr/bin/env python
 
+import logging
 import os
 import sys
 
 from bin_dir import bin_dir
 
 
-def run(address, node_type):
+def run(node_type, address):
     here = bin_dir()
-    print "Pushing to", address, "..."
     repo_root = os.path.join(here, '..')
     os.chdir(repo_root)
-    if os.system("git push -f gitsalt@%s:config %s:master"
-                 % (address, node_type)):
-        print "Something went wrong."
-    else:
-        print "Done."
+    os.system("git push -f gitsalt@%s:config %s:master"
+              % (address, node_type))
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
-        print "Usage: %s <instance address> <personality>" % sys.argv[0]
+        print "Usage: %s <node-type> <address>" % sys.argv[0]
         sys.exit(1)
     run(*sys.argv[1:])

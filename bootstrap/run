@@ -27,7 +27,7 @@ log "updating package information..."
 apt-get --assume-yes update | tee -a ${LOGFILE}
 
 log "installing salt..."
-apt-get --assume-yes install salt-minion=0.10.5-0precise | tee -a ${LOGFILE}
+apt-get --assume-yes install salt-minion | tee -a ${LOGFILE}
 
 log "configuring salt..."
 
