@@ -52,10 +52,13 @@
 {% endfor %}
 {% endfor %}
 
-# Needed to copy initialization files.
-invsrvlauncher_lantern_ssh:
+# invsrvlauncher needs access to these accounts in order to initialize new
+# instances.
+{% for role in 'lantern','gitsalt' %}
+invsrvlauncher_{{ role }}_ssh:
     ssh_auth.present:
-      - user: lantern
+      - user: {{ role }}
       - source: salt://lantern_administrators/invsrvlauncher.pub_key
       - require:
-        - file: /home/lantern/.ssh
+        - file: /home/{{ role }}/.ssh
+{% endfor %}
