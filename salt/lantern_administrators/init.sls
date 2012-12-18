@@ -1,4 +1,4 @@
-{% for name in 'myles','pants','aranhoide','lantern','invsrvlauncher' %}
+{% for name in 'myles','pants','aranhoide','leahxschmidt','lantern','invsrvlauncher' %}
 
 {{ name }}:
     user.present:
@@ -38,7 +38,7 @@
 
 {% endfor %}
 
-{% for admin in 'myles','pants','aranhoide' %}
+{% for admin in 'myles','pants','aranhoide','leahxschmidt' %}
 {% for role in admin,'gitsalt','lantern','invsrvlauncher' %}
 
 {{ admin }}_{{ role }}_ssh:
