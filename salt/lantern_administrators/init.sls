@@ -51,3 +51,11 @@
 
 {% endfor %}
 {% endfor %}
+
+# Needed to copy initialization files.
+invsrvlauncher_lantern_ssh:
+    ssh_auth.present:
+      - user: lantern
+      - source: salt://lantern_administrators/invsrvlauncher.pub_key
+      - require:
+        - file: /home/lantern/.ssh
