@@ -1,0 +1,97 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  
+  "Description" : "AWS CloudFormation template for launching a generic EC2 node.",
+  
+  "Parameters" : {
+  
+    "KeyPair" : {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access",
+      "Type" : "String", 
+      "Default" : "lantern"
+    },
+    
+    "InstanceType" : {
+      "Description" : "EC2 instance type.",
+      "Type" : "String",
+      "Default" : "t1.micro"
+    },
+    
+    "Bootstrap" : {
+      "Description" : "Base64 encoded bootstrap script", 
+      "Type" : "String"
+    },
+    
+    "Bootstrap2" : {
+      "Description" : "Base64 encoded bootstrap script (part 2)",
+      "Type" : "String",
+      "Default" : ""
+    },
+    
+    "Bootstrap3" : {
+      "Description" : "Base64 encoded bootstrap script (part 3)",
+      "Type" : "String",
+      "Default" : ""
+    },
+    
+    "Bootstrap4" : {
+      "Description" : "Base64 encoded bootstrap script (part 4)",
+      "Type" : "String",
+      "Default" : ""
+    }
+
+  },
+  
+  "Outputs" : {
+    "InstanceId" : {
+      "Description" : "Id of the instance", 
+      "Value" : {"Ref" : "Ec2Instance"}
+    },
+    "AZ" : {
+      "Description" : "Availability Zone of the instance",
+      "Value" : {"Fn::GetAtt" : [ "Ec2Instance", "AvailabilityZone" ]}
+    },
+    "PublicDNS" : {
+      "Description" : "DNS name of the instance", 
+      "Value" : {"Fn::GetAtt" : [ "Ec2Instance", "PublicDnsName" ]}
+    },
+    "PublicIp" : {
+      "Description" : "Public IP address of the instance",
+      "Value" : {"Fn::GetAtt" : [ "Ec2Instance", "PublicIp"]}
+    }
+  },
+  
+  "Mappings" : {
+    "RegionMap" : {
+      "ap-northeast-1" : { "AMI" : "ami-60c77761"},
+      "ap-southeast-1" : { "AMI" : "ami-a4ca8df6"},
+      "eu-west-1" : { "AMI" : "ami-e7e8d393"},
+      "sa-east-1" : { "AMI" : "ami-8cd80691"},
+      "us-east-1" : { "AMI" : "ami-a29943cb"},
+      "us-west-1" : { "AMI" : "ami-87712ac2"},
+      "us-west-2" : { "AMI" : "ami-20800c10"}
+    }
+  },
+  
+  "Resources" : {
+
+    "Ec2Instance" : {
+      "Type" : "AWS::EC2::Instance",
+      "Properties" : {
+        "SecurityGroups" : [ "default" ],
+        "KeyName" : { "Ref" : "KeyPair" },
+        "ImageId" : { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "AMI" ]}, 
+        "InstanceType": {"Ref": "InstanceType"},
+        "Tags" : [{ 
+          "Key" : "node-group",
+          "Value" : "default"
+        }],
+        "UserData" : { "Fn::Join" : [ "", [
+          { "Ref" : "Bootstrap" },
+          { "Ref" : "Bootstrap2" },
+          { "Ref" : "Bootstrap3" },
+          { "Ref" : "Bootstrap4" }]]}
+      }
+    }
+  }
+}
