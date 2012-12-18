@@ -35,7 +35,7 @@ def run(stack_name, *filenames):
             time.sleep(check_interval)
 
     loginfo("Launching stack.")
-    stack_id = launch_stack.run(stack_name, 'lantern-peer', conn)
+    stack_id = launch_stack.run('lantern-peer', stack_name, conn)
 
     loginfo("Waiting for stack to be created.")
     while True:
