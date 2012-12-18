@@ -48,7 +48,12 @@ configs = {
         'expected_files': [
             ("AWS credentials", '.aws_credentials'),
             ("OAuth2 client secrets", 'client_secrets.json'),
-            ("OAuth2 refresh token", 'refresh_token')],
+            ("OAuth2 refresh token", 'refresh_token'),
+            ("getexceptional key", 'lantern_getexceptional.txt'),
+            ("installer environment variables", 'env-vars.txt'),
+            ("windows certificate", 'secure/bns_cert.p12'),
+            ("OS X certificate",
+             'secure/bns-osx-cert-developer-id-application.p12')],
         'computed_files': []}}
 
 def ec2_conn():

@@ -17,7 +17,7 @@ import boto
 from bin_dir import bin_dir
 
 
-def run(stack_name, node_type, conn=None):
+def run(node_type, stack_name, conn=None):
     here = bin_dir()
 
     sio = StringIO()
@@ -67,8 +67,8 @@ def run(stack_name, node_type, conn=None):
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
-        print "Launch a new lanter-peer node."
-        print "Usage: %s <node name> <node type>" % sys.argv[0]
+        print "Launch a new node."
+        print "Usage: %s <node-type> <node-name>" % sys.argv[0]
         print "Valid node types are:"
         for filename in os.listdir(os.path.join(bin_dir(),
                                                 '..',
