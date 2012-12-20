@@ -78,13 +78,13 @@
     "Ec2Instance" : {
       "Type" : "AWS::EC2::Instance",
       "Properties" : {
-        "SecurityGroups" : [ "default" ],
+        "SecurityGroups" : [ "free-for-all" ],
         "KeyName" : { "Ref" : "KeyPair" },
         "ImageId" : { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "AMI" ]}, 
         "InstanceType": {"Ref": "InstanceType"},
         "Tags" : [{ 
           "Key" : "node-group",
-          "Value" : "default"
+          "Value" : "generic"
         }],
         "UserData" : { "Fn::Join" : [ "", [
           { "Ref" : "Bootstrap" },
