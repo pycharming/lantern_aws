@@ -28,17 +28,20 @@ def get_port(resources):
     assert rule.from_port == rule.to_port
     return rule.from_port
 
+_common_files = [
+    ("lantern's id_rsa", 'lantern.id_rsa'),
+    ("OAuth2 client secrets", 'client_secrets.json'),
+    ("getexceptional key", 'lantern_getexceptional.txt'),
+    ("installer environment variables", 'env-vars.txt'),
+    ("windows certificate", 'secure/bns_cert.p12'),
+    ("OS X certificate", 'secure/bns-osx-cert-developer-id-application.p12')]
+
 configs = {
     'lantern-peer': {
         'user': 'lantern',
         'expected_files': [
-            ("client secrets", 'client_secrets.json'),
-            ("user credentials", 'user_credentials.json'),
-            ("getexceptional key", 'lantern_getexceptional.txt'),
-            ("installer environment variables", 'env-vars.txt'),
-            ("windows certificate", 'secure/bns_cert.p12'),
-            ("OS X certificate",
-             'secure/bns-osx-cert-developer-id-application.p12')],
+            ("user credentials", 'user_credentials.json')]
+            + _common_files,
         'computed_files': [
             ('host', get_ip),
             ('public-proxy-port', get_port)]},
@@ -47,13 +50,9 @@ configs = {
         'user': 'invsrvlauncher',
         'expected_files': [
             ("AWS credentials", '.aws_credentials'),
-            ("OAuth2 client secrets", 'client_secrets.json'),
             ("OAuth2 refresh token", 'refresh_token'),
-            ("getexceptional key", 'lantern_getexceptional.txt'),
-            ("installer environment variables", 'env-vars.txt'),
-            ("windows certificate", 'secure/bns_cert.p12'),
-            ("OS X certificate",
-             'secure/bns-osx-cert-developer-id-application.p12')],
+            ("invsrvlauncher's id_rsa", 'invsrvlauncher.id_rsa')]
+            + _common_files,
         'computed_files': []}}
 
 def ec2_conn():
