@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
+import json
 import os
 import sys
 import random
 import string
+import time
 
 import boto
 from boto.exception import S3CreateError
@@ -35,7 +37,7 @@ import xmpp_util
 valid_bucket_name_characters = string.lowercase + string.digits
 
 
-def main(num_buckets):
+def main(num_buckets, access_token):
     conn = boto.connect_s3()
     # boto.create_bucket(name) won't warn me if I already have a bucket called
     # `name`.  I check against this, lest I create less than `num_buckets`.
@@ -45,7 +47,7 @@ def main(num_buckets):
         bname = create_bucket(conn, taken_names)
         taken_names.add(bname)
         bucket_names.append(bname)
-    inform_lantern_controller(bucket_names)
+    tell_lantern_controller(access_token, bucket_names)
 
 def create_bucket(conn, taken_names):
     while True:
@@ -77,15 +79,34 @@ def urandint(min_, max_):
     random.seed(os.urandom(8))  # for good measure! :)
     return random.randint(min_, max_)
 
-def inform_lantern_controller(bucket_names):
-    print "Now I would inform lantern-controller that the following buckets were created:"
-    for each in bucket_names:
-        print "   ", each
+def tell_lantern_controller(access_token, bucket_names):
+    bot = XmppBot(access_token, bucket_names)
+    while not bot.connect():
+        logging.warn("Trouble connecting to XMPP.  Retrying in one minute...")
+        time.sleep(60)
+    bot.process(block=True)
+
+class XmppBot(xmpp_util.OAuth2Bot):
+    def __init__(self, token, buckets):
+        xmpp_util.OAuth2Bot.__init__(self, 'invsrvlauncher@gmail.com', token)
+        self.body = json.dumps({'register-buckets': buckets})
+    def session_start(self, event):
+        xmpp_util.OAuth2Bot.session_start(self, event)
+        self.send_message(xmpp_util.lanternctrl_jid, self.body, mtype='chat')
+        self.disconnect(wait=True)
 
 if __name__ == '__main__':
     try:
         num_buckets = int(sys.argv[1])
+        client_secrets_filename = sys.argv[2]
+        refresh_token_filename = sys.argv[3]
     except (IndexError, ValueError):
-        print "Usage: %s <num_buckets>" % sys.argv[0]
+        print "Usage: %s <num_buckets> <client_secrets_file> <refresh_token_file>" % sys.argv[0]
         sys.exit(1)
-    main(num_buckets)
+    client_id, client_secret = xmpp_util.read_client_secrets(
+            client_secrets_filename)
+    refresh_token = file(refresh_token_filename).read()
+    access_token = xmpp_util.get_access_token(client_id,
+                                              client_secret,
+                                              refresh_token)
+    main(num_buckets, access_token)
