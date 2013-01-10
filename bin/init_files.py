@@ -29,6 +29,7 @@ def get_port(resources):
     return rule.from_port
 
 _common_files = [
+    ("AWS credentials", '.aws_credentials'),
     ("lantern's id_rsa", 'lantern.id_rsa'),
     ("OAuth2 client secrets", 'client_secrets.json'),
     ("getexceptional key", 'lantern_getexceptional.txt'),
@@ -50,7 +51,6 @@ configs = {
     'invsrvlauncher': {
         'user': 'invsrvlauncher',
         'expected_files': [
-            ("AWS credentials", '.aws_credentials'),
             ("OAuth2 refresh token", 'refresh_token'),
             ("invsrvlauncher's id_rsa", 'invsrvlauncher.id_rsa')]
             + _common_files,
