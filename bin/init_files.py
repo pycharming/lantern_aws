@@ -40,6 +40,7 @@ configs = {
     'lantern-peer': {
         'user': 'lantern',
         'expected_files': [
+            ("installer bucket", 'bucket'),
             ("user credentials", 'user_credentials.json')]
             + _common_files,
         'computed_files': [
