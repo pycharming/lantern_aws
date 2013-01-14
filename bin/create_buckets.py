@@ -36,6 +36,15 @@ import xmpp_util
 # certificate only matches buckets that do not contain periods."
 valid_bucket_name_characters = string.lowercase + string.digits
 
+# A template to make a bucket only accessible through HTTPS.  Parameterized by
+# bucket id.
+policy_template = \
+"""{"Statement": [{"Action": "s3:*",
+                   "Effect":"Deny",
+                   "Principal": "*",
+                   "Resource": "arn:aws:s3:::%s/*",
+                   "Condition": {"Bool": {"aws:SecureTransport": false}}}]}"""
+
 
 def main(num_buckets, access_token):
     conn = boto.connect_s3()
@@ -59,7 +68,8 @@ def try_and_create_bucket(name, conn, taken_names):
     if name in taken_names:
         return False
     try:
-        conn.create_bucket(name)
+        bucket = conn.create_bucket(name)
+        bucket.set_policy(policy_template % name)
         return True
     except S3CreateError as e:
         if e.error_code == 'BucketAlreadyExists':
