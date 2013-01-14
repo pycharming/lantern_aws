@@ -14,7 +14,7 @@ import init_files
 import update_node
 
 
-def run(stack_name, *filenames):
+def run(stack_type, stack_name, *filenames):
 
     conn = boto.connect_cloudformation()
     ip = None
@@ -30,12 +30,12 @@ def run(stack_name, *filenames):
         loginfo("Waiting for %s." % desc)
         time.sleep(check_interval * 2)
         while os.system(
-            "ssh -o 'StrictHostKeyChecking no' lantern@%s 'test -f %s'"
+            "ssh -o 'StrictHostKeyChecking no' lantern@%s 'test -f %s' 2>/dev/null"
             % (ip, filename)):
             time.sleep(check_interval)
 
     loginfo("Launching stack.")
-    stack_id = launch_stack.run('lantern-peer', stack_name, conn)
+    stack_id = launch_stack.run(stack_type, stack_name, conn)
 
     loginfo("Waiting for stack to be created.")
     while True:
@@ -49,15 +49,14 @@ def run(stack_name, *filenames):
     wait_for_remote_file("instance to be bootstraped", '.bootstrap-done', 20)
 
     loginfo("Sending configuration and secret files.")
-    init_files.run('lantern-peer',
+    init_files.run(stack_type,
                    stack_name,
                    *filenames)
 
-    loginfo("Installing lantern and dependencies.")
-    update_node.run('lantern-peer', ip)
+    loginfo("Pushing salt configuration.")
+    update_node.run(stack_type, ip)
 
-    wait_for_remote_file("installers to be built", '.installers-built', 60)
-    wait_for_remote_file("lantern to be built and launched",
+    wait_for_remote_file("instance set up to complete",
                          '.update-done',
                          60)
 
@@ -65,9 +64,16 @@ def run(stack_name, *filenames):
 
 
 if __name__ == '__main__':
-    expected_files = init_files.configs['lantern-peer']['expected_files']
-    if len(sys.argv) != len(expected_files) + 2:
-        print "Usage:", sys.argv[0], "<stack name>",
+    try:
+        stack_type = sys.argv[1]
+    except IndexError:
+        print "Usage:", sys.argv[0], "<stack-type> <stack-name> [<required-file> ...]"
+        sys.exit(1)
+
+    expected_files = init_files.configs[stack_type]['expected_files']
+
+    if len(sys.argv) != len(expected_files) + 3:
+        print "Usage:", sys.argv[0], "<stack-type> <stack-name>",
         print init_files.files_usage(expected_files)
         sys.exit(1)
     logging.basicConfig(level=logging.INFO,
