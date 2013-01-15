@@ -19,7 +19,15 @@ In addition, there is a script to create Amazon S3 buckets with random names, an
 
 ### How it works
 
-To begin with, we call `bin/create_buckets.py` to create a pool of randomly named Amazon S3 buckets and register them with the **Lantern controller**. 
+#### Setup
+
+To begin with, we call scripts to perform the following setup actions, in either order:
+
+- create a pool of randomly named Amazon S3 buckets and register them with the **Lantern controller** ([like this](#create-buckets)), and
+
+- [spawn](#spawn-invsrvlauncher) an invited server launcher.
+
+#### Handling invitations
 
 The first time each particular user (say, `inviter@gmail.com`) invites one of their buddies (say, `buddy@gmail.com`) to Lantern, the following happens:
 
@@ -62,7 +70,7 @@ Most of the scripts described below take paths to sensitive files which, for sec
 
 [XXX: but how do you pass them to these scripts without having them unencrypted locally?]
 
-### Create buckets
+### <a id='create-buckets'></a>Create buckets
 
 To create and register a pool of buckets:
 
@@ -76,7 +84,7 @@ Where
 
 The script needs the latter two arguments in order to log into Google Talk as an user that the **Lantern controller** trusts, and send it an XMPP message to register the new buckets.
 
-### <a id='spawn-invsrvlauncher'></a>Spawn Invited Server Launcher
+### <a id='spawn-invsrvlauncher'></a>Spawn an Invited Server Launcher
 
 To launch, configure and start up an *invited server launcher*, you call `bin/spawn.py` with an annoyingly long list of arguments.  Most of these are files that the launcher needs only in order to pass them over to the Lantern peers it will launch:
 
@@ -101,7 +109,7 @@ Where
 
 - `getexceptional key` and the `install4j (...)` files contain various [secret](#secret) licensing information required to build the installers.
 
-### <a id='spawn-lanternpeer'></a>Spawn Lantern Peer
+### <a id='spawn-lanternpeer'></a>Spawn a Lantern Peer
 
 You are not supposed to launch Lantern peers during normal operation.  The invited server launcher does that.  But should you need this for debugging, testing, or recovery, this is how you do it:
 
