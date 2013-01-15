@@ -1,73 +1,48 @@
 Introduction
 ============
 
-This package contains utility scripts and configuration for launching and
-maintaining lantern components that run on Amazon Web Services. 
+This package contains utility scripts and configuration files for launching and
+maintaining Lantern components hosted on Amazon Web Services. 
 
-## Short version
+## Overview
 
-Launch, configure and start up a lantern node by running:
+### Components
 
-    bin/spawn.py <node-name> <client-secrets-file> <user-credentials-file> <getexceptional-key> <install4j-env-vars> <install4j-windows-key> <install4j-osx-key>
+There are two types of systems created and managed by these scripts at this moment:
 
-`node-name` will be the name of the CloudFormation stack created for this node.  You can use this name to refer to this node in some of the finer grained scripts described in the next section.  This also allows you to identify the stack in any other interface to CloudFormation (e.g. the AWS web console).
+- **Lantern peers** AKA **invited servers**: EC2 instances that run Lantern in behalf of some user, providing fallback proxy access for their invitees (XXX: they are not called "invitee servers" only for consistency with older code-- this may need a cleanup.)
+    On setup, these instances also build Lantern installers and upload them to S3.  These installers have the address of the server that built them baked in, so users that install Lantern from them can find the server even if Google Talk is blocked.  Indeed, the main goal of these instances is providing access to Google Talk itself whenever censors block it.
 
-`client-secrets-file` is the path to a JSON file in the format Google Apps makes available for download when you register an application.
+- **Invited server launcher**: this is a single instance that launches and configures Lantern peers on demand.
 
-`user-credentials` is the path to a JSON file that contains the OAuth2 access credentials for the user in which behalf Lantern will run.  It has the form:
+In addition, there is a script to create Amazon S3 buckets with random names, and register them with the **Lantern controller** so they can be used to host installers.
 
-    {"username": "xyzzy@gmail.com",
-     "access_token": "ya29.AHES6ZT ... ",
-     "refresh_token": "1/G_aZr6_tIR ... "}
+### How it works
 
-`getexceptional-key` and the `install4j-*` files contain various licensing information required to build the installers.
+To begin with, we call `bin/create_buckets.py` to create a pool of randomly named Amazon S3 buckets and register them with the **Lantern controller**. 
 
-### Shorter version
+The first time each particular user (say, `inviter@gmail.com`) invites one of their buddies (say, `buddy@gmail.com`) to Lantern, the following happens:
 
-If you copy the install4j files to the examples folder, the following command will launch an instance with client secrets and user credentials associated to some lanterncyborg@gmail.com:
+ - The inviter's **Lantern client** sends an XMPP message to the **Lantern controller**, notifying it that `inviter@gmail.com` wants to invite `buddy@gmail.com`.  This request also includes some credentials (i.e. a *refresh token*) that allows the bearer to login to Google Talk as `inviter@gmail.com`.
 
-    example/spawn <node-name>
+ - **Lantern controller** chooses one of the least used buckets in its pool, and sends an XMPP message to the **invited server launcher**, asking it to create a new **Lantern peer** that will run as the inviter.  To this end, it sends the refresh token it was passed from the Lantern client, and the name of the bucket where the installers created by this server should be stored.
 
-*Update:* This user is not in beta, though.
- 
-## For finer control
+ - The **invited server launcher** spawns and configures a new **Lantern peer** with the given refresh token and bucket name.
 
-There are separate scripts to launch, configure, and start up lantern nodes.
+ - The **Lantern peer** downloads all necessary packages and git repositories, builds Lantern installers and uploads them to a 'folder' with a randomly generated name in the given bucket, builds Lantern itself and runs it as a service, then notifies **Lantern controller** that it's done starting up, passing it the location where the installers have been uploaded.
 
-Launch a generic node running
+ - The **Lantern controller** stores the installer location for `inviter@gmail.com` and sends an e-mail to `buddy@gmail.com` (and to whomever else may have been invited by `inviter@gmail.com` while the previous steps were taking place), telling them that they were invited, and where they can download a Lantern installer for their platform. 
 
-    bin/launch_stack.py <node-name>
+From here on, whenever `inviter@gmail.com` invites a new buddy, the invite e-mail will be sent immediately to them, using the install location stored for the inviter.
 
-Configure instance-specific data running
+## Usage
 
-    bin/init_lantern_peer.py <client-secrets> <user-credentials> <install4j-env-vars> <install4j-windows-key> <install4j-osx-key>
-
-Besides the data you explicitly provide, this tells the instance its public IP address and the port where it should listen for proxy requests.
-
-Setup/update all launched nodes as lantern instances using
-
-    bin/update_group.py
-
-This will do nothing to instances that are already up to date.
-
-Alternatively, initialize/update a specific node using
-
-    bin/update_node.py <address>
-
-The first time you run either update script, Oracle Java 7, maven 3 and install4j will be installed, installers will be built, the 'oauth2' branch of Lantern will be checked out and built, and Lantern will be launched as a service.  Subsequent updates will apply any changes in the [salt][salt] configuration.
-
-## To Do
-
-Better dependency management.  At the moment everything gets set up alright in first place, but if you want to apply hotfixes you will need to rebuild/restart some stuff manually.  More details coming soon (TM).
-
-Before you Start
-================
+### Before you Start
 
 These scripts require Python 2 (tested on 2.7.3; earlier versions may work)
 and the 2.5 version of the [`boto`][boto] library.
 
-As of this writing, the latest version of `boto` (2.6) **won't** work with
-these scripts.  You can run `bin/install-boto` to install an appropriate
+As of this writing, the latest stable version of `boto` (2.6) **won't** work with these scripts.  You can run `bin/install-boto` to install an appropriate
 version from GitHub.
 
 In addition, you need to let `boto` know your AWS credentials.  If you have an
@@ -81,9 +56,124 @@ your .bashrc:
 
 or provide them through some of [boto's configuration files][botoconfig].
 
+### <a id='secret'></a>Secret files
+
+Most of the scripts described below take paths to sensitive files which, for security reasons, are not included in github.  If you need them, ask (e.g.) in the bns-ops mailing list.  After you obtain them, please [be careful][secguidelines] not to leak them.
+
+[XXX: but how do you pass them to these scripts without having them unencrypted locally?]
+
+### Create buckets
+
+To create and register a pool of buckets:
+
+    bin/create_buckets.py <bucket count> <client secrets file> <refresh token file>
+
+Where
+
+- `bucket count` is the number of buckets we want to create;
+- <a id='client-secrets-file'></a>`client secrets file` is the path to a [secret](#secret) file with the format and semantics described [here][client-secrets].  Typically, you download it from a link in the "API Access" section in the [Google APIs console][googleapiconsole]; 
+- <a id='refresh-token-file'></a>`refresh token file` is the path to a [secret](#secret) file containing the *refresh token* that gives the app with the abovementioned *client secrets* permission to log in to Google Talk as `invsrvlauncher@gmail.com`.  [XXX: add to the repo a script to obtain this easily].
+
+The script needs the latter two arguments in order to log into Google Talk as an user that the **Lantern controller** trusts, and send it an XMPP message to register the new buckets.
+
+### <a id='spawn-invsrvlauncher'></a>Spawn Invited Server Launcher
+
+To launch, configure and start up an *invited server launcher*, you call `bin/spawn.py` with an annoyingly long list of arguments.  Most of these are files that the launcher needs only in order to pass them over to the Lantern peers it will launch:
+
+    bin/spawn.py invsrvlauncher <stack name> <OAuth2 refresh token> <invsrvlauncher's id_rsa> <AWS credentials> <Lantern's id_rsa> <OAuth2 client secrets> <getexceptional key> <install4j environment variables> <install4j windows certificate> <install4j OS X certificate>
+
+Where
+
+- `stack name` will be the name of the CloudFormation stack created for this server.  You can use this name to refer to this node in some of the finer grained scripts described [below](#plumbing).  This also allows you to identify the stack in any other interface to CloudFormation (e.g. the AWS web console).
+
+- `OAuth2 refresh token` is the same as [above](#refresh-token-file).
+
+- `invsrvlauncher's id_rsa` is a ssh private key for a `invsrvlauncher` github user.  The invitee server launcher needs to check out this very repository from github in order to launch Lantern peers, so this user has been given pull permissions.
+
+- `AWS credentials` is a file containing credentials for an user with permissions to launch new CloudFormation stacks and create and populate S3 buckets. [XXX: pin down the exact permissions.]  The file should have the format expected by some AWS console tools at AWS_CREDENTIAL_FILE.  To wit:
+
+        AWSAccessKeyId=UPPERCA5ELETTER5ANDNUMBERSHERE
+        AWSSecretKey=bASe64+vOmIt/heRE
+
+- `Lantern's id_rsa` is a ssh private key for a `lanterncyborg` github user.  At this moment this user has no permissions to our secret repositories, but the `lantern-ui` submodule is linked in the `lantern` repo with a ssh URI, so we need *some* ssh credentials that github recognizes.
+
+- `OAuth2 client secrets` is the same as [above](#client-secrets-file).
+
+- `getexceptional key` and the `install4j (...)` files contain various [secret](#secret) licensing information required to build the installers.
+
+### <a id='spawn-lanternpeer'></a>Spawn Lantern Peer
+
+You are not supposed to launch Lantern peers during normal operation.  The invited server launcher does that.  But should you need this for debugging, testing, or recovery, this is how you do it:
+
+    bin/spawn.py lantern-peer <stack name> <installer bucket> <user credentials> <AWS credentials> <Lantern's id_rsa> <OAuth2 client secrets> <getexceptional key> <install4j environment variables> <install4j windows certificate> <install4j OS X certificate>
+
+Where
+
+- `installer bucket` is the name of an S3 bucket where the instance will upload the installers it builds (the bucket needs to exist and the AWS credentials must enable uploading to it);
+
+- `user credentials` is the path to a JSON file that contains the OAuth2 access credentials for the user in which behalf Lantern will run.  It has the form:
+
+        {"username": "xyzzy@gmail.com",
+         "access_token": "ya29.AHES6ZT ... ",
+         "refresh_token": "1/G_aZr6_tIR ... "}
+
+and all the other parameters are the same as their namesakes in the argument list for [spawning an invitee server launcher](#spawn-invsrvlauncher).
+
+## <a id='plumbing'></a>Plumbing
+
+There are separate scripts to launch, configure, and start up/update nodes.
+
+### Launch
+
+Launch a generic node running
+
+    bin/launch_stack.py <stack type> <stack name>
+
+where 
+
+- `stack type` is either 'invsrvlauncher' or 'lantern-peer', and
+- `stack name` is any valid CloudFormation stack name that is not already taken.  You may use this name in some of the scripts described below.
+
+### Configure
+
+Configure instance-specific data and copy over secret files using
+
+    bin/init_files.py <stack type> <ip or stack name> <file>...
+
+where
+
+- `stack type` is either 'invsrvlauncher' or 'lantern-peer',
+- `ip or stack name` is either the IP or stack name of the node you want to configure,
+
+and the rest of the arguments are the same as you'd use with `spawn.py` for [either](#spawn-invsrvlauncher) [stack type](#spawn-lanternpeer).
+
+If the stack type is 'lantern-peer', this script also tells the instance its public IP address and the port where it should listen for proxy requests.
+
+### Bring up
+
+Upload [salt][salt] configuration and trigger setup/update: 
+
+    bin/update_node.py <stack type> <address>
+
+Alternatively, you can update salt configuration for all instances of a given stack type by invoking:
+
+    bin/update_group.py <stack type>
+
+
+## To Do
+
+Better provisions for recovery: what if a lantern-peer or bucket is discovered and blocked by censors?  At the moment everything gets set up alright in first place, but if you want to apply hotfixes you will need to rebuild/restart some stuff manually.  More details coming soon (TM).
+
+Search for XXX in this document for other pending tasks.
+
+[client-secrets]: https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
+
+[googleapiconsole]: https://code.google.com/apis/console/
 
 [boto]: https://github.com/boto/boto 
 
 [botoconfig]: http://code.google.com/p/boto/wiki/BotoConfig
 
 [salt]: http://saltstack.org
+
+[secguidelines]: https://github.com/getlantern/bns-ops/issues/5
