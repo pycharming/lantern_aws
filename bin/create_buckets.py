@@ -115,7 +115,7 @@ if __name__ == '__main__':
         sys.exit(1)
     client_id, client_secret = xmpp_util.read_client_secrets(
             client_secrets_filename)
-    refresh_token = file(refresh_token_filename).read()
+    refresh_token = file(refresh_token_filename).read().strip()
     access_token = xmpp_util.get_access_token(client_id,
                                               client_secret,
                                               refresh_token)
