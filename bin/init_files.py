@@ -29,7 +29,7 @@ def get_port(resources):
     return rule.from_port
 
 _common_files = [
-    ("AWS credentials", '.aws_credentials'),
+    ("AWS credentials", '.aws_credential'),
     ("lantern's id_rsa", 'lantern.id_rsa'),
     ("OAuth2 client secrets", 'client_secrets.json'),
     ("getexceptional key", 'lantern_getexceptional.txt'),
