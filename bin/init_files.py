@@ -29,6 +29,9 @@ def get_port(resources):
     return rule.from_port
 
 _common_files = [
+    # DRY warning: invsrvlauncher's xmpp-bot.init relies on some of these
+    # names.
+    # XXX refactor out as constants when we have unified branches.
     ("AWS credentials", '.aws_credential'),
     ("lantern's id_rsa", 'lantern.id_rsa'),
     ("OAuth2 client secrets", 'client_secrets.json'),
