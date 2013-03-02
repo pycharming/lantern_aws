@@ -3,7 +3,7 @@ import json
 import requests
 from sleekxmpp import ClientXMPP
 
-lanternctrl_jid = 'lanternctrl@lanternctrl.appspot.com/bot'
+lanternctrl_jid = 'lanternctrl@appspot.com/bot'
 
 class OAuth2Bot(ClientXMPP):
     def __init__(self, jid, token):
