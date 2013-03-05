@@ -14,7 +14,7 @@
     "InstanceType" : {
       "Description" : "EC2 instance type.",
       "Type" : "String",
-      "Default" : "m1.small"
+      "Default" : "t1.micro"
     },
     
     "Bootstrap" : {
