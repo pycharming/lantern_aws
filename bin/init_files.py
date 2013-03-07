@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 
-# XXX: There is stuff here that is specific to lantern peers (specifically,
-# feeding ip and port in addition to the given files).  It doesn't hurt for
-# other instances, but I'd better factor it out for clarity.
-
 import logging
 import os
 import shutil
@@ -44,7 +40,6 @@ configs = {
     'lantern-peer': {
         'user': 'lantern',
         'expected_files': [
-            ("installer bucket", 'bucket'),
             ("user credentials", 'user_credentials.json')]
             + _common_files,
         'computed_files': [
