@@ -14,7 +14,7 @@ import init_files
 import update_node
 
 
-def run(stack_type, stack_name, *filenames):
+def run(stack_type, stack_name, *filenames, **kwargs):
 
     conn = boto.connect_cloudformation()
     ip = None
@@ -45,6 +45,13 @@ def run(stack_type, stack_name, *filenames):
             break
 
     ip = init_files.get_ip(stack.list_resources())
+
+    # XXX: this is so the invsrvlauncher can trigger the building of the
+    # instance ASAP.  This is ugly, but it was the least traumatic change that
+    # I could think of.  All this is due to a big rewrite anyway.
+    callback = kwargs.get('host_port_callback')
+    if callback is not None:
+        callback(ip, init_files.get_port(stack.list_resources()))
 
     wait_for_remote_file("instance to be bootstraped", '.bootstrap-done', 20)
 
