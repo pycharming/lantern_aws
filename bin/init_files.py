@@ -28,13 +28,8 @@ _common_files = [
     # DRY warning: invsrvlauncher's xmpp-bot.init relies on some of these
     # names.
     # XXX refactor out as constants when we have unified branches.
-    ("AWS credentials", '.aws_credential'),
     ("lantern's id_rsa", 'lantern.id_rsa'),
-    ("OAuth2 client secrets", 'client_secrets.json'),
-    ("getexceptional key", 'lantern_getexceptional.txt'),
-    ("installer environment variables", 'env-vars.txt'),
-    ("windows certificate", 'secure/bns_cert.p12'),
-    ("OS X certificate", 'secure/bns-osx-cert-developer-id-application.p12')]
+    ("OAuth2 client secrets", 'client_secrets.json')]
 
 configs = {
     'lantern-peer': {
@@ -45,12 +40,16 @@ configs = {
         'computed_files': [
             ('host', get_ip),
             ('public-proxy-port', get_port)]},
-
     'invsrvlauncher': {
         'user': 'invsrvlauncher',
         'expected_files': [
-            ("OAuth2 refresh token", 'refresh_token'),
-            ("invsrvlauncher's id_rsa", 'invsrvlauncher.id_rsa')]
+            ("AWS credentials", '.aws_credential'),
+            ("OAuth2 refresh token for invsrvlauncher", 'refresh_token'),
+            ("invsrvlauncher's id_rsa", 'invsrvlauncher.id_rsa'),
+            ("getexceptional key", 'lantern_getexceptional.txt'),
+            ("installer environment variables", 'env-vars.txt'),
+            ("windows certificate", 'secure/bns_cert.p12'),
+            ("OS X certificate", 'secure/bns-osx-cert-developer-id-application.p12')]
             + _common_files,
         'computed_files': []}}
 
