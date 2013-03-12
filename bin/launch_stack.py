@@ -12,7 +12,7 @@ import tarfile
 import tempfile
 import zlib
 
-import boto
+import region
 
 from bin_dir import bin_dir
 
@@ -60,7 +60,7 @@ def run(node_type, stack_name, conn=None):
                                  'cloudformation',
                                  node_type + '.json')).read()
 
-    conn = conn or boto.connect_cloudformation()
+    conn = conn or region.connect_cloudformation()
     return conn.create_stack(stack_name,
                              template_body=template,
                              parameters=parameters)

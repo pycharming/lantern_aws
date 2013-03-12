@@ -5,7 +5,7 @@ import shutil
 import sys
 import tempfile
 
-import boto
+import region
 
 
 def die(reason):
@@ -35,7 +35,7 @@ if os.system("git clone --bare %s %s" % (repo_root, repo_copy)):
     die("Failed to clone repository.")
 
 print "Connecting to the EC2 endpoint..."
-conn = boto.connect_ec2()
+conn = region.connect_ec2()
 
 print "Looking up nodes in group", group, "..."
 for reservation in conn.get_all_instances(filters={'group-name': group}):

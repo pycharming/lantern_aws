@@ -6,7 +6,7 @@ import shutil
 import sys
 import tempfile
 
-import boto
+import region
 
 
 def get_ip(resources):
@@ -57,7 +57,7 @@ def ec2_conn():
     try:
         return ec2_conn.conn
     except AttributeError:
-        ec2_conn.conn = boto.connect_ec2()
+        ec2_conn.conn = region.connect_ec2()
         return ec2_conn.conn
 
 def find_resource_id(resources, res_type):
@@ -78,7 +78,7 @@ def run(stack_type, which, *paths):
         if not filename.endswith(expected_name):
             logging.warning("WARNING: I was kind of expecting the %s file to be called '%s'." % (desc, expected_name))
 
-    cf_conn = boto.connect_cloudformation()
+    cf_conn = region.connect_cloudformation()
 
     any_inited = False
 

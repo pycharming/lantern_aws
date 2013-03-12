@@ -7,8 +7,7 @@ import os
 import sys
 import time
 
-import boto
-
+import region
 import launch_stack
 import init_files
 import update_node
@@ -16,7 +15,7 @@ import update_node
 
 def run(stack_type, stack_name, *filenames, **kwargs):
 
-    conn = boto.connect_cloudformation()
+    conn = region.connect_cloudformation()
     ip = None
 
     def loginfo(s):

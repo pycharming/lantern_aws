@@ -7,7 +7,7 @@ import random
 import string
 import time
 
-import boto
+import region
 from boto.exception import S3CreateError
 
 from bin_dir import bin_dir
@@ -47,8 +47,8 @@ policy_template = \
 
 
 def main(num_buckets, access_token):
-    conn = boto.connect_s3()
-    # boto.create_bucket(name) won't warn me if I already have a bucket called
+    conn = region.connect_s3()
+    # conn.create_bucket(name) won't warn me if I already have a bucket called
     # `name`.  I check against this, lest I create less than `num_buckets`.
     taken_names = {b.name for b in conn.get_all_buckets()}
     bucket_names = []
