@@ -1,1 +1,0 @@
-../../salt/fail2ban.sls
