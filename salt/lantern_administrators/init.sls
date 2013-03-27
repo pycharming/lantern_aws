@@ -5,11 +5,6 @@
       - gid_from_name: yes
       - home: /home/{{ name }}
       - shell: /bin/bash
-      - optional_groups:
-        - adm
-        - admin
-        - dip
-        - netdev
 
 /home/{{ name }}:
     file.directory:
@@ -39,26 +34,12 @@
 {% endfor %}
 
 {% for admin in 'myles','pants','aranhoide','leahxschmidt' %}
-{% for role in admin,'gitsalt','lantern','invsrvlauncher' %}
-
+{% for role in admin,'lantern','invsrvlauncher' %}
 {{ admin }}_{{ role }}_ssh:
     ssh_auth.present:
       - user: {{ role }}
       - source: salt://lantern_administrators/{{ admin }}.pub_key
       - require:
         - file: /home/{{ role }}/.ssh
-
-
 {% endfor %}
-{% endfor %}
-
-# invsrvlauncher needs access to these accounts in order to initialize new
-# instances.
-{% for role in 'lantern','gitsalt' %}
-invsrvlauncher_{{ role }}_ssh:
-    ssh_auth.present:
-      - user: {{ role }}
-      - source: salt://lantern_administrators/invsrvlauncher.pub_key
-      - require:
-        - file: /home/{{ role }}/.ssh
 {% endfor %}
