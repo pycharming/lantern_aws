@@ -29,12 +29,14 @@ def connect(region=None):
     print "Connecting to region %s..." % region
     return boto.ec2.connect_to_region(region)
 
-def get_key(conn, region=None):
-    key_prefix = 'lantern-%s-%s-%s' % (get_region(region),
+def get_key(conn=None, region=None):
+    region = get_region(region)
+    key_prefix = 'lantern-%s-%s-%s' % (region,
                                        socket.gethostname(),
                                        getpass.getuser())
     if not os.path.exists(keypair_dir):
         os.makedirs(keypair_dir)
+    conn = None
     for i in count(1):
         key_name = '%s-%s' % (key_prefix, i)
         key_path = os.path.join(keypair_dir, key_name + '.pem')
@@ -42,7 +44,7 @@ def get_key(conn, region=None):
             break
         try:
             print "Trying to create new keypair '%s'" % key_name
-            key_pair = conn.create_key_pair(key_name)
+            key_pair = (conn or connect(region)).create_key_pair(key_name)
             if key_pair.save(keypair_dir):
                 break
         except:

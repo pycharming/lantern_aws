@@ -6,6 +6,7 @@ import sys
 
 import here
 import region
+import util
 
 
 def launch_instance(name):
@@ -36,13 +37,10 @@ def launch_instance(name):
     print "(You may see some connection refusals; this is normal.)"
     print
     delay = 1
-    while os.system(("rsync -e 'ssh -o StrictHostKeyChecking=no -i %s'"
-                     + " -az %s/ ubuntu@%s:salt")
-                    % (key_path, here.salt_states_path, ins.ip_address)):
+    while util.rsync(key_path, ins.ip_address, 'salt'):
         time.sleep(delay)
         delay *= 1.5
         print "Retrying..."
-    print "`rsync`ed successfuly!"
     print
     print "Copying bootstrap file..."
     print
