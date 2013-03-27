@@ -22,6 +22,7 @@ amis = {"ap-northeast-1": "ami-60c77761",
         "us-west-2": "ami-20800c10"}
 
 region = 'us-east-1'
+free_for_all_sg_name = 'free-for-all'
 keypair_dir = os.path.expanduser('~/.lantern-keypairs')
 
 def get_key(conn):
@@ -44,20 +45,39 @@ def get_key(conn):
             traceback.print_exc()
     return key_name, key_path
 
+def assure_security_group_present(conn):
+    try:
+        group = conn.create_security_group(
+                free_for_all_sg_name,
+                ("Promiscuous security group"
+                 + " for machines with local firewalls."))
+    except boto.exception.EC2ResponseError as e:
+        if e.error_code == 'InvalidGroup.Duplicate':
+            print "Security group already exists."
+            return
+        else:
+            raise
+    group.authorize('tcp', 0, 65535, '0.0.0.0/0')
+    group.authorize('udp', 0, 65535, '0.0.0.0/0')
+    # -1 is a wildcard for ICMP, so this is effectively authorizing ALL types.
+    group.authorize('icmp', -1, -1, '0.0.0.0/0')
+    print "Created security group."
+
 here = bin_dir()
 salt_states_path = os.path.join(here, '..', 'salt')
 bootstrap_path = os.path.join(here, '..', 'etc','bootstrap.bash')
 
 def launch_instance(name):
     conn = boto.ec2.connect_to_region(region)
+    print "Checking/creating prerequisites..."
     key_name, key_path = get_key(conn)
+    assure_security_group_present(conn)
     print "Creating instance..."
     reservation = conn.run_instances(
             amis[region],
             key_name=key_name,
             instance_type='t1.micro',
-            #XXX: create this security group if not already there.
-            security_groups=['free-for-all'])
+            security_groups=[free_for_all_sg_name])
     print "Waiting for instance to run..."
     delay = 1
     while True:
