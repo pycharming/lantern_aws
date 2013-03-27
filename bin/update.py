@@ -29,16 +29,13 @@ def update(machine):
     _, key_path = region.get_key()
     print "Pushing salt config..."
     util.rsync(key_path, address)
-    try:
-        os.system(("ssh -i %s ubuntu@%s 'sudo salt-call state.highstate'"
-                   + " | tee .log") % (key_path, address))
-        print
-        print "Done updating. The following look like errors:"
-        print
-        os.system("grep -i error .log")
-        os.system("grep False .log")
-    finally:
-        os.remove(".log")
+    os.system(("ssh -i %s ubuntu@%s 'sudo salt-call state.highstate'"
+               + " | tee .log") % (key_path, address))
+    print
+    print "Done updating. The following look like errors:"
+    print
+    os.system("grep -i error .log")
+    os.system("grep False .log")
 
 if __name__ == '__main__':
     machine = (len(sys.argv) == 2 and sys.argv[1]
