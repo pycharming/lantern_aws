@@ -10,6 +10,11 @@ export DEBIAN_FRONTEND=noninteractive
 
 LOG=/tmp/salt-bootstrap.log
 
+# Feel free to comment this out if it causes any problems.  I was getting
+# massive warning spam from perl because of a missing locale.
+locale-gen en_US en_US.UTF-8 gl_ES.UTF-8
+dpkg-reconfigure locales
+
 # We configure the hostname before we generate the salt keys so we get the
 # correct configuration to begin with and so we don't have to update salt keys
 # later.
