@@ -6,6 +6,7 @@ import sys
 
 import here
 import region
+import update_secrets
 import util
 
 
@@ -37,10 +38,14 @@ def launch_instance(name):
     print "(You may see some connection refusals; this is normal.)"
     print
     delay = 1
-    while util.rsync(key_path, ins.ip_address, 'salt'):
+    while util.rsync(key_path, ins.ip_address, remote_path='salt'):
         time.sleep(delay)
         delay *= 1.5
         print "Retrying..."
+    print
+    print "Copying secrets..."
+    print
+    update_secrets.update(key_path, ins.ip_address)
     print
     print "Copying bootstrap file..."
     print
