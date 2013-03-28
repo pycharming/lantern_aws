@@ -10,6 +10,7 @@ java-prereqs:
 
 java:
     pkg.installed:
+        - order: 2
         - names:
             - sun-java6-jre
             - sun-java6-bin
@@ -20,6 +21,7 @@ java:
 
 maven:
     cmd.script:
+        - order: 2
         - source: salt://lantern_build_prereqs/install-maven.bash
         - unless: "which mvn"
         - user: root
