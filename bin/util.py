@@ -29,7 +29,7 @@ def rsync(key_path,
           local_path=here.salt_states_path,
           remote_path='/srv/salt'):
     error = os.system(("rsync -e 'ssh -o StrictHostKeyChecking=no -i %s'"
-                       + " -az %s/ ubuntu@%s:%s")
+                       + " -azLk %s/ ubuntu@%s:%s")
                       % (key_path, local_path, ip, remote_path))
     if not error:
         print "Rsynced successfuly."
