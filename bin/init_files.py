@@ -67,9 +67,12 @@ def find_resource_id(resources, res_type):
 
 
 def run_critical(command, details):
-    if os.system(command):
-        logging.critical(details)
-        raise RuntimeError
+    for tries in xrange(5):
+        if not os.system(command):
+            return
+        time.sleep(5)
+    logging.critical(details)
+    raise RuntimeError
 
 def run(stack_type, which, *paths):
     conf = configs[stack_type]
