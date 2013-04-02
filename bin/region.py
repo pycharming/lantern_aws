@@ -4,7 +4,7 @@ from boto.ec2.connection import EC2Connection
 from boto.cloudformation.connection import CloudFormationConnection
 
 
-default_region = 'ap-southeast-1'
+default_region = 'us-east-1'
 
 classes = {'ec2': EC2Connection,
            'cloudformation': CloudFormationConnection}
