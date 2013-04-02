@@ -9,6 +9,14 @@ import tempfile
 import region
 
 
+def get_private_ip(resources):
+    res_id = find_resource_id(resources, u'AWS::EC2::Instance')
+    reservations = ec2_conn().get_all_instances(instance_ids=[res_id])
+    if not reservations:
+        return None
+    instance, = reservations[0].instances
+    return instance.private_ip_address
+
 def get_ip(resources):
     res_id = find_resource_id(resources, u'AWS::EC2::Instance')
     reservations = ec2_conn().get_all_instances(instance_ids=[res_id])

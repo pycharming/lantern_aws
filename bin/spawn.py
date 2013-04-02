@@ -16,7 +16,7 @@ import update_node
 def run(stack_type, stack_name, *filenames, **kwargs):
 
     conn = region.connect_cloudformation()
-    ip = None
+    ip = private_ip = None
 
     def loginfo(s):
         if ip is None:
@@ -30,7 +30,7 @@ def run(stack_type, stack_name, *filenames, **kwargs):
         time.sleep(check_interval * 2)
         while os.system(
             "ssh -o 'StrictHostKeyChecking no' lantern@%s 'test -f %s' 2>/dev/null"
-            % (ip, filename)):
+            % (private_ip, filename)):
             time.sleep(check_interval)
 
     loginfo("Launching stack.")
@@ -44,6 +44,7 @@ def run(stack_type, stack_name, *filenames, **kwargs):
             break
 
     ip = init_files.get_ip(stack.list_resources())
+    private_ip = init_files.get_private_ip(stack.list_resources())
 
     # XXX: this is so the invsrvlauncher can trigger the building of the
     # instance ASAP.  This is ugly, but it was the least traumatic change that
@@ -60,7 +61,7 @@ def run(stack_type, stack_name, *filenames, **kwargs):
                    *filenames)
 
     loginfo("Pushing salt configuration.")
-    update_node.run(stack_type, ip)
+    update_node.run(stack_type, private_ip)
 
     wait_for_remote_file("instance set up to complete",
                          '.update-done',
