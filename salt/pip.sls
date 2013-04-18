@@ -1,8 +1,13 @@
-python-setuptools:
-    pkg.installed
+some-pip:
+    cmd.run:
+        - name: "apt-get install python-pip -y"
+        - unless: "which pip"
 
 pip:
     cmd.run:
-        - name: test "$(which pip)" || sudo easy_install pip
+        - name: "pip install --upgrade pip && hash -r"
+        - order: 1
+        # The apt-get version of pip installs to /usr/bin/pip instead.
+        - unless: "[ $(which pip) == /usr/local/bin/pip ]"
         - require:
-            - pkg: python-setuptools
+            - cmd: some-pip
