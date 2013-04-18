@@ -52,7 +52,6 @@ configs = {
         'user': 'invsrvlauncher',
         'expected_files': [
             ("AWS credentials", '.aws_credential'),
-            ("OAuth2 refresh token for invsrvlauncher", 'refresh_token'),
             ("invsrvlauncher's id_rsa", 'invsrvlauncher.id_rsa'),
             ("getexceptional key", 'lantern_getexceptional.txt'),
             ("installer environment variables", 'env-vars.txt'),
