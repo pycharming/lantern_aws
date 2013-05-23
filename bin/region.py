@@ -1,14 +1,10 @@
 from itertools import *
-import getpass
 import os
-import socket
 
 import boto.ec2
 
 
 default_region = 'us-east-1'
-
-keypair_dir = os.path.expanduser('~/.lantern-keypairs')
 
 amis = {"ap-northeast-1": "ami-60c77761",
         "ap-southeast-1": "ami-a4ca8df6",
@@ -31,6 +27,7 @@ def connect(region=None):
 
 def get_key(conn=None, region=None):
     region = get_region(region)
+    return 'lantern',
     key_prefix = 'lantern-%s-%s-%s' % (region,
                                        socket.gethostname(),
                                        getpass.getuser())

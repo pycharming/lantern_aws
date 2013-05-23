@@ -12,12 +12,14 @@ import util
 def launch_instance(name):
     conn = region.connect()
     print "Checking/creating prerequisites..."
-    key_name, key_path = region.get_key(conn)
+    key_path = os.path.join(here.secrets_path,
+                            'lantern_aws',
+                            region.get_region() + ".pem")
     region.assure_security_group_present(conn)
     print "Creating instance..."
     reservation = conn.run_instances(
             region.get_ami(),
-            key_name=key_name,
+            key_name='lantern',
             instance_type='t1.micro',
             security_groups=[region.free_for_all_sg_name])
     print "Waiting for instance to run..."
