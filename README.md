@@ -11,9 +11,8 @@ maintaining Lantern components hosted on Amazon Web Services.
 There are two types of systems created and managed by these scripts at this moment:
 
 - **Lantern peers** AKA **invited servers**: EC2 instances that run Lantern in behalf of some user, providing fallback proxy access for their invitees (XXX: they are not called "invitee servers" only for consistency with older code-- this may need a cleanup.)
-    On setup, these instances also build Lantern installers and upload them to S3.  These installers have the address of the server that built them baked in, so users that install Lantern from them can find the server even if Google Talk is blocked.  Indeed, the main goal of these instances is providing access to Google Talk itself whenever censors block it.
 
-- **Invited server launcher**: this is a single instance that launches and configures Lantern peers on demand.
+- **Invited server launchers**: this is a small fixed number of instances that launch and configure Lantern peers on demand.  For each such peer, they also build a correspending Lantern installer and upload them to S3.  These installers have the address of the corresponding peer baked in, so users that install Lantern from them can find the server even if Google Accounts and/or Google Talk are blocked.  Indeed, the main goal of these instances is providing access to Google Accounts/Talk whenever censors block it.
 
 In addition, there is a script to create Amazon S3 buckets with random names, and register them with the **Lantern controller** so they can be used to host installers.
 
@@ -31,17 +30,19 @@ To begin with, we call scripts to perform the following setup actions, in either
 
 The first time each particular user (say, `inviter@gmail.com`) invites one of their buddies (say, `buddy@gmail.com`) to Lantern, the following happens:
 
- - The inviter's **Lantern client** sends an XMPP message to the **Lantern controller**, notifying it that `inviter@gmail.com` wants to invite `buddy@gmail.com`.  This request also includes some credentials (i.e. a *refresh token*) that allows the bearer to login to Google Talk as `inviter@gmail.com`.
+ - The inviter's **Lantern client** sends an XMPP message (actually, an Available notification) to the **Lantern controller**, notifying it that `inviter@gmail.com` wants to invite `buddy@gmail.com`.  This request also includes some credentials (i.e. a *refresh token*) that allows the bearer to login to Google Talk as `inviter@gmail.com`.
 
- - **Lantern controller** chooses one of the least used buckets in its pool, and sends an XMPP message to the **invited server launcher**, asking it to create a new **Lantern peer** that will run as the inviter.  To this end, it sends the refresh token it was passed from the Lantern client, and the name of the bucket where the installers created by this server should be stored.
+ - **Lantern controller** chooses one of the least used buckets in its pool, and sends an SQS message to the **invited server launcher**, asking it to create a new **Lantern peer** that will run as the inviter.  To this end, it sends the refresh token it was passed from the Lantern client, and the name of the bucket where the installers created by this server should be stored.
 
- - The **invited server launcher** spawns and configures a new **Lantern peer** with the given refresh token and bucket name.
+ - The **invited server launcher** spawns and configures a new **Lantern peer** with the given refresh token, builds Lantern installers with that peer as the fallback server, and uploads them to a 'folder' with a randomly generated name in the given bucket.
 
- - The **Lantern peer** downloads all necessary packages and git repositories, builds Lantern installers and uploads them to a 'folder' with a randomly generated name in the given bucket, builds Lantern itself and runs it as a service, then notifies **Lantern controller** that it's done starting up, passing it the location where the installers have been uploaded.
+ - The **Lantern peer** downloads all necessary packages and git repositories, builds Lantern itself and runs it as a service.
 
- - The **Lantern controller** stores the installer location for `inviter@gmail.com` and sends an e-mail to `buddy@gmail.com` (and to whomever else may have been invited by `inviter@gmail.com` while the previous steps were taking place), telling them that they were invited, and where they can download a Lantern installer for their platform. 
+ - The **invited server launcher** notices that the lantern peer is done starting up and notifies the **lantern controller**, through a SQS message, of that fact, and of the location of the new installers (in the form `<bucket>/<folder>`).
 
-From here on, whenever `inviter@gmail.com` invites a new buddy, the invite e-mail will be sent immediately to them, using the install location stored for the inviter.
+ - The **Lantern controller** stores the installer location for `inviter@gmail.com` and sends an e-mail to `buddy@gmail.com` (and to whomever else may have been invited by `inviter@gmail.com` while the previous steps were taking place), telling them that they were invited, and where they can download a Lantern installer for their platform.
+
+From here on, whenever `inviter@gmail.com` invites a new buddy, the invite e-mail will be sent immediately to them, using the installer location stored for the inviter.
 
 ## Usage
 
@@ -51,7 +52,7 @@ These scripts require Python 2 (tested on 2.7.3; earlier versions may work)
 and the 2.5 version of the [`boto`][boto] library.
 
 As of this writing, the latest stable version of `boto` (2.6) **won't** work with these scripts.  You can run `bin/install-boto` to install an appropriate
-version from GitHub.
+version.
 
 In addition, you need to let `boto` know your AWS credentials.  If you have an
 `AWS_CREDENTIAL_FILE` environment variable set up as required by some AWS
@@ -88,13 +89,9 @@ The script needs the latter two arguments in order to log into Google Talk as an
 
 To launch, configure and start up an *invited server launcher*, you call `bin/spawn.py` with an annoyingly long list of arguments.  Most of these are files that the launcher needs only in order to pass them over to the Lantern peers it will launch:
 
-    bin/spawn.py invsrvlauncher <stack name> <OAuth2 refresh token> <invsrvlauncher's id_rsa> <AWS credentials> <Lantern's id_rsa> <OAuth2 client secrets> <getexceptional key> <install4j environment variables> <install4j windows certificate> <install4j OS X certificate>
-
-Where
+    bin/spawn.py invsrvlauncher <stack name> <AWS credentials> <invsrvlauncher's id_rsa> <getexceptional key> <installer environment variables> <windows certificate> <OS X certificate> <lantern's id_rsa> <OAuth2 client secrets> <Fallback proxy keystore>
 
 - `stack name` will be the name of the CloudFormation stack created for this server.  You can use this name to refer to this node in some of the finer grained scripts described [below](#plumbing).  This also allows you to identify the stack in any other interface to CloudFormation (e.g. the AWS web console).
-
-- `OAuth2 refresh token` is the same as [above](#refresh-token-file).
 
 - `invsrvlauncher's id_rsa` is a ssh private key for a `invsrvlauncher` github user.  The invitee server launcher needs to check out this very repository from github in order to launch Lantern peers, so this user has been given pull permissions.
 
@@ -109,15 +106,15 @@ Where
 
 - `getexceptional key` and the `install4j (...)` files contain various [secret](#secret) licensing information required to build the installers.
 
+- `Fallback proxy keystore` is a file containing certificates needed by the fallback proxies so the client can verify their identity.
+
 ### <a id='spawn-lanternpeer'></a>Spawn a Lantern Peer
 
 You are not supposed to launch Lantern peers during normal operation.  The invited server launcher does that.  But should you need this for debugging, testing, or recovery, this is how you do it:
 
-    bin/spawn.py lantern-peer <stack name> <installer bucket> <user credentials> <AWS credentials> <Lantern's id_rsa> <OAuth2 client secrets> <getexceptional key> <install4j environment variables> <install4j windows certificate> <install4j OS X certificate>
+    bin/spawn.py lantern-peer <stack name> <user credentials> <lantern's id_rsa> <OAuth2 client secrets> <Fallback proxy keystore>
 
 Where
-
-- `installer bucket` is the name of an S3 bucket where the instance will upload the installers it builds (the bucket needs to exist and the AWS credentials must enable uploading to it);
 
 - `user credentials` is the path to a JSON file that contains the OAuth2 access credentials for the user in which behalf Lantern will run.  It has the form:
 
