@@ -37,7 +37,8 @@ _common_files = [
     # names.
     # XXX refactor out as constants when we have unified branches.
     ("lantern's id_rsa", 'lantern.id_rsa'),
-    ("OAuth2 client secrets", 'client_secrets.json')]
+    ("OAuth2 client secrets", 'client_secrets.json'),
+    ("Fallback proxy keystore", 'littleproxy_keystore.jks')]
 
 configs = {
     'lantern-peer': {
