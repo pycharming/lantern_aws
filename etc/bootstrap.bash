@@ -31,6 +31,7 @@ apt-get upgrade -y > >(tee -a $LOG) 2>&1
 apt-get autoremove -y > >(tee -a $LOG) 2>&1
 apt-get install salt-master -y > >(tee -a $LOG) 2>&1
 apt-get install salt-minion -y > >(tee -a $LOG) 2>&1
+apt-get install salt-cloud -y > >(tee -a $LOG) 2>&1
 
 while [ ! -e /etc/salt/pki/master/minions_pre/$HOSTNAME ]
 do
