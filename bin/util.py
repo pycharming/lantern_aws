@@ -1,5 +1,6 @@
 import os
 import re
+import stat
 import sys
 import time
 
@@ -47,3 +48,15 @@ def call_with_key_path_and_address(callback):
 (You may also set that in the MACHINETOUPDATE environment variable.)"""
                 % sys.argv[0])
         sys.exit(1)
+
+def set_secret_permissions():
+    """Secret files should be only readable by user, but git won't remember
+    read/write settings for group and others.
+
+    We can't even create an instance unless we restrict the permissions of the
+    corresponding .pem.
+    """
+    aws_dir = os.path.join(here.secrets_path, 'lantern_aws')
+    for filename in os.listdir(aws_dir):
+        os.chmod(os.path.join(aws_dir, filename),
+                 stat.S_IREAD)

@@ -10,6 +10,7 @@ import util
 
 
 def launch_instance(name):
+    util.set_secret_permissions()
     conn = region.connect()
     print "Checking/creating prerequisites..."
     key_path = os.path.join(here.secrets_path,

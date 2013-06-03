@@ -6,6 +6,7 @@ import util
 
 
 def update(key_path, address):
+    util.set_secret_permissions()
     print "Pushing salt config..."
     util.rsync(key_path, address)
     os.system(("ssh -i %s ubuntu@%s 'sudo salt-call state.highstate'"
