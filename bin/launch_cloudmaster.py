@@ -50,7 +50,7 @@ def launch_cloudmaster():
     print "Uploading salt configuration..."
     update.rsync_salt()
     print "Setting cloudmaster minion config..."
-    update.upload_cloudmaster_minion_config()
+    upload_cloudmaster_minion_config()
     print "Copying bootstrap file..."
     os.system("scp -i %s %s ubuntu@%s:"
               % (key_path, here.bootstrap_path, ins.ip_address))
@@ -60,6 +60,28 @@ def launch_cloudmaster():
     print
     print "Done launching."
     update.print_errors()
+
+def upload_cloudmaster_minion_config():
+    key_path = region.get_key_path()
+    address = util.get_address()
+    os.system(("ssh -i %s ubuntu@%s 'sudo mkdir /etc/salt"
+               + " && sudo chown ubuntu:ubuntu /etc/salt'")
+               % (key_path, address))
+    aws_id, aws_key = util.read_aws_credential()
+    os.system((r"""ssh -i %s ubuntu@%s '("""
+               + r"""echo "master: salt" """
+               + r""" && echo "grains:" """
+               + r""" && echo "    aws_id: %s" """
+               + r""" && echo "    aws_key: \"%s\"" """
+               + r""" && echo "    aws_region: %s " """
+               + r""" && echo "    aws_ami: %s ") """
+               + r""" > /etc/salt/minion'""")
+              % (key_path,
+                 address,
+                 aws_id,
+                 aws_key,
+                 config.region,
+                 region.get_ami()))
 
 
 if __name__ == '__main__':
