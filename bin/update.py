@@ -22,6 +22,9 @@ def print_errors():
     raw_false_positives = """
 -// Set this value to "true" to get emails only on errors. Default
 -//Unattended-Upgrade::MailOnlyOnError "true";
+-# One of 'garbage', 'trace', 'debug', info', 'warning', 'error', 'critical'.
+-# Default: 'False'
+-#delete_sshkeys: False
 """
     known_false_positives = filter(None,
                                    map(str.strip,
