@@ -16,10 +16,26 @@ def update():
     os.system(("ssh -i %s ubuntu@%s 'sudo salt-call state.highstate'"
                + " | tee .log") % (region.get_key_path(), util.get_address()))
     print
-    print "Done updating. Any prints below may be caused by errors:"
+    print "Done updating."
+    print_errors()
+
+def print_errors():
+    raw_false_positives = """
+-// Set this value to "true" to get emails only on errors. Default
+-//Unattended-Upgrade::MailOnlyOnError "true";
+"""
+    known_false_positives = filter(None,
+                                   map(str.strip,
+                                       raw_false_positives.split("\n")))
     print
-    os.system("grep -i error .log")
-    os.system("grep False .log")
+    print "Any prints below may be caused by errors:"
+    print
+    for line in file(".log"):
+        line = line.strip()
+        if (line not in known_false_positives
+            and ("error" in line.lower()
+                 or "False" in line)):
+            print line
 
 def rsync_salt():
     error = os.system(("rsync -e 'ssh -o StrictHostKeyChecking=no -i %s'"

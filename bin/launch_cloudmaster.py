@@ -58,10 +58,8 @@ def launch_cloudmaster():
     os.system("ssh -i %s ubuntu@%s 'sudo ./bootstrap.bash' | tee .log"
               % (key_path, ins.ip_address))
     print
-    print "Done launching. Any prints below may be caused by errors:"
-    print
-    os.system("grep -i error .log")
-    os.system("grep False .log")
+    print "Done launching."
+    update.print_errors()
 
 
 if __name__ == '__main__':
