@@ -1,5 +1,4 @@
 aws:
     provider: aws
-    #XXX hardcoded to our ap-southeast-1 Ubuntu AMI.
-    image: ami-a4ca8df6
+    image: {{ grains['aws_ami'] }}
     size: Small Instance

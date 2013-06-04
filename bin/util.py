@@ -3,51 +3,58 @@ import re
 import stat
 import sys
 import time
+from functools import wraps
 
+import config
 import here
 import region
 
 
-def get_address(s):
-    if re.match(r'\d+\.\d+\.\d+\.\d+', s):
-        return s
-    else:
-        conn = region.connect()
+def memoized(f):
+    d = {}
+    @wraps(f)
+    def deco(*args):
         try:
-            reservation, = conn.get_all_instances(
-                    filters={'tag:Name': s})
-            instance, = reservation.instances
-            if instance.ip_address is None:
-                raise RuntimeError("%s looks like a dead instance." % s)
-            return instance.ip_address
-        except ValueError:
-            # `s` is neither an IP nor an EC2 name.  It may still be
-            # something that can be resolved to an IP.  Let's try.
-            return s
+            return d[args]
+        except KeyError:
+            ret = d[args] = f(*args)
+            return ret
+    return deco
 
-def rsync(key_path,
-          ip,
-          local_path=here.salt_states_path,
-          remote_path='/srv/salt'):
-    error = os.system(("rsync -e 'ssh -o StrictHostKeyChecking=no -i %s'"
-                       + " -azLk %s/ ubuntu@%s:%s")
-                      % (key_path, local_path, ip, remote_path))
-    if not error:
-        print "Rsynced successfuly."
-    return error
+@memoized
+def get_address():
+    """
+    Return the address of the 'cloudmaster' machine in the current region.
+    """
+    name = config.cloudmaster_name
+    try:
+        reservation, = region.connect().get_all_instances(
+                filters={'tag:Name': name})
+        instance, = reservation.instances
+        if instance.ip_address is None:
+            raise RuntimeError("'%s' looks like a dead instance." % name)
+        return instance.ip_address
+    except ValueError:
+        # `s` is neither an IP nor an EC2 name.  It may still be
+        # something that can be resolved to an IP.  Let's try.
+        raise RuntimeError(("'%s' not found in current region."
+                            + "  Are you sure you launched it?") % name)
 
-def call_with_key_path_and_address(callback):
-    machine = (len(sys.argv) == 2 and sys.argv[1]
-               or os.environ.get('MACHINETOUPDATE'))
-    if machine:
-        _, key_path = region.get_key()
-        callback(key_path, get_address(machine))
-    else:
-        print >> sys.stderr, (
-"""Usage: %s <ip or name of machine to update>
-(You may also set that in the MACHINETOUPDATE environment variable.)"""
-                % sys.argv[0])
-        sys.exit(1)
+@memoized
+def read_aws_credential():
+    id_, key = None, None
+    for line in file(os.path.join(here.secrets_path,
+                                  'lantern_aws',
+                                  'aws_credential')):
+        line = line.strip()
+        m = re.match(r"AWSAccessKeyId=(.*)", line)
+        if m:
+            id_ = m.groups()[0]
+        m = re.match("AWSSecretKey=(.*)", line)
+        if m:
+            key = m.groups()[0]
+    assert id_ and key
+    return id_, key
 
 def set_secret_permissions():
     """Secret files should be only readable by user, but git won't remember

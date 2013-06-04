@@ -42,7 +42,7 @@ You launch a cloud master using the following command:
 
     bin/launch.py
 
-By default, this will launch an instance in the `ap-southeast-1` (Singapore) region, that will communicate with the production Lantern Controller (app engine ID `lanternctrl`).  You can modify these values editing `config.py`.
+By default, this will launch an instance with name 'cloudmaster' in the `ap-southeast-1` (Singapore) region.  This instance will communicate with the production Lantern Controller (app engine ID `lanternctrl`).  It will also use a security group called 'free-for-all', which is expected to be totally open (access will be restricted through in-machine firewalls).  This security group will be created if it's not found in the given region.  You can modify all the values described in this paragraph editing `config.py`.
 
 As of this writing, allowed regions are
 
@@ -50,8 +50,6 @@ As of this writing, allowed regions are
     us-east-1 (useful for testing).
 
 Should you want to add support for other regions, just create a `lantern` KeyPair in that region and upload the corresponding `.pem` file to `getlantern/too-many-secrets/lantern_aws/<region-id>.pem`.
-
-The new instance will be launched in the given region with a name of the form `cloudmaster_<controller-id>`, or just `cloudmaster` if using the production lantern-controller.
 
 The cloud master will use the Salt configuration in your local `salt/` directory (i.e., not a git commit of any sort).
 

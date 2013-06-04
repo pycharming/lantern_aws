@@ -1,5 +1,22 @@
-salt-cloud:
-    service.running:
-        - enabled: yes
+/etc/salt/lantern.pem:
+    file.managed:
+        source: salt://salt_cloud/lantern.pem
+        user: root
+        group: root
+        mode: 600
 
-# copiar chave lantern.pem
+/etc/salt/cloud:
+    file.managed:
+        source: salt://salt_cloud/cloud
+        template: jinja
+        user: root
+        group: root
+        mode: 600
+
+/etc/salt/cloud.profiles:
+    file.managed:
+        source: salt://salt_cloud/cloud.profiles
+        template: jinja
+        user: root
+        group: root
+        mode: 600

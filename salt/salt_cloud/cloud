@@ -1,10 +1,8 @@
-# Note: This example is for /etc/salt/cloud
-
 providers:
   aws:
     # Set up the location of the salt master
     minion:
-      master: {{ master_location }}
+      master: {{ grains['ipv4'][0] }}
 
     # Specify whether to use public or private IP for deploy script.
     #
@@ -16,18 +14,18 @@ providers:
 
     # Set the AWS access credentials (see below)
     #
-    id: {{ aws_id }}
-    key: '{{ aws_key }}'
+    id: {{ grains['aws_id'] }}
+    key: "{{ grains['aws_key'] }}"
 
     # Make sure this key is owned by root with permissions 0400.
     #
-    private_key: /home/cloudmaster/lantern.pem
+    private_key: /etc/salt/lantern.pem
     keyname: lantern
     securitygroup: free-for-all
 
     # Default region
     #
-    location: ap-southeast-1
+    location: {{ grains['aws_region'] }}
 
     # Configure which user to use to run the deploy script. This setting is
     # dependent upon the AMI that is used to deploy. It is usually safer to
