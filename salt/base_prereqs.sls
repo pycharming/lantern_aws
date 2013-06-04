@@ -3,3 +3,4 @@ base-packages:
         - order: 1
         - names:
             - python-software-properties
+            - git
