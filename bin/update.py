@@ -3,6 +3,7 @@
 import os
 
 import config
+import here
 import region
 import util
 
@@ -33,14 +34,14 @@ def rsync_salt():
 def upload_cloudmaster_minion_config():
     key_path = region.get_key_path()
     aws_id, aws_key = util.read_aws_credential()
-    os.system((r"""(ssh -i %s ubuntu@%s '("""
-               + r"""echo "master: 127.0.0.1" """
-               + r"""echo "grains:"""
+    os.system((r"""ssh -i %s ubuntu@%s '("""
+               + r"""echo "master: salt" """
+               + r"""echo "grains:" """
                + r""" && echo "    aws_id: %s" """
                + r""" && echo "    aws_key: \"%s\"" """
                + r""" && echo "    aws_region: %s " """
                + r""" && echo "    aws_ami: %s ") """
-               + r """ > /srv/salt/minion'""")
+               + r""" > /srv/salt/minion'""")
               % (region.get_key_path(),
                  util.get_address(),
                  aws_id,

@@ -37,13 +37,19 @@ def launch_cloudmaster():
     print "Trying to connect to server..."
     print "(You may see some connection refusals; this is normal.)"
     print
+    key_path = region.get_key_path()
     delay = 1
-    while update.rsync_salt():
+    while os.system(("ssh -o StrictHostKeyChecking=no -i %s ubuntu@%s "
+                     + " 'sudo mkdir /srv/salt "
+                     + " && sudo chown ubuntu:ubuntu /srv/salt'")
+                     % (key_path, ins.ip_address)):
         time.sleep(delay)
         delay *= 1.5
         print "Retrying..."
     print
-    print "Configuring server..."
+    print "Uploading salt configuration..."
+    update.rsync_salt()
+    print "Setting cloudmaster minion config..."
     update.upload_cloudmaster_minion_config()
     print "Copying bootstrap file..."
     os.system("scp -i %s %s ubuntu@%s:"

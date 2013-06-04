@@ -4,6 +4,7 @@ import os
 import boto.ec2
 
 import config
+import here
 import util
 
 
