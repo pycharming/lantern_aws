@@ -40,7 +40,7 @@ Note that this downloads a private repository that is only accessible to the Lan
 
 You launch a cloud master using the following command: 
 
-    bin/launch.py
+    bin/launch_cloudmaster.py
 
 By default, this will launch an instance with name 'cloudmaster' in the `ap-southeast-1` (Singapore) region.  This instance will communicate with the production Lantern Controller (app engine ID `lanternctrl`).  It will also use a security group called 'free-for-all', which is expected to be totally open (access will be restricted through in-machine firewalls).  This security group will be created if it's not found in the given region.  You can modify all the values described in this paragraph editing `config.py`.
 
