@@ -1,6 +1,6 @@
 /etc/salt/lantern.pem:
     file.managed:
-        - source: salt://salt_cloud/lantern.pem
+        - source: salt://salt_cloud/{{ grains['aws_region'] }}.pem
         - user: root
         - group: root
         - mode: 600
