@@ -20,7 +20,11 @@ def launch_cloudmaster():
     reservation = conn.run_instances(
             region.get_ami(),
             key_name='lantern',
-            instance_type='t1.micro',
+            # WARNING: Even if we eventually stop building installers in the
+            # cloudmaster we should not downgrade it to a micro instance.
+            # A micro instance will still run out of memory when trying to
+            # spawn peers (this is probably a bug in salt-cloud?)
+            instance_type='m1.small',
             security_groups=[config.free_for_all_sg_name])
     print "Waiting for instance to run..."
     delay = 1

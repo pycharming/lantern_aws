@@ -1,4 +1,4 @@
 aws:
     provider: aws
     image: {{ grains['aws_ami'] }}
-    size: Small Instance
+    size: Micro Instance

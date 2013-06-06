@@ -25,6 +25,8 @@ def print_errors():
 -# One of 'garbage', 'trace', 'debug', info', 'warning', 'error', 'critical'.
 -# Default: 'False'
 -#delete_sshkeys: False
+liberror-perl changed from absent to 0.17-1
+Changes:   liberror-perl: { new : 0.17-1
 """
     known_false_positives = filter(None,
                                    map(str.strip,
