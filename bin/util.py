@@ -63,10 +63,13 @@ def set_secret_permissions():
     We can't even create an instance unless we restrict the permissions of the
     corresponding .pem.
     """
-    aws_dir = os.path.join(here.secrets_path, 'lantern_aws')
-    for filename in os.listdir(aws_dir):
-        os.chmod(os.path.join(aws_dir, filename),
-                 stat.S_IREAD)
+    for filename in os.listdir(here.secrets_path):
+        path = os.path.join(here.secrets_path, filename)
+        if os.path.isdir(path):
+            permissions = stat.S_IEXEC | stat.S_IREAD
+        else:
+            permissions = stat.S_IREAD
+        os.chmod(path, permissions)
 
 def ssh_cloudmaster(cmd=None, out=None):
     import region
