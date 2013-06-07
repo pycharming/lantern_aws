@@ -42,6 +42,7 @@ service salt-minion restart
 apt-get install python-libcloud -y > >(tee -a $LOG) 2>&1
 apt-get install python-pip -y > >(tee -a $LOG) 2>&1
 pip install --upgrade pip > >(tee -a $LOG) 2>&1
+pip install boto > >(tee -a $LOG) 2>&1
 pip install salt-cloud > >(tee -a $LOG) 2>&1
 
 while [ ! -e /etc/salt/pki/master/minions_pre/$HOSTNAME ]

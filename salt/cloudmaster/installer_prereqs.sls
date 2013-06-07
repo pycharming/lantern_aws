@@ -1,3 +1,8 @@
+# The windows JRE is not really used, but install4j expects it there.  It
+# would not even accept a dummy file with the same name.
+{% set jre_platforms=['windows-x86','linux-x86','linux-amd64'] %}
+
+
 /home/lantern/repo:
     file.directory:
         - user: lantern
@@ -23,10 +28,8 @@ jres-dir:
         - require:
             - git: latest-repo
 
-# The windows JRE is not really used, but install4j expects it there.  It
-# would not even accept a dummy file with the same name.
-{% for platform in 'windows-x86','linux-x86','linux-amd64' %}
-{{ platform }}-jre-downloaded:
+{% for platform in jre_platforms %}
+{{ platform }}-jre:
     cmd.run:
         - name: "wget -q https://d3g17h6tzzjzlu.cloudfront.net/{{ platform }}-jre.tar.gz"
         - unless: "test -f /home/lantern/repo/install/jres/{{ platform }}-jre.tar.gz"
@@ -45,3 +48,22 @@ install4j:
         - user: root
         - group: root
         - cwd: /tmp
+
+build-installers:
+    file.managed:
+        - name: /home/lantern/build-installers.bash
+        - source: salt://cloudmaster/build-installers.bash
+        - user: lantern
+        - group: lantern
+        - mode: 700
+
+# Dummy command that depends transitively on everything else in this file.
+installer-prereqs:
+    cmd.run:
+        - name: ':'
+        - require:
+            {% for platform in jre_platforms %}
+            - cmd: {{ platform }}-jre
+            {% endfor %}
+            - cmd: install4j
+            - file: build-installers
