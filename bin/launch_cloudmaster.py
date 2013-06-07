@@ -61,39 +61,35 @@ def launch_cloudmaster():
     os.system("scp -i %s %s ubuntu@%s:"
               % (key_path, here.bootstrap_path, ins.ip_address))
     print "Bootstrapping..."
-    os.system("ssh -i %s ubuntu@%s 'sudo ./bootstrap.bash' | tee .log"
-              % (key_path, ins.ip_address))
+    util.ssh_cloudmaster("sudo ./bootstrap.bash", ".log")
     print
     print "Done launching."
     update.print_errors()
 
 def init_dir(path):
-    return os.system(("ssh -o StrictHostKeyChecking=no -i %s ubuntu@%s "
-                      + " 'sudo mkdir %s "
-                      + " && sudo chown ubuntu:ubuntu %s'")
-                     % (region.get_key_path(), util.get_address(), path, path))
+    return util.ssh_cloudmaster("sudo mkdir %s ; sudo chown ubuntu:ubuntu %s"
+                                % (path, path))
 
 def upload_cloudmaster_minion_config():
     key_path = region.get_key_path()
     address = util.get_address()
-    os.system(("ssh -i %s ubuntu@%s 'sudo mkdir /etc/salt"
-               + " && sudo chown ubuntu:ubuntu /etc/salt'")
-               % (key_path, address))
+    init_dir("/etc/salt")
     aws_id, aws_key = util.read_aws_credential()
-    os.system((r"""ssh -i %s ubuntu@%s '("""
-               + r"""echo "master: salt" """
-               + r""" && echo "grains:" """
-               + r""" && echo "    aws_id: %s" """
-               + r""" && echo "    aws_key: \"%s\"" """
-               + r""" && echo "    aws_region: %s " """
-               + r""" && echo "    aws_ami: %s ") """
-               + r""" > /etc/salt/minion'""")
-              % (key_path,
-                 address,
-                 aws_id,
-                 aws_key,
-                 config.region,
-                 region.get_ami()))
+    ssh_cloudmaster((r"""(echo "master: salt" """
+                     + r""" && echo "grains:" """
+                     + r""" && echo "    aws_id: %s" """
+                     + r""" && echo "    aws_key: \"%s\"" """
+                     + r""" && echo "    aws_region: %s " """
+                     + r""" && echo "    aws_ami: %s " """
+                     + r""" && echo "    controller: %s " """
+                     + r""" ) > /etc/salt/minion""")
+                    % (key_path,
+                      address,
+                      aws_id,
+                      aws_key,
+                      config.region,
+                      region.get_ami(),
+                      config.controller))
 
 
 if __name__ == '__main__':

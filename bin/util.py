@@ -7,7 +7,6 @@ from functools import wraps
 
 import config
 import here
-import region
 
 
 def memoized(f):
@@ -26,6 +25,7 @@ def get_address():
     """
     Return the address of the 'cloudmaster' machine in the current region.
     """
+    import region
     name = config.cloudmaster_name
     try:
         reservation, = region.connect().get_all_instances(
@@ -67,3 +67,14 @@ def set_secret_permissions():
     for filename in os.listdir(aws_dir):
         os.chmod(os.path.join(aws_dir, filename),
                  stat.S_IREAD)
+
+def ssh_cloudmaster(cmd=None, out=None):
+    import region
+    full_cmd = "ssh -o StrictHostKeyChecking=no -i %s ubuntu@%s" % (
+                    region.get_key_path(),
+                    get_address())
+    if cmd:
+        full_cmd += " '%s'" % cmd
+    if out:
+        full_cmd += "| tee %s" % out
+    return os.system(full_cmd)
