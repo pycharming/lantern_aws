@@ -41,12 +41,19 @@ Changes:   liberror-perl: { new : 0.17-1
                  or "False" in line)):
             print line
 
+def upload_secrets():
+    return rsync(os.path.join(here.secrets_path, 'build-installers'),
+                 '/home/lantern/secure')
 def rsync_salt():
+    return rsync(here.salt_states_path, '/srv/salt')
+
+def rsync(src, dst):
     error = os.system(("rsync -e 'ssh -o StrictHostKeyChecking=no -i %s'"
-                       + " -azLk %s/ ubuntu@%s:/srv/salt")
+                       + " -azLk %s/ ubuntu@%s:%s")
                       % (region.get_key_path(),
-                         here.salt_states_path,
-                         util.get_address()))
+                         src,
+                         util.get_address(),
+                         dst))
     if not error:
         print "Rsynced successfuly."
     return error

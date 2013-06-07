@@ -43,18 +43,20 @@ def launch_cloudmaster():
     print
     key_path = region.get_key_path()
     delay = 1
-    while os.system(("ssh -o StrictHostKeyChecking=no -i %s ubuntu@%s "
-                     + " 'sudo mkdir /srv/salt "
-                     + " && sudo chown ubuntu:ubuntu /srv/salt'")
-                     % (key_path, ins.ip_address)):
+    while init_dir('/srv/salt'):
         time.sleep(delay)
         delay *= 1.5
         print "Retrying..."
+    print
+    print "Initializing /home/lantern..."
+    init_dir('/home/lantern')
     print
     print "Uploading salt configuration..."
     update.rsync_salt()
     print "Setting cloudmaster minion config..."
     upload_cloudmaster_minion_config()
+    print "Uploading secrets..."
+    update.upload_secrets()
     print "Copying bootstrap file..."
     os.system("scp -i %s %s ubuntu@%s:"
               % (key_path, here.bootstrap_path, ins.ip_address))
@@ -64,6 +66,12 @@ def launch_cloudmaster():
     print
     print "Done launching."
     update.print_errors()
+
+def init_dir(path):
+    return os.system(("ssh -o StrictHostKeyChecking=no -i %s ubuntu@%s "
+                      + " 'sudo mkdir %s "
+                      + " && sudo chown ubuntu:ubuntu %s'")
+                     % (region.get_key_path(), util.get_address(), path, path))
 
 def upload_cloudmaster_minion_config():
     key_path = region.get_key_path()
