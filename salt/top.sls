@@ -7,4 +7,4 @@ base:
     'cloudmaster':
         - lantern_build_prereqs
         - salt_cloud
-#        - cloudmaster
+        - cloudmaster
