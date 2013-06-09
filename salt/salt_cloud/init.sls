@@ -20,3 +20,11 @@
         - user: root
         - group: root
         - mode: 600
+
+python-libcloud:
+    pkg.installed
+
+salt-cloud:
+    pip.installed:
+        - require:
+              - pkg: python-libcloud

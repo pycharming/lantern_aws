@@ -1,0 +1,2 @@
+boto:
+    pip.installed
