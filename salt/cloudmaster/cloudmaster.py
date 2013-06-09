@@ -18,11 +18,6 @@ import yaml
 here = os.path.dirname(sys.argv[0]) if __name__ == '__main__' else __file__
 
 
-#DRY warning: lantern-controller needs to know this too.
-BUCKET = 'lantern-installers'
-LAUNCH_COMPLETE = 'launch-complete'
-BUILD_COMPLETE = 'build-complete'
-FOLDER_NAME_LENGTH = 8
 #DRY warning: ../top.sls
 FALLBACK_PROXY_PREFIX = "fp-"
 MAP_FILE = '/home/lantern/map'
