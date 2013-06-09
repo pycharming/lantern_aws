@@ -1,3 +1,5 @@
+sync_after_install: all
+
 providers:
   aws:
     # Set up the location of the salt master
@@ -40,3 +42,4 @@ providers:
     ssh_username: ubuntu
 
     provider: aws
+    rename_on_destroy: True
