@@ -30,6 +30,8 @@ LAUNCH_COMPLETE = 'launch-complete'
 BUILD_COMPLETE = 'build-complete'
 FOLDER_NAME_LENGTH = 8
 ALLOWED_FOLDER_CHARS = string.lowercase + string.digits
+#DRY warning: ../top.sls
+FALLBACK_PROXY_PREFIX = "fp-"
 
 
 def log_exceptions(f):
@@ -112,14 +114,15 @@ def launch_instance(email, refresh_token, build_args, notify_q,
     user_creds_fp, user_creds_filename = tempfile.mkstemp(
                                                suffix='.user_credentials.json')
     user_creds_file = os.fdopen(user_creds_fp, 'w')
-    instance_name = "inv%x" % hash(email)
+    instance_name = "%s%x" % (FALLBACK_PROXY_PREFIX, hash(email))
     #XXX pick a random port in the appropriate range.
     port = 12345
     try:
         json.dump(creds_dict, user_creds_file)
         user_creds_file.close()
         while get_ip(instance_name):
-            instance_name = 'invx%x' % hash(os.urandom(8))
+            instance_name = '%s%x' % (FALLBACK_PROXY_PREFIX,
+                                      hash(os.urandom(8)))
         logging.info("Spawning %s..." % instance_name)
         os.system("salt-cloud -p aws %s" % instance_name)
         host = get_ip(instance_name)

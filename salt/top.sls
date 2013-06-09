@@ -5,6 +5,8 @@ base:
         - lantern_administrators
         - unattended_upgrades
     'cloudmaster':
-        - lantern_build_prereqs
         - salt_cloud
         - cloudmaster
+    #DRY warning: cloudmaster/cloudmaster.py
+    'fp-*':
+        - fallback_proxy

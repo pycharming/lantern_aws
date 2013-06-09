@@ -12,6 +12,8 @@ def update():
     util.set_secret_permissions()
     print "Pushing salt config..."
     rsync_salt()
+
+def apply_update():
     util.ssh_cloudmaster("sudo salt-call state.highstate", ".log")
     print
     print "Done updating."

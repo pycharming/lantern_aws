@@ -1,7 +1,3 @@
-include:
-    - cloudmaster.installer_prereqs
-
-
 /home/lantern/cloudmaster.py:
     file.managed:
         - source: salt://cloudmaster/cloudmaster.py
@@ -16,12 +12,6 @@ include:
         - user: root
         - mode: 700
 
-/home/lantern/env.bash:
-    file.managed:
-        - source: salt://cloudmaster/env.bash
-        - user: root
-        - mode: 700
-
 cloudmaster-service:
     service.running:
         - name: cloudmaster
@@ -29,4 +19,3 @@ cloudmaster-service:
         - require:
             - file: /home/lantern/cloudmaster.py
             - file: /etc/init.d/cloudmaster
-            - cmd: installer-prereqs
