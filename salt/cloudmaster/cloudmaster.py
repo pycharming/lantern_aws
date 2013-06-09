@@ -74,7 +74,9 @@ def check_q():
                                      'refresh_token': refresh_token,
                                      'aws_id': AWS_ID,
                                      'aws_key': AWS_KEY,
-                                     'controller': CONTROLLER}}})
+                                     'controller': CONTROLLER,
+                                     'proxy_port': random.randint(1024,
+                                                                  61024)}}})
         yaml.dump(d, file(MAP_FILE, 'w'))
         os.system("salt-cloud -m %s" % MAP_FILE)
 

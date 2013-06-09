@@ -1,0 +1,4 @@
+[lantern_proxy]
+title=Lantern Proxy
+description=Lantern censorship circumvention tool
+ports={{ public_port }}/tcp
