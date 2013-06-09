@@ -13,12 +13,10 @@
 
 # Author: Spider Person <aranhoide@gmail.com>
 
-# PATH should only include /usr/* if it runs after the mountnfs.sh script
-export PATH=/usr/local/apache-maven-3.0.5/bin:/sbin:/usr/sbin:/bin:/usr/bin
-export JAVA_HOME=/usr/lib/jvm/java-6-sun
 DESC="bot listening for requests to launch new Lantern cloud instances."
 NAME=cloudmaster
 LHOME=/home/lantern
+source $LHOME/env.bash
 DAEMON=$LHOME/cloudmaster.py
 # DRY warning: check cloudmaster.py
 DAEMON_ARGS="$LHOME/secure/client_secrets.json $LHOME/secure/littleproxy_keystore.jks"

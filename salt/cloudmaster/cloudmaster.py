@@ -6,6 +6,7 @@ from Queue import Empty  # for the queue.Queue.Empty exception.
 from multiprocessing import Process, Queue
 import os
 import random
+import re
 import string
 import sys
 import tempfile
@@ -13,6 +14,7 @@ import time
 from functools import wraps
 
 import boto
+import boto.ec2
 import boto.sqs
 from boto.sqs.jsonmessage import JSONMessage
 from boto.exception import BotoServerError
@@ -22,6 +24,8 @@ from boto.s3.key import Key
 here = os.path.dirname(sys.argv[0]) if __name__ == '__main__' else __file__
 
 
+#DRY warning: lantern-controller needs to know this too.
+BUCKET = 'lantern-installers'
 LAUNCH_COMPLETE = 'launch-complete'
 BUILD_COMPLETE = 'build-complete'
 FOLDER_NAME_LENGTH = 8
@@ -33,8 +37,8 @@ def log_exceptions(f):
     def deco(*args, **kw):
         try:
             return f(*args, **kw)
-        except:
-            logging.exception()
+        except Exception, e:
+            logging.exception(e)
             raise
     return deco
 
@@ -49,13 +53,17 @@ class Task:
 
 @log_exceptions
 def check_qs(notify_q, builder_q, build_args):
-    sqs = boto.sqs.connect_to_region("{{ grains['aws_region'] }}")
+    sqs = boto.sqs.connect_to_region("{{ grains['aws_region'] }}", **aws_creds)
+    #sqs = boto.sqs.connect_to_region("ap-southeast-1", **aws_creds)
     ctrl_req_q = sqs.get_queue("{{ grains['controller'] }}_request")
+    #ctrl_req_q = sqs.get_queue("lanternctrltest_request")
     ctrl_req_q.set_message_class(JSONMessage)
     ctrl_notify_q = sqs.get_queue("notify_{{ grains['controller'] }}")
+    #ctrl_notify_q = sqs.get_queue("notify_lanternctrltest")
     ctrl_notify_q.set_message_class(JSONMessage)
     pending = {}
     while True:
+        logging.info("Checking queues.")
         try:
             msg = notify_q.get(False)
             msg_type, email = msg[:2]
@@ -80,23 +88,23 @@ def check_qs(notify_q, builder_q, build_args):
             pass
         msg = ctrl_req_q.read()
         if msg is None:
+            logging.info("Nothing in request queue...")
             continue
         d = msg.get_body()
         # DRY warning: InvitedServerLauncher at lantern-controller.
         email = d['launch-invsrv-as']
         refresh_token = d['launch-refrtok']
-        bucket = d['launch-bucket']
         logging.info("Got spawn request for '%s'"
                      % clip_email(email))
         pending[email] = Task(email, msg)
         Process(target=launch_instance,
-                args=(email, refresh_token, bucket, build_args,
+                args=(email, refresh_token, build_args,
                       notify_q, builder_q)).start()
         # Give other servers a chance to handle any remaining messages.
         time.sleep(5)
 
 @log_exceptions
-def launch_instance(email, refresh_token, bucket, build_args, notify_q,
+def launch_instance(email, refresh_token, build_args, notify_q,
                     builder_q):
     creds_dict = {'username': email,
                   'access_token': 'whatever',
@@ -115,15 +123,18 @@ def launch_instance(email, refresh_token, bucket, build_args, notify_q,
         logging.info("Spawning %s..." % instance_name)
         os.system("salt-cloud -p aws %s" % instance_name)
         host = get_ip(instance_name)
-        builder_q.put((email, host, port, bucket))
+        builder_q.put((email, host, port))
         #XXX Now I would initialize the server.  Pillars?
         notify_q.put((LAUNCH_COMPLETE, email))
     finally:
         os.remove(user_creds_filename)
 
 def get_ip(instance_name):
-    reservation, = connect().get_all_instances(filters={'tag:Name': name})
-    instance, = reservation.instances
+    reservations = connect().get_all_instances(
+            filters={'tag:Name': instance_name})
+    if not reservations:
+        return None
+    instance, = reservations[0].instances
     return instance.ip_address
 
 #XXX: refactor somewhere that we can share between machines.
@@ -138,50 +149,54 @@ def memoized(f):
             return ret
     return deco
 
+aws_creds = {'aws_access_key_id': "{{ grains['aws_id'] }}",
+             'aws_secret_access_key': "{{ grains['aws_key'] }}"}
+#aws_creds = {'aws_access_key_id': "XXX",
+#             'aws_secret_access_key': "YYY"}
+
 @memoized
 def connect():
     return boto.ec2.connect_to_region(
-            {{ grains['aws_region'] }},
-            aws_access_key_id={{ grains['aws_id'] }},
-            aws_secret_access_key={{ grains['aws_key'] }})
-
+            "{{ grains['aws_region'] }}",
+            #'ap-southeast-1',
+            **aws_creds)
 
 @log_exceptions
 def build_installers_proc(notify_q, builder_q):
     while True:
         notify_q.put(build_installers(*builder_q.get()))
 
-def build_installers(email, host, port, bucket):
-    logging.info("Building installers for %s (%s:%s) bucket %s..."
-                 % (clip_email(email), host, port, bucket))
+def build_installers(email, host, port):
+    logging.info("Building installers for %s (%s:%s) ..."
+                 % (clip_email(email), host, port))
     error = os.system("FALLBACK_SERVER_HOST=%s FALLBACK_SERVER_PORT=%s %s/build-installers.bash"
                       % (host, port, here))
     assert not error
-    installer_location = upload_installers(bucket)
+    installer_location = upload_installers()
     logging.info("Installers for %s uploaded to %s."
                  % (clip_email(email), installer_location))
     return BUILD_COMPLETE, email, installer_location
 
-def upload_installers(bucket_name):
-    logging.info("Uploading installers to %s..." % bucket_name)
-    conn = boto.connect_s3()
-    bucket = conn.get_bucket(bucket_name)
-    folder = get_random_folder_name(bucket)
-    # DRY warning: suffixes, name structure.
-    for arch, suffix in [('windows-x86', '.exe'),
-                         ('osx', '.dmg'),
-                         ('linux-x86', '-32-bit.deb'),
-                         ('linux-amd64', '-64-bit.deb')]:
-        filename = "lantern-%s%s" % (VERSION, suffix)
-        key = Key(bucket)
+def upload_installers():
+    conn = boto.connect_s3(**aws_creds)
+    folder = get_random_folder_name()
+    repo = os.path.join(here, 'repo')
+    for suffix in ['.exe', '.dmg', '-32-bit.deb', '-64-bit.deb']:
+        filename, = (s for s in os.listdir(repo)
+                     if s.endswith(suffix))
+        version, = re.match('lantern-(.*)%s' % suffix).groups()
+        key = Key(BUCKET)
         key.name = "%s/%s" % (folder, filename)
         key.storage_class = 'REDUCED_REDUNDANCY'
         logging.info("Uploading to %s" % key.name)
-        key.set_contents_from_filename(os.path.join(here, 'lantern', filename))
+        path = os.path.join(repo, filename)
+        key.set_contents_from_filename(path)
         key.set_acl('public-read')
-    return "%s/%s" % (bucket_name, folder)
+        os.unlink(path)
+    return "%s/%s" % (folder, version)
 
-def get_random_folder_name(bucket):
+def get_random_folder_name():
+    bucket = boto.connect_s3(**aws_creds).get_bucket(BUCKET)
     while True:
         attempt = ''.join(random.choice(ALLOWED_FOLDER_CHARS)
                           for _ in xrange(FOLDER_NAME_LENGTH))
@@ -199,7 +214,7 @@ if __name__ == '__main__':
     secrets_dir = here
     lantern_aws_dir = os.path.join(here, 'lantern_aws')
     logging.basicConfig(level=logging.INFO,
-                        filename=os.path.join(here, 'invsrvlauncher.log'),
+                        filename=os.path.join(here, 'cloudmaster.log'),
                         format='%(levelname)-8s %(message)s')
     try:
         _, client_secrets_filename, keystore_path = sys.argv
@@ -216,4 +231,4 @@ if __name__ == '__main__':
     Process(target=build_installers_proc, args=(notify_q, builder_q)).start()
     check_qs(notify_q,
              builder_q,
-             (lantern_id_rsa_filename, client_secrets_filename, keystore_path))
+             (client_secrets_filename, keystore_path))

@@ -5,7 +5,7 @@ HERE=$(readlink -f $(dirname $0))
 # Maven is too chatty for syslog.
 LOGFILE=$HERE/build-installers.log
 
-source $HERE/env-vars.txt
+source $HERE/secure/env-vars.txt
 
 # Make sure we find install4jc.
 PATH=$PATH:/usr/local/bin

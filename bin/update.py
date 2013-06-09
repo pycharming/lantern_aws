@@ -26,10 +26,12 @@ def print_errors():
 -#delete_sshkeys: False
 liberror-perl changed from absent to 0.17-1
 Changes:   liberror-perl: { new : 0.17-1
+error = os.system("FALLBACK_SERVER_HOST=%s FALLBACK_SERVER_PORT=%s %s/build-installers.bash"
+assert not error
 """
-    known_false_positives = filter(None,
-                                   map(str.strip,
-                                       raw_false_positives.split("\n")))
+    known_false_positives = set(filter(None,
+                                       map(str.strip,
+                                           raw_false_positives.split("\n"))))
     print
     print "Any prints below may be caused by errors:"
     print

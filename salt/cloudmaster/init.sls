@@ -16,6 +16,12 @@ include:
         - user: root
         - mode: 700
 
+/home/lantern/env.bash:
+    file.managed:
+        - source: salt://cloudmaster/env.bash
+        - user: root
+        - mode: 700
+
 cloudmaster-service:
     service.running:
         - name: cloudmaster
