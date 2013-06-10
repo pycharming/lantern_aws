@@ -11,4 +11,5 @@ base:
         - cloudmaster
     #DRY warning: cloudmaster/cloudmaster.py
     'fp-*':
+        - apt_upgrade
         - fallback_proxy
