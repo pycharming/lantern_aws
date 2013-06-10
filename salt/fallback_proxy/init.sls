@@ -1,10 +1,19 @@
-{% set iwbfiles=[
+{% set txtfiles=[
+    ('/home/lantern/', 'getlanternversion.py', 700),
+    ('/home/lantern/', 'user_credentials.json', 400),
+    ('/home/lantern/', 'client_secrets.json', 400),
     ('/home/lantern/secure/', 'env-vars.txt', 400),
-    ('/home/lantern/secure/', 'bns_cert.p12', 400),
-    ('/home/lantern/secure/', 'bns-osx-cert-developer-id-application.p12', 400),
     ('/home/lantern/repo/', 'buildInstallerWrappers.bash', 500),
     ('/home/lantern/repo/install/wrapper/', 'wrapper.install4j', 500),
     ('/home/lantern/repo/install/wrapper/', 'dpkg.bash', 500),
+    ('/home/lantern/repo/install/wrapper/', 'fallback.json', 400)] %}
+
+# The only difference is jinja doesn't like these.
+{% set binaries=[
+    ('/home/lantern/', 'littleproxy_keystore.jks', 400),
+    ('/home/lantern/secure/', 'bns_cert.p12', 400),
+    ('/home/lantern/secure/', 'bns-osx-cert-developer-id-application.p12',
+     400),
     ('/home/lantern/repo/install/common/', 'lantern.icns', 400),
     ('/home/lantern/repo/install/common/', '128on.png', 400),
     ('/home/lantern/repo/install/common/', '16off.png', 400),
@@ -23,30 +32,32 @@ openjdk-6-jre:
     file.directory:
         - user: lantern
         - group: lantern
-        - dir_mode: 500
-        - file_mode: 400
-        - recurse:
-            - user
-            - group
-            - mode
+        - mode: 500
 
-/home/lantern/repo/install/common:
-    file.directory:
-        - makedirs: True
-
-/home/lantern/repo:
+{% for dir in ['/home/lantern/repo',
+               '/home/lantern/repo/install',
+               '/home/lantern/repo/install/common'] %}
+{{ dir }}:
     file.directory:
         - user: lantern
         - group: lantern
-        - dir_mode: 750
-        - recurse:
-            - user
-            - group
-            - mode
+        - dir_mode: 700
+        - makedirs: yes
+{% endfor %}
+
+{% for dir,filename,mode in txtfiles %}
+{{ dir+filename }}:
+    file.managed:
+        - source: salt://fallback_proxy/{{ filename }}
+        - template: jinja
+        - user: lantern
+        - group: lantern
+        - mode: {{ mode }}
         - require:
             - file: /home/lantern/repo/install/common
+{% endfor %}
 
-{% for dir,filename,mode in iwbfiles %}
+{% for dir,filename,mode in binaries %}
 {{ dir+filename }}:
     file.managed:
         - source: salt://fallback_proxy/{{ filename }}
@@ -57,24 +68,6 @@ openjdk-6-jre:
             - file: /home/lantern/repo/install/common
 {% endfor %}
 
-
-
-build-wrappers:
-    cmd.run:
-        #XXX: version!
-        - name: "source ../secure/env-vars.txt && /home/lantern/repo/buildInstallerWrappers.bash $(../getlanternversion.py)"
-        - user: lantern
-        - cwd: /home/lantern/repo
-        - unless: "[ -e /home/lantern/repo/install/*.exe ]"
-        - require:
-            - cmd: install4j
-            - pkg: openjdk-6-jre
-            {% for dir,filename,mode in iwbfiles %}
-            - file: {{ dir+filename }}
-            {% endfor %}
-            - file: /home/lantern/getlanternversion.py
-            - cmd: install-lantern
-
 install-lantern:
     cmd.script:
         - source: salt://fallback_proxy/install-lantern.bash
@@ -82,6 +75,24 @@ install-lantern:
         - user: root
         - group: root
         - cwd: /root
+
+build-wrappers:
+    cmd.run:
+        - name: "source ../secure/env-vars.txt && /home/lantern/repo/buildInstallerWrappers.bash $(../getlanternversion.py) && touch /home/lantern/wrappers_built"
+        - user: lantern
+        - cwd: /home/lantern/repo
+        - unless: "[ -e /home/lantern/wrappers_built ]"
+        - require:
+            - cmd: install4j
+            - pkg: openjdk-6-jre
+            {% for dir,filename,mode in txtfiles %}
+            - file: {{ dir+filename }}
+            {% endfor %}
+            {% for dir,filename,mode in binaries %}
+            - file: {{ dir+filename }}
+            {% endfor %}
+            # We need lantern in order to know which version to install.
+            - cmd: install-lantern
 
 /etc/init.d/lantern:
     file.managed:
@@ -91,42 +102,13 @@ install-lantern:
         - group: root
         - mode: 700
 
-/home/lantern/user_credentials.json:
-    file.managed:
-        - source: salt://fallback_proxy/user_credentials.json
-        - template: jinja
-        - user: lantern
-        - group: lantern
-        - mode: 400
-
-/home/lantern/client_secrets.json:
-    file.managed:
-        - source: salt://fallback_proxy/user_credentials.json
-        - template: jinja
-        - user: lantern
-        - group: lantern
-        - mode: 400
-
-/home/lantern/littleproxy_keystore.jks:
-    file.managed:
-        - source: salt://fallback_proxy/littleproxy_keystore.jks
-        - user: lantern
-        - group: lantern
-        - mode: 400
-
 /etc/ufw/applications.d/lantern:
     file.managed:
         - source: salt://fallback_proxy/ufw_rules
+        - template: jinja
         - user: root
         - group: root
         - mode: 644
-
-/home/lantern/getlanternversion.py:
-    file.managed:
-        - source: salt://home/lantern/getlanternversion.py
-        - user: lantern
-        - group: lantern
-        - mode: 700
 
 open-proxy-port:
     cmd.run:
@@ -136,22 +118,35 @@ open-proxy-port:
 
 upload-wrappers:
     cmd.script:
-        - source: salt://lantern_aws/upload_wrappers.py
+        - source: salt://fallback_proxy/upload_wrappers.py
+        - template: jinja
+        - unless: "[ -e /home/lantern/uploaded_wrappers ]"
         - user: lantern
         - group: lantern
         - cwd: /home/lantern/repo/install
         - require:
             - cmd: build-wrappers
-lantern:
+
+lantern-service:
     service.running:
+        - name: lantern
         - enable: yes
         - require:
             - file: /etc/init.d/lantern
-            - file: /home/lantern/user_credentials.json
-            - file: /home/lantern/
             - cmd: open-proxy-port
             - cmd: upload-wrappers
+            {% for dir,filename,mode in txtfiles %}
+            - file: {{ dir+filename }}
+            {% endfor %}
 
-# upload-wrappers
-
-
+report-completion:
+    cmd.script:
+        - source: salt://lantern_aws/report_completion.py
+        - template: jinja
+        - unless: "[ -e /home/lantern/reported_completion ]"
+        - user: lantern
+        - group: lantern
+        - cwd: /home/lantern
+        - require:
+            - service: lantern-service
+            - cmd: upload-wrappers

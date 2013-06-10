@@ -1,19 +1,47 @@
 #!/usr/bin/env python
 
-import boto
+from base64 import b64decode
+from cPickle import loads
+import logging
+
+import boto.sqs
 from boto.sqs.jsonmessage import JSONMessage
 
+
+# DRY warning: ../cloudmaster/cloudmaster.py
+USERID = "{{ grains['userid'] }}"
+AWS_REGION = "{{ grains['aws_region'] }}"
+AWS_ID = "{{ grains['aws_id'] }}"
+AWS_KEY = "{{ grains['aws_key'] }}"
+CONTROLLER = "{{ grains['controller'] }}"
+SQSMSG = "{{ grains['sqs_msg'] }}"
+aws_creds = {'aws_access_key_id': AWS_ID,
+             'aws_secret_access_key': AWS_KEY}
+
+
 def report_completion():
+    installer_location = file('/home/lantern/uploaded_wrappers').read()
+    sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
     logging.info("Reporting installers for %s are ready at %s."
-                 % (clip_email(email), task.installer_location))
+                 % (clip_email(USERID), installer_location))
+    ctrl_req_q = sqs.get_queue("%s_request" % CONTROLLER)
+    ctrl_notify_q = sqs.get_queue("notify_%s" % CONTROLLER)
     msg = JSONMessage()
     msg.set_body(
-            {'invsrvup-user': email,
-             'invsrvup-insloc': task.installer_location})
+            {'invsrvup-user': USERID,
+             'invsrvup-insloc': installer_location})
     ctrl_notify_q.write(msg)
-    ctrl_req_q.delete_message(task.message)
+    to_delete = loads(b64decode(SQSMSG))
+    ctrl_req_q.delete_message(to_delete)
+    file('/home/lantern/reported_completion', 'w').write('OK')
 
-#XXX: duplicated; factor out
 def clip_email(email):
     at_index = email.find('@')
     return '%s...%s' % (email[:1], email[at_index-2:at_index])
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        #filename=os.path.join(here, 'report_completion.log'),
+                        format='%(levelname)-8s %(message)s')
+    report_completion()

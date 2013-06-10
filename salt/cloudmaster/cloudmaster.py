@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
+from base64 import b64encode
+from cPickle import dumps
 import json
 import logging
 import os
+import random
 import sys
 import time
 from functools import wraps
@@ -18,6 +21,7 @@ import yaml
 here = os.path.dirname(sys.argv[0]) if __name__ == '__main__' else __file__
 
 
+PRIVATE_IP = "{{ grains['ipv4'][0] }}"
 #DRY warning: ../top.sls
 FALLBACK_PROXY_PREFIX = "fp-"
 MAP_FILE = '/home/lantern/map'
@@ -41,6 +45,14 @@ def log_exceptions(f):
 
 @log_exceptions
 def check_q():
+    now = time.time()
+    with LockFile(MAP_FILE):
+        if time.time() - now > 60:
+            logging.info("Took too long to acquire lock; letting go...")
+            return
+        actually_check_q()
+
+def actually_check_q():
     logging.info("Checking queue...")
     sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
     ctrl_req_q = sqs.get_queue("%s_request" % CONTROLLER)
@@ -56,29 +68,36 @@ def check_q():
     logging.info("Got spawn request for '%s'"
                  % clip_email(email))
     instance_name = "%s%x" % (FALLBACK_PROXY_PREFIX, hash(email))
-    while get_ip(instance_name):
-        #XXX: kill it?
-        os.system("salt-cloud -d %s" % instance_name)
-        time.sleep(10)
+    if get_ip(instance_name):
+        logging.info("Instance %s already exists; killing..."
+                     % instance_name)
+        os.system("sudo salt-cloud -y -d %s >> /home/lantern/cloudmaster.log 2>&1" % instance_name)
+        time.sleep(5)
+    if get_ip(instance_name):
+        logging.warning("Couldn't kill instance! Giving up.")
+        return
     logging.info("Spawning %s..." % instance_name)
-    with LockFile(MAP_FILE):
-        if os.path.exists(MAP_FILE):
-            d = yaml.load(file(MAP_FILE))
-        else:
-            d = {'aws': []}
-        for entry in d['aws'][:]:
-            if instance_name in entry:
-                d['aws'].remove(entry)
-        d['aws'].append({instance_name:
-                         {'grains': {'username': email,
-                                     'refresh_token': refresh_token,
-                                     'aws_id': AWS_ID,
-                                     'aws_key': AWS_KEY,
-                                     'controller': CONTROLLER,
-                                     'proxy_port': random.randint(1024,
-                                                                  61024)}}})
-        yaml.dump(d, file(MAP_FILE, 'w'))
-        os.system("salt-cloud -m %s" % MAP_FILE)
+    if os.path.exists(MAP_FILE):
+        d = yaml.load(file(MAP_FILE))
+    else:
+        d = {'aws': []}
+    for entry in d['aws'][:]:
+        if instance_name in entry:
+            d['aws'].remove(entry)
+    d['aws'].append({instance_name:
+                     {'minion': {'master': PRIVATE_IP,
+                                 'userid': email,
+                                 'refresh_token': refresh_token,
+                                 'aws_id': AWS_ID,
+                                 'aws_key': AWS_KEY,
+                                 'controller': CONTROLLER,
+                                 'public_ip': get_ip(instance_name),
+                                 'proxy_port': random.randint(1024, 61024),
+                                 'sqs_msg': b64encode(dumps(msg))}}})
+    yaml.dump(d, file(MAP_FILE, 'w'))
+    os.system("sudo salt-cloud -y -m %s >> /home/lantern/cloudmaster.log 2>&1"
+              % MAP_FILE)
+    os.system("sudo salt '%s' state.highstate >> /home/lantern/cloudmaster.log 2>&1" % instance_name)
 
 def get_ip(instance_name):
     reservations = connect().get_all_instances(
