@@ -53,7 +53,7 @@ def upload_wrappers():
         os.unlink(filename)
     file('/home/lantern/uploaded_wrappers', 'w').write(
             # DRY warning: lantern-controller needs to understand this format.
-            "%s/%s|%s" % (BUCKET, folder, newest_version))
+            "%s/%s,%s" % (BUCKET, folder, newest_version))
 
 def get_random_folder_name(bucket):
     while True:
