@@ -3,6 +3,7 @@
 from base64 import b64decode
 from cPickle import loads
 import logging
+from functools import wraps
 
 import boto.sqs
 from boto.sqs.jsonmessage import JSONMessage
@@ -19,6 +20,17 @@ aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
 
 
+def log_exceptions(f):
+    @wraps(f)
+    def deco(*args, **kw):
+        try:
+            return f(*args, **kw)
+        except Exception, e:
+            logging.exception(e)
+            raise
+    return deco
+
+@log_exceptions
 def report_completion():
     installer_location = file('/home/lantern/uploaded_wrappers').read()
     sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
@@ -42,6 +54,6 @@ def clip_email(email):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
-                        #filename=os.path.join(here, 'report_completion.log'),
+                        filename='/home/lantern/report_completion.log',
                         format='%(levelname)-8s %(message)s')
     report_completion()

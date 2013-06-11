@@ -30,9 +30,9 @@ def trigger_launch():
     print "Awaiting response..."
     while True:
         msg = notify_q.read()
-        notify_q.delete_message(msg)
         if msg is not None:
             print "Got message: %r" % msg.get_body()
+            notify_q.delete_message(msg)
             return
         sys.stdout.write(".")
         sys.stdout.flush()

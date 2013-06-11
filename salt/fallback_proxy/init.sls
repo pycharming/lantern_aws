@@ -1,5 +1,10 @@
+{% set dirs=['/home/lantern/repo',
+             '/home/lantern/repo/install',
+             '/home/lantern/repo/install/common'] %}
+
 {% set txtfiles=[
     ('/home/lantern/', 'getlanternversion.py', 700),
+    ('/home/lantern/', 'report_completion.py', 700),
     ('/home/lantern/', 'user_credentials.json', 400),
     ('/home/lantern/', 'client_secrets.json', 400),
     ('/home/lantern/secure/', 'env-vars.txt', 400),
@@ -24,6 +29,7 @@
 
 include:
     - install4j
+    - boto
 
 openjdk-6-jre:
     pkg.installed
@@ -34,9 +40,7 @@ openjdk-6-jre:
         - group: lantern
         - mode: 500
 
-{% for dir in ['/home/lantern/repo',
-               '/home/lantern/repo/install',
-               '/home/lantern/repo/install/common'] %}
+{% for dir in dirs %}
 {{ dir }}:
     file.directory:
         - user: lantern
@@ -76,21 +80,33 @@ install-lantern:
         - group: root
         - cwd: /root
 
-build-wrappers:
+fallback-proxy-dirs-and-files:
     cmd.run:
-        - name: "source ../secure/env-vars.txt && /home/lantern/repo/buildInstallerWrappers.bash $(../getlanternversion.py) && touch /home/lantern/wrappers_built"
-        - user: lantern
-        - cwd: /home/lantern/repo
-        - unless: "[ -e /home/lantern/wrappers_built ]"
+        - name: ":"
         - require:
-            - cmd: install4j
-            - pkg: openjdk-6-jre
+            - file: /home/lantern/secure
+            - file: /etc/init.d/lantern
+            - file: /etc/ufw/applications.d/lantern
+            {% for dir in dirs %}
+            - file: {{ dir }}
+            {% endfor %}
             {% for dir,filename,mode in txtfiles %}
             - file: {{ dir+filename }}
             {% endfor %}
             {% for dir,filename,mode in binaries %}
             - file: {{ dir+filename }}
             {% endfor %}
+
+build-wrappers:
+    cmd.script:
+        - source: salt://fallback_proxy/build-wrappers.bash
+        - user: lantern
+        - cwd: /home/lantern/repo
+        - unless: "[ -e /home/lantern/wrappers_built ]"
+        - require:
+            - cmd: fallback-proxy-dirs-and-files
+            - cmd: install4j
+            - pkg: openjdk-6-jre
             # We need lantern in order to know which version to install.
             - cmd: install-lantern
 
@@ -114,7 +130,7 @@ open-proxy-port:
     cmd.run:
         - name: "ufw allow lantern_proxy"
         - require:
-            - file: /etc/ufw/applications.d/lantern
+            - cmd: fallback-proxy-dirs-and-files
 
 upload-wrappers:
     cmd.script:
@@ -132,16 +148,13 @@ lantern-service:
         - name: lantern
         - enable: yes
         - require:
-            - file: /etc/init.d/lantern
             - cmd: open-proxy-port
             - cmd: upload-wrappers
-            {% for dir,filename,mode in txtfiles %}
-            - file: {{ dir+filename }}
-            {% endfor %}
+            - cmd: fallback-proxy-dirs-and-files
 
 report-completion:
     cmd.script:
-        - source: salt://lantern_aws/report_completion.py
+        - source: salt://fallback_proxy/report_completion.py
         - template: jinja
         - unless: "[ -e /home/lantern/reported_completion ]"
         - user: lantern
@@ -150,3 +163,7 @@ report-completion:
         - require:
             - service: lantern-service
             - cmd: upload-wrappers
+            # I need boto updated so I have the same version as the cloudmaster
+            # and thus I can unpickle and delete the SQS message that
+            # triggered the launching of this instance.
+            - pip: boto==2.9.5

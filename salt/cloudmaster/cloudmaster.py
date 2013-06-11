@@ -86,14 +86,17 @@ def actually_check_q():
             d['aws'].remove(entry)
     d['aws'].append({instance_name:
                      {'minion': {'master': PRIVATE_IP,
+                                 #'log_level': 'debug',
                                  'userid': email,
                                  'refresh_token': refresh_token,
+                                 'aws_region': AWS_REGION,
                                  'aws_id': AWS_ID,
                                  'aws_key': AWS_KEY,
                                  'controller': CONTROLLER,
                                  'public_ip': get_ip(instance_name),
                                  'proxy_port': random.randint(1024, 61024),
-                                 'sqs_msg': b64encode(dumps(msg))}}})
+                                 'sqs_msg': b64encode(dumps(msg)),
+                                 'shell': '/bin/bash'}}})
     yaml.dump(d, file(MAP_FILE, 'w'))
     os.system("sudo salt-cloud -y -m %s >> /home/lantern/cloudmaster.log 2>&1"
               % MAP_FILE)

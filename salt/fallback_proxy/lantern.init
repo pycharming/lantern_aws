@@ -18,7 +18,7 @@ export PATH=/bin:/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 DESC="Lantern censorship circunvention tool"
 NAME=lantern
 LANTERN_DIR=/home/lantern/
-DAEMON=lantern
+DAEMON=/opt/lantern/lantern
 DAEMON_ARGS="--disable-ui --force-give --oauth2-client-secrets-file $LANTERN_DIR/client_secrets.json --oauth2-user-credentials-file $LANTERN_DIR/user_credentials.json --server-port {{ grains['proxy_port'] }} --as-fallback-proxy --keystore $LANTERN_DIR/littleproxy_keystore.jks"
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
@@ -48,7 +48,7 @@ do_start()
 	#   2 if daemon could not be started
     start-stop-daemon --start --quiet --pidfile $PIDFILE --startas $DAEMON --test > /dev/null \
 		|| return 1
-	start-stop-daemon --start --quiet --background --make-pidfile --pidfile $PIDFILE --exec $DAEMON --chuid lantern:lantern --chdir $LANTERN_REPO_DIR --umask 0 -- \
+	start-stop-daemon --start --quiet --background --make-pidfile --pidfile $PIDFILE --exec $DAEMON --chuid lantern:lantern --chdir $LANTERN_DIR --umask 0 -- \
 		$DAEMON_ARGS \
 		|| return 2
 	# Add code here, if necessary, that waits for the process to be ready
