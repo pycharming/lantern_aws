@@ -46,6 +46,10 @@ def upload_wrappers():
         key = Key(bucket)
         key.name = "%s/%s" % (folder, filename)
         key.storage_class = 'REDUCED_REDUNDANCY'
+        # By default, .sh files will be given a text/x-sh MIME type, which
+        # will cause them to be displayed in the browser, not downloaded.
+        if filename.endswith('.sh'):
+            key.set_metadata('Content-Type', 'application/x-sh')
         logging.info("Uploading to %s" % key.name)
         key.set_contents_from_filename(filename)
         key.set_acl('public-read')
