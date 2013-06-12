@@ -4,4 +4,5 @@ tmp
 *.pyc
 example/*.txt
 example/*.p12
+.log
 

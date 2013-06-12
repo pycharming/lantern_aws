@@ -3,7 +3,7 @@ some-pip:
         - name: "apt-get install python-pip -y"
         - unless: "which pip"
 
-pip:
+the-right-pip:
     cmd.run:
         - name: "pip install --upgrade pip && hash -r"
         - order: 1
