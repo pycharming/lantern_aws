@@ -1,3 +1,6 @@
+include:
+    - salt_cloud
+
 /home/lantern/cloudmaster.py:
     file.managed:
         - source: salt://cloudmaster/cloudmaster.py
@@ -8,7 +11,8 @@
     cron.present:
         - user: lantern
         - require:
-            - pip: lockfile
+            - pip: lockfile==0.9.1
+            - pip: salt-cloud==0.8.8
 
-lockfile:
+lockfile==0.9.1:
     pip.installed

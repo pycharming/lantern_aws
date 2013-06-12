@@ -24,7 +24,7 @@
 python-libcloud:
     pkg.installed
 
-salt-cloud:
+salt-cloud==0.8.8:
     pip.installed:
         - require:
               - pkg: python-libcloud
