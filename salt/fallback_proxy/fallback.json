@@ -1,2 +1,2 @@
-{"ip" : "{{ grains['public_ip'] }}",
+{"ip" : "{{ grains['ec2_public-ipv4'] }}",
  "port" : "{{ grains['proxy_port'] }}"}

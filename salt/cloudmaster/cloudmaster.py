@@ -93,7 +93,6 @@ def actually_check_q():
                                  'aws_id': AWS_ID,
                                  'aws_key': AWS_KEY,
                                  'controller': CONTROLLER,
-                                 'public_ip': get_ip(instance_name),
                                  'proxy_port': random.randint(1024, 61024),
                                  'sqs_msg': b64encode(dumps(msg)),
                                  'shell': '/bin/bash'}}})
