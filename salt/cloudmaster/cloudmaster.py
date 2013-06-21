@@ -85,8 +85,8 @@ def actually_check_q():
         if instance_name in entry:
             d['aws'].remove(entry)
     d['aws'].append({instance_name:
-                     {'minion': {'master': PRIVATE_IP,
-                                 #'log_level': 'debug',
+                     {'minion': {'master': PRIVATE_IP},
+                      'grains': {#'log_level': 'debug',
                                  'userid': email,
                                  'refresh_token': refresh_token,
                                  'aws_region': AWS_REGION,
