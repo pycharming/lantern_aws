@@ -25,6 +25,7 @@
     ('/home/lantern/repo/install/common/', '16on.png', 400),
     ('/home/lantern/repo/install/common/', '32off.png', 400),
     ('/home/lantern/repo/install/common/', '32on.png', 400),
+    ('/home/lantern/repo/install/wrapper/', 'InstallDownloader.class', 400),
     ('/home/lantern/repo/install/common/', '64on.png', 400)] %}
 
 include:
