@@ -16,7 +16,7 @@ def trigger_launch():
     aws_id, aws_key = util.read_aws_credential()
     aws_creds = {'aws_access_key_id': aws_id,
                  'aws_secret_access_key': aws_key}
-    sqs = boto.sqs.connect_to_region(config.region)
+    sqs = boto.sqs.connect_to_region(config.aws_region, **aws_creds)
     req_q = sqs.get_queue("%s_request" % config.controller)
     notify_q = sqs.get_queue("notify_%s" % config.controller)
     for q in [req_q, notify_q]:
