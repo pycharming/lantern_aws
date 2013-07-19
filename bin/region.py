@@ -17,18 +17,18 @@ amis = {"ap-northeast-1": "ami-60c77761",
         "us-west-2": "ami-20800c10"}
 
 def get_ami():
-    return amis[config.region]
+    return amis[config.aws_region]
 
 def get_key_path():
     return os.path.join(here.secrets_path,
                         'lantern_aws',
-                        config.region + ".pem")
+                        config.aws_region + ".pem")
 
 @util.memoized
 def connect():
     aws_id, aws_key = util.read_aws_credential()
-    print "Connecting to region %s..." % config.region
-    return boto.ec2.connect_to_region(config.region,
+    print "Connecting to region %s..." % config.aws_region
+    return boto.ec2.connect_to_region(config.aws_region,
                                       aws_access_key_id=aws_id,
                                       aws_secret_access_key=aws_key)
 

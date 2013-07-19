@@ -85,7 +85,7 @@ def upload_cloudmaster_minion_config():
                           + r""" ) > /etc/salt/minion""")
                          % (aws_id,
                             aws_key,
-                            config.region,
+                            config.aws_region,
                             region.get_ami(),
                             config.controller))
 
