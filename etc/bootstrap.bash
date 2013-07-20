@@ -24,20 +24,24 @@ hostname -F /etc/hostname
 # 'salt' alias is so the minion will find the local master.
 sed -i "s/^127.0.0.1.*$/127.0.0.1 $HOSTNAME localhost salt/" /etc/hosts
 
-apt-get install python-software-properties -y > >(tee -a $LOG) 2>&1
+apt-get install python-software-properties python-crypto python-zmq msgpack-python python-markupsafe python-jinja2 -y > >(tee -a $LOG) 2>&1
 add-apt-repository ppa:saltstack/salt -y > >(tee -a $LOG) 2>&1
 apt-get update -y > >(tee -a $LOG) 2>&1
-apt-get upgrade -y > >(tee -a $LOG) 2>&1
+#apt-get upgrade -y > >(tee -a $LOG) 2>&1
 apt-get autoremove -y > >(tee -a $LOG) 2>&1
-apt-get install salt-master -y > >(tee -a $LOG) 2>&1
+#apt-get install salt-master=0.15.3 -y > >(tee -a $LOG) 2>&1
+apt-get install python-pip -y > >(tee -a $LOG) 2>&1
+pip install --upgrade  pip > >(tee -a $LOG) 2>&1
+hash -r
 
 # For some reason salt-minion's installer will ask us about overwritting
 # /etc/salt/minion, despite our efforts to make it clear we don't want to
 # interact with it.
 mv /etc/salt/minion /etc/salt/minion.bak
-apt-get install salt-minion -y > >(tee -a $LOG) 2>&1
+pip install salt==0.15.3 > >(tee -a $LOG) 2>&1
 mv /etc/salt/minion.bak /etc/salt/minion
-service salt-minion restart
+sudo salt-master -d
+sudo salt-minion -d
 
 while [ ! -e /etc/salt/pki/master/minions_pre/$HOSTNAME ]
 do

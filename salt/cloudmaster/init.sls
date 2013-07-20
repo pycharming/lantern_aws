@@ -12,7 +12,7 @@ include:
         - user: lantern
         - require:
             - pip: lockfile==0.9.1
-            - cmd: salt-cloud
+            - pip: salt-cloud==0.8.9
 
 lockfile==0.9.1:
     pip.installed
