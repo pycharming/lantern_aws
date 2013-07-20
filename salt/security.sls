@@ -11,8 +11,9 @@ ufw:
         - require:
             - pkg: ufw
 
-# Don't lock ourselves out of the box.
-'ufw allow openssh':
+# Enable ufw (it seems the salt state won't do this by itself), but don't lock
+# ourselves out of the box.
+'ufw allow openssh && echo y | ufw enable':
     cmd.run:
         - order: 2
         - require:
