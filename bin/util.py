@@ -63,13 +63,9 @@ def set_secret_permissions():
     We can't even create an instance unless we restrict the permissions of the
     corresponding .pem.
     """
-    for filename in os.listdir(here.secrets_path):
-        path = os.path.join(here.secrets_path, filename)
-        if os.path.isdir(path):
-            permissions = stat.S_IEXEC | stat.S_IREAD
-        else:
-            permissions = stat.S_IREAD
-        os.chmod(path, permissions)
+    for path, dirnames, filenames in os.walk(here.secrets_path):
+        for name in filenames:
+            os.chmod(os.path.join(path, name), stat.S_IREAD)
 
 def ssh_cloudmaster(cmd=None, out=None):
     import region
