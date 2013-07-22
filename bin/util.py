@@ -5,6 +5,8 @@ import sys
 import time
 from functools import wraps
 
+import yaml
+
 import config
 import here
 
@@ -55,6 +57,12 @@ def read_aws_credential():
             key = m.groups()[0]
     assert id_ and key
     return id_, key
+
+def read_do_credential():
+    d = yaml.load(file(os.path.join(here.secrets_path,
+                                    'lantern_aws',
+                                    'do_credential')))
+    return d['client_id'], d['api_key']
 
 def set_secret_permissions():
     """Secret files should be only readable by user, but git won't remember

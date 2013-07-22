@@ -7,6 +7,13 @@
         - group: root
         - mode: 600
 
+/etc/salt/cloudmaster.id_rsa:
+    file.managed:
+        - source: salt://salt_cloud/cloudmaster.id_rsa
+        - user: root
+        - group: root
+        - mode: 600
+
 /etc/salt/cloud:
     file.managed:
         - source: salt://salt_cloud/cloud

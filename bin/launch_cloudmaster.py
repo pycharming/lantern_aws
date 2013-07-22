@@ -75,18 +75,25 @@ def upload_cloudmaster_minion_config():
     address = util.get_address()
     init_dir("/etc/salt")
     aws_id, aws_key = util.read_aws_credential()
+    do_id, do_key = util.read_do_credential()
     util.ssh_cloudmaster((r"""(echo "master: salt" """
                           + r""" && echo "grains:" """
                           + r""" && echo "    aws_id: %s" """
                           + r""" && echo "    aws_key: \"%s\"" """
                           + r""" && echo "    aws_region: %s " """
                           + r""" && echo "    aws_ami: %s " """
+                          + r""" && echo "    do_id: %s " """
+                          + r""" && echo "    do_key: %s " """
+                          + r""" && echo "    do_region: %s " """
                           + r""" && echo "    controller: %s " """
                           + r""" ) > /etc/salt/minion""")
                          % (aws_id,
                             aws_key,
                             config.aws_region,
                             region.get_ami(),
+                            do_id,
+                            do_key,
+                            config.do_region,
                             config.controller))
 
 

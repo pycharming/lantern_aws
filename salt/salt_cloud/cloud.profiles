@@ -2,3 +2,8 @@ aws:
     provider: aws
     image: {{ grains['aws_ami'] }}
     size: Micro Instance
+
+do:
+    provider: do
+    image: "Ubuntu 12.04 x64"
+    size: 1GB

@@ -43,3 +43,12 @@ providers:
 
     provider: aws
     rename_on_destroy: True
+
+  do:
+    provider: digital_ocean
+    client_key: {{ grains['do_id'] }}
+    api_key: {{ grains['do_key'] }}
+    location: {{ grains['do_region'] }}
+    ssh_key_file: /etc/salt/cloudmaster.id_rsa
+    ssh_key_name: cloudmaster
+
