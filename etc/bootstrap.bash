@@ -24,10 +24,9 @@ hostname -F /etc/hostname
 # 'salt' alias is so the minion will find the local master.
 sed -i "s/^127.0.0.1.*$/127.0.0.1 $HOSTNAME localhost salt/" /etc/hosts
 
-apt-get install python-software-properties python-crypto python-zmq msgpack-python python-markupsafe python-jinja2 -y > >(tee -a $LOG) 2>&1
-add-apt-repository ppa:saltstack/salt -y > >(tee -a $LOG) 2>&1
 apt-get update -y > >(tee -a $LOG) 2>&1
 #apt-get upgrade -y > >(tee -a $LOG) 2>&1
+apt-get install python python-support python-pkg-resources python-crypto python-jinja2 python-m2crypto python-yaml python-zmq dctrl-tools msgpack-python python-markupsafe -y > >(tee -a $LOG) 2>&1
 apt-get autoremove -y > >(tee -a $LOG) 2>&1
 #apt-get install salt-master=0.15.3 -y > >(tee -a $LOG) 2>&1
 apt-get install python-pip -y > >(tee -a $LOG) 2>&1
