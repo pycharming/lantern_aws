@@ -98,7 +98,6 @@ def actually_check_q():
     yaml.dump(d, file(MAP_FILE, 'w'))
     os.system("sudo salt-cloud -y -m %s >> /home/lantern/cloudmaster.log 2>&1"
               % MAP_FILE)
-    os.system("sudo salt '%s' state.highstate >> /home/lantern/cloudmaster.log 2>&1" % instance_name)
 
 def get_ip(instance_name):
     reservations = connect().get_all_instances(

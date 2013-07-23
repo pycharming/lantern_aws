@@ -26,7 +26,7 @@ sed -i "s/^127.0.0.1.*$/127.0.0.1 $HOSTNAME localhost salt/" /etc/hosts
 
 apt-get update -y > >(tee -a $LOG) 2>&1
 #apt-get upgrade -y > >(tee -a $LOG) 2>&1
-apt-get install python python-support python-pkg-resources python-crypto python-jinja2 python-m2crypto python-yaml python-zmq dctrl-tools msgpack-python python-markupsafe python-pip -y -o DPkg::Options::=--force-confold > >(tee -a $LOG) 2>&1
+apt-get install python python-support python-pkg-resources python-crypto python-jinja2 python-m2crypto python-yaml python-zmq dctrl-tools msgpack-python python-markupsafe python-pip debconf-utils -y -o DPkg::Options::=--force-confold > >(tee -a $LOG) 2>&1
 apt-get autoremove -y > >(tee -a $LOG) 2>&1
 pip install --upgrade pip > >(tee -a $LOG) 2>&1
 hash -r

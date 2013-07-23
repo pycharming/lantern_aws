@@ -1,4 +1,4 @@
-#XXX: these config files are actually specific to the use that
+#XXX: some of these config files are actually specific to the use that
 #cloudmaster makes of salt-cloud.  Move there.
 /etc/salt/lantern.pem:
     file.managed:
@@ -38,3 +38,15 @@ salt-cloud==0.8.9:
     pip.installed:
         - require:
               - pip: apache-libcloud
+
+bootstrap-script:
+    file.managed:
+        - name: /usr/local/lib/python2.7/dist-packages/saltcloud/deploy/bootstrap-salt.sh
+        - source: salt://salt_cloud/bootstrap.bash
+        # This is how the pip installation of salt-cloud has them.
+        - mode: 644
+        - user: root
+        - group: staff
+        - require:
+            # To make sure we override the default version.
+            - pip: salt-cloud==0.8.9
