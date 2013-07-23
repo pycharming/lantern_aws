@@ -26,21 +26,14 @@ sed -i "s/^127.0.0.1.*$/127.0.0.1 $HOSTNAME localhost salt/" /etc/hosts
 
 apt-get update -y > >(tee -a $LOG) 2>&1
 #apt-get upgrade -y > >(tee -a $LOG) 2>&1
-apt-get install python python-support python-pkg-resources python-crypto python-jinja2 python-m2crypto python-yaml python-zmq dctrl-tools msgpack-python python-markupsafe -y > >(tee -a $LOG) 2>&1
+apt-get install python python-support python-pkg-resources python-crypto python-jinja2 python-m2crypto python-yaml python-zmq dctrl-tools msgpack-python python-markupsafe python-pip -y -o DPkg::Options::=--force-confold > >(tee -a $LOG) 2>&1
 apt-get autoremove -y > >(tee -a $LOG) 2>&1
-#apt-get install salt-master=0.15.3 -y > >(tee -a $LOG) 2>&1
-apt-get install python-pip -y > >(tee -a $LOG) 2>&1
-pip install --upgrade  pip > >(tee -a $LOG) 2>&1
+pip install --upgrade pip > >(tee -a $LOG) 2>&1
 hash -r
 
-# For some reason salt-minion's installer will ask us about overwritting
-# /etc/salt/minion, despite our efforts to make it clear we don't want to
-# interact with it.
-mv /etc/salt/minion /etc/salt/minion.bak
 pip install salt==0.15.3 > >(tee -a $LOG) 2>&1
-mv /etc/salt/minion.bak /etc/salt/minion
-sudo salt-master -d
-sudo salt-minion -d
+salt-master -d &
+salt-minion -d &
 
 while [ ! -e /etc/salt/pki/master/minions_pre/$HOSTNAME ]
 do

@@ -1,5 +1,6 @@
 base:
     '*':
+        - salt_minion
         - base_prereqs
         - pip
         - security
@@ -7,6 +8,7 @@ base:
         - unattended_upgrades
         - boto
     'cloudmaster':
+        - salt_master
         - salt_cloud
         - cloudmaster
     #DRY warning: cloudmaster/cloudmaster.py
