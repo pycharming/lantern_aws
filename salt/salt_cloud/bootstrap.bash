@@ -27,7 +27,7 @@ apt-get autoremove -y
 pip install --upgrade pip
 hash -r
 
-pip install salt==0.15.3
+pip install salt=={{ vm['grains']['saltversion'] }}
 
 mkdir -p /etc/salt/pki/minion
 echo '{{ vm['priv_key'] }}' > /etc/salt/pki/minion/minion.pem

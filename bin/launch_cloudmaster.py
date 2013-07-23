@@ -61,7 +61,9 @@ def launch_cloudmaster():
     os.system("scp -i %s %s ubuntu@%s:"
               % (key_path, here.bootstrap_path, ins.ip_address))
     print "Bootstrapping..."
-    util.ssh_cloudmaster("sudo ./bootstrap.bash", ".log")
+    util.ssh_cloudmaster("sudo SALT_VERSION=%s ./bootstrap.bash"
+                            % config.salt_version,
+                         ".log")
     print
     print "Done launching."
     update.print_errors()

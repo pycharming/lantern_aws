@@ -31,7 +31,7 @@ apt-get autoremove -y > >(tee -a $LOG) 2>&1
 pip install --upgrade pip > >(tee -a $LOG) 2>&1
 hash -r
 
-pip install salt==0.15.3 > >(tee -a $LOG) 2>&1
+pip install salt==$SALT_VERSION > >(tee -a $LOG) 2>&1
 salt-master -d &
 salt-minion -d &
 

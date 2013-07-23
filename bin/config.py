@@ -1,4 +1,5 @@
 # Values for production deployment.
+salt_version = '0.15.3'
 aws_region = 'ap-southeast-1'
 do_region = 'Amsterdam 1'
 controller = 'lanternctrl'

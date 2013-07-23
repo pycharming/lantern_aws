@@ -29,6 +29,7 @@ AWS_REGION = "{{ grains['aws_region'] }}"
 AWS_ID = "{{ grains['aws_id'] }}"
 AWS_KEY = "{{ grains['aws_key'] }}"
 CONTROLLER = "{{ grains['controller'] }}"
+SALT_VERSION = "{{ grains['saltversion'] }}"
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
 
@@ -86,7 +87,8 @@ def actually_check_q():
             d['aws'].remove(entry)
     d['aws'].append({instance_name:
                      {'minion': {'master': PRIVATE_IP},
-                      'grains': {'userid': email,
+                      'grains': {'saltversion': SALT_VERSION,
+                                 'userid': email,
                                  'refresh_token': refresh_token,
                                  'aws_region': AWS_REGION,
                                  'aws_id': AWS_ID,
