@@ -21,7 +21,7 @@ import yaml
 here = os.path.dirname(sys.argv[0]) if __name__ == '__main__' else __file__
 
 
-PRIVATE_IP = "{{ grains['ipv4'][0] }}"
+PRIVATE_IP = "{{ grains['ec2_local-ipv4'] }}"
 #DRY warning: ../top.sls
 FALLBACK_PROXY_PREFIX = "fp-"
 MAP_FILE = '/home/lantern/map'
