@@ -30,10 +30,11 @@
         - group: root
         - mode: 600
 
-python-libcloud:
-    pkg.installed
+apache-libcloud:
+    pip.installed:
+        - upgrade: yes
 
 salt-cloud==0.8.9:
     pip.installed:
         - require:
-              - pkg: python-libcloud
+              - pip: apache-libcloud
