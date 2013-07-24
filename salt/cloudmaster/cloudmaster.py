@@ -29,7 +29,7 @@ AWS_REGION = "{{ grains['aws_region'] }}"
 AWS_ID = "{{ grains['aws_id'] }}"
 AWS_KEY = "{{ grains['aws_key'] }}"
 CONTROLLER = "{{ grains['controller'] }}"
-SALT_VERSION = "{{ grains['saltversion'] }}"
+SALT_VERSION = "{{ pillar['salt_version'] }}"
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
 

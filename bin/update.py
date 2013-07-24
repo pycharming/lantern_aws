@@ -10,7 +10,11 @@ import util
 
 def update():
     util.set_secret_permissions()
-    print "Pushing salt config..."
+    print "Uploading minion config..."
+    upload_cloudmaster_minion_config()
+    print "Uploading pillars..."
+    upload_pillars()
+    print "Uploading states..."
     rsync_salt()
 
 def apply_update():
@@ -61,6 +65,44 @@ def rsync(src, dst):
         print "Rsynced successfuly."
     return error
 
+def upload_cloudmaster_minion_config():
+    key_path = region.get_key_path()
+    address = util.get_address()
+    aws_id, aws_key = util.read_aws_credential()
+    do_id, do_key = util.read_do_credential()
+    util.ssh_cloudmaster((r"""(echo "master: salt" """
+                          + r""" && echo "grains:" """
+                          + r""" && echo "    aws_id: %s" """
+                          + r""" && echo "    aws_key: \"%s\"" """
+                          + r""" && echo "    aws_region: %s " """
+                          + r""" && echo "    aws_ami: %s " """
+                          + r""" && echo "    do_id: %s " """
+                          + r""" && echo "    do_key: %s " """
+                          + r""" && echo "    do_region: %s " """
+                          + r""" && echo "    controller: %s " """
+                          + r""" && echo "    saltversion: %s " """
+                          + r""" ) > /home/ubuntu/minion""")
+                         % (aws_id,
+                            aws_key,
+                            config.aws_region,
+                            region.get_ami(),
+                            do_id,
+                            do_key,
+                            config.do_region,
+                            config.controller,
+                            config.salt_version))
+    util.ssh_cloudmaster('sudo mv /home/ubuntu/minion /etc/salt/minion'
+                         ' && sudo chown root:root /etc/salt/minion'
+                         ' && sudo chmod 600 /etc/salt/minion')
+
+def upload_pillars():
+    util.ssh_cloudmaster((
+            'echo "salt_version: %s" > salt.sls '
+            r' && echo "base: {\"*\": [salt]}" > top.sls '
+            ' && sudo mv salt.sls top.sls /srv/pillar/ '
+            ' && sudo chown -R root:root /srv/pillar '
+            ' && sudo chmod -R 600 /srv/pillar '
+            ) % config.salt_version)
 
 if __name__ == '__main__':
     update()
