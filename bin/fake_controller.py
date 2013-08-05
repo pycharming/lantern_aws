@@ -25,8 +25,8 @@ def trigger_launch():
     msg.set_body(
         #XXX: put details of some test user in ../secret/lantern_aws.
         {'launch-invsrv-as': 'aranhoide@gmail.com',
-         'launch-refrtok':
-             file('../../secret/aranhoide.refresh_token').read().strip()})
+         'launch-refrtok': '<tokenless-donor>'})
+             #file('../../secret/aranhoide.refresh_token').read().strip()})
     print "Sending request..."
     req_q.write(msg)
     print "Awaiting response..."

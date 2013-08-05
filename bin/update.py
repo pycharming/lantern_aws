@@ -96,13 +96,24 @@ def upload_cloudmaster_minion_config():
                          ' && sudo chmod 600 /etc/salt/minion')
 
 def upload_pillars():
+    refr_tok = file(os.path.join(here.secrets_path,
+                                 'lantern_aws',
+                                 'lanterndonors.refresh_token')).read().strip()
     util.ssh_cloudmaster((
-            'echo "salt_version: %s" > salt.sls '
-            r' && echo "base: {\"*\": [salt]}" > top.sls '
-            ' && sudo mv salt.sls top.sls /srv/pillar/ '
+            'echo "lanterndonors_refrtok: %s" > cloudmaster.sls '
+            ' && echo "salt_version: %s" > salt.sls '
+            # Hack so every instance will read specific pillars from a file named
+            # with the <instance_name>.sls scheme.
+            r' && echo "include: [{{ grains[\"id\"] }}]" > fallback_proxy.sls '
+            r' && echo "base: {\"*\": [salt], '
+                             r'\"cloudmaster\": [cloudmaster], '
+                             r'\"fp-*\": [fallback_proxy]}" '
+                ' > top.sls '
+            ' && sudo mv salt.sls top.sls cloudmaster.sls fallback_proxy.sls '
+                ' /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
-            ) % config.salt_version)
+            ) % (refr_tok, config.salt_version))
 
 if __name__ == '__main__':
     update()

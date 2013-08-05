@@ -88,8 +88,6 @@ def actually_check_q():
     d['aws'].append({instance_name:
                      {'minion': {'master': PRIVATE_IP},
                       'grains': {'saltversion': SALT_VERSION,
-                                 'userid': email,
-                                 'refresh_token': refresh_token,
                                  'aws_region': AWS_REGION,
                                  'aws_id': AWS_ID,
                                  'aws_key': AWS_KEY,
@@ -98,6 +96,30 @@ def actually_check_q():
                                  'sqs_msg': b64encode(dumps(msg)),
                                  'shell': '/bin/bash'}}})
     yaml.dump(d, file(MAP_FILE, 'w'))
+    # DRY warning: ProcessDonation at lantern-controller.
+    if refresh_token == '<tokenless-donor>':
+        runas_email = 'lanterndonors@gmail.com'
+        refresh_token = '{{ pillar["lanterndonors_refrtok"] }}'
+        # DRY warning: InvitedServerLauncher.py at lantern-controller.
+        report_status = 'awaiting_token'
+    else:
+        runas_email = email
+        # DRY warning: InvitedServerLauncher.py at lantern-controller.
+        report_status = 'setup_complete'
+    yaml.dump({
+               # DRY warning:
+               # lantern_aws/salt/fallback_proxy/report_completion.py
+               'report_user': email,
+               'report_status': report_status,
+               # DRY warning:
+               # lantern_aws/salt/fallback_proxy/user_credentials.json
+               'run_as_user': runas_email,
+               'refresh_token': refresh_token},
+              file(('/home/lantern/%s.sls' % instance_name), 'w'))
+    #XXX: ugly, but we're already in sin running all this as a user with
+    # passwordless sudo.  TODO: move this to a command with setuid or give
+    # this user write access to /srv/pillar and to salt(-cloud) commands.
+    os.system("sudo mv /home/lantern/%s.sls /srv/pillar/" % instance_name)
     os.system("sudo salt-cloud -y -m %s >> /home/lantern/cloudmaster.log 2>&1"
               % MAP_FILE)
 
