@@ -64,11 +64,15 @@ def actually_check_q():
         return
     d = msg.get_body()
     # DRY warning: InvitedServerLauncher at lantern-controller.
-    email = d['launch-invsrv-as']
-    refresh_token = d['launch-refrtok']
-    logging.info("Got spawn request for '%s'"
-                 % clip_email(email))
-    instance_name = "%s%x" % (FALLBACK_PROXY_PREFIX, hash(email))
+    if 'launch-invsrv-as' in d:
+        launch_proxy(d['launch-invsrv-as'], d['launch-refrtok'], msg)
+    else:
+        assert 'feed-token-for' in d
+        feed_token(d['feed-token-for'], d['feed-refrtok'], msg)
+
+def launch_proxy(email, refresh_token, msg):
+    logging.info("Got spawn request for '%s'" % clip_email(email))
+    instance_name = get_instance_name(email)
     if get_ip(instance_name):
         logging.info("Instance %s already exists; killing..."
                      % instance_name)
@@ -93,7 +97,6 @@ def actually_check_q():
                                  'aws_key': AWS_KEY,
                                  'controller': CONTROLLER,
                                  'proxy_port': random.randint(1024, 61024),
-                                 'sqs_msg': b64encode(dumps(msg)),
                                  'shell': '/bin/bash'}}})
     yaml.dump(d, file(MAP_FILE, 'w'))
     # DRY warning: ProcessDonation at lantern-controller.
@@ -106,22 +109,45 @@ def actually_check_q():
         runas_email = email
         # DRY warning: InvitedServerLauncher.py at lantern-controller.
         report_status = 'setup_complete'
+    set_pillar(runas_email, refresh_token, email, report_status, msg)
+    #XXX: ugly, but we're already in sin running all this as a user with
+    # passwordless sudo.  TODO: move this to a command with setuid or give
+    # this user write access to /srv/pillar and to salt(-cloud) commands.
+    os.system("sudo salt-cloud -y -m %s >> /home/lantern/cloudmaster.log 2>&1"
+              % MAP_FILE)
+
+def feed_token(email, token, msg):
+    logging.info("Got request to feed token to '%s'" % clip_email(email))
+    set_pillar(email, token, email, 'setup_complete', msg)
+    instance = get_instance_name(email)
+
+    #XXX: ugly, but we're already in sin running all this as a user with
+    # passwordless sudo.  TODO: move this to a command with setuid or give
+    # this user write access to /srv/pillar and to salt(-cloud) commands.
+    os.system("sudo salt %s cmd.run 'rm /home/lantern/reported_completion'"
+              % instance)
+    os.system("sudo salt %s state.highstate" % instance)
+
+def set_pillar(runas_email, refresh_token, report_email, report_status, msg):
+    filename = '/home/lantern/%s.sls' % get_instance_name(report_email)
     yaml.dump({
                # DRY warning:
                # lantern_aws/salt/fallback_proxy/report_completion.py
-               'report_user': email,
+               'report_user': report_email,
                'report_status': report_status,
                # DRY warning:
                # lantern_aws/salt/fallback_proxy/user_credentials.json
                'run_as_user': runas_email,
-               'refresh_token': refresh_token},
-              file(('/home/lantern/%s.sls' % instance_name), 'w'))
+               'refresh_token': refresh_token,
+               'sqs_msg': b64encode(dumps(msg))},
+              file(filename, 'w'))
     #XXX: ugly, but we're already in sin running all this as a user with
     # passwordless sudo.  TODO: move this to a command with setuid or give
     # this user write access to /srv/pillar and to salt(-cloud) commands.
-    os.system("sudo mv /home/lantern/%s.sls /srv/pillar/" % instance_name)
-    os.system("sudo salt-cloud -y -m %s >> /home/lantern/cloudmaster.log 2>&1"
-              % MAP_FILE)
+    os.system("sudo mv %s /srv/pillar/" % filename)
+
+def get_instance_name(email):
+    return "%s%x" % (FALLBACK_PROXY_PREFIX, hash(email))
 
 def get_ip(instance_name):
     reservations = connect().get_all_instances(

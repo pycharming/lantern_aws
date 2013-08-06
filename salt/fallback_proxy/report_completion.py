@@ -16,7 +16,7 @@ AWS_REGION = "{{ grains['aws_region'] }}"
 AWS_ID = "{{ grains['aws_id'] }}"
 AWS_KEY = "{{ grains['aws_key'] }}"
 CONTROLLER = "{{ grains['controller'] }}"
-SQSMSG = "{{ grains['sqs_msg'] }}"
+SQSMSG = "{{ pillar['sqs_msg'] }}"
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
 

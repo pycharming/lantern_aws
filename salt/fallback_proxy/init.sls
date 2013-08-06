@@ -152,6 +152,9 @@ lantern-service:
             - cmd: open-proxy-port
             - cmd: upload-wrappers
             - cmd: fallback-proxy-dirs-and-files
+        - watch:
+            # Restart when we get a new user to run as, or a new refresh token.
+            - file: /home/lantern/user_credentials.json
 
 report-completion:
     cmd.script:
