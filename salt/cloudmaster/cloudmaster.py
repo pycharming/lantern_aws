@@ -22,6 +22,7 @@ here = os.path.dirname(sys.argv[0]) if __name__ == '__main__' else __file__
 
 
 PRIVATE_IP = "{{ grains['ec2_local-ipv4'] }}"
+PUBLIC_IP = "{{ grains['ec2_public-ipv4'] }}"
 #DRY warning: ../top.sls
 FALLBACK_PROXY_PREFIX = "fp-"
 MAP_FILE = '/home/lantern/map'
@@ -33,6 +34,11 @@ SALT_VERSION = "{{ pillar['salt_version'] }}"
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
 
+def get_provider():
+    return 'do'
+
+def get_master_ip(provider):
+    return {'aws': PRIVATE_IP, 'do': PUBLIC_IP}[provider]
 
 def log_exceptions(f):
     @wraps(f)
@@ -85,19 +91,20 @@ def launch_proxy(email, refresh_token, msg):
     if os.path.exists(MAP_FILE):
         d = yaml.load(file(MAP_FILE))
     else:
-        d = {'aws': []}
-    for entry in d['aws'][:]:
-        if instance_name in entry:
-            d['aws'].remove(entry)
-    d['aws'].append({instance_name:
-                     {'minion': {'master': PRIVATE_IP},
-                      'grains': {'saltversion': SALT_VERSION,
-                                 'aws_region': AWS_REGION,
-                                 'aws_id': AWS_ID,
-                                 'aws_key': AWS_KEY,
-                                 'controller': CONTROLLER,
-                                 'proxy_port': random.randint(1024, 61024),
-                                 'shell': '/bin/bash'}}})
+        d = {'aws': [], 'do': []}
+    for provider in ['aws', 'do']:
+        for entry in d[provider][:]:
+            if instance_name in entry:
+                d[provider].remove(entry)
+    d[get_provider()].append({instance_name:
+                       {'minion': {'master': get_master_ip(get_provider())},
+                        'grains': {'saltversion': SALT_VERSION,
+                                   'aws_region': AWS_REGION,
+                                   'aws_id': AWS_ID,
+                                   'aws_key': AWS_KEY,
+                                   'controller': CONTROLLER,
+                                   'proxy_port': random.randint(1024, 61024),
+                                   'shell': '/bin/bash'}}})
     yaml.dump(d, file(MAP_FILE, 'w'))
     # DRY warning: ProcessDonation at lantern-controller.
     if refresh_token == '<tokenless-donor>':

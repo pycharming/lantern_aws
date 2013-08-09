@@ -41,7 +41,6 @@ def launch_cloudmaster():
     print "Trying to connect to server..."
     print "(You may see some connection refusals; this is normal.)"
     print
-    key_path = region.get_key_path()
     delay = 1
     while init_dir('/srv/salt'):
         time.sleep(delay)
@@ -53,6 +52,8 @@ def launch_cloudmaster():
     init_dir('/home/lantern')
     init_dir('/etc/salt')
     print
+    print "Uploading pillars..."
+    update.upload_pillars()
     print "Setting cloudmaster minion config..."
     update.upload_cloudmaster_minion_config()
     print "Uploading salt configuration..."
@@ -61,7 +62,7 @@ def launch_cloudmaster():
     update.upload_secrets()
     print "Copying bootstrap file..."
     os.system("scp -i %s %s ubuntu@%s:"
-              % (key_path, here.bootstrap_path, ins.ip_address))
+              % (config.key_path, here.bootstrap_path, ins.ip_address))
     print "Bootstrapping..."
     util.ssh_cloudmaster("sudo SALT_VERSION=%s ./bootstrap.bash"
                             % config.salt_version,

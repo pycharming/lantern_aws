@@ -19,11 +19,6 @@ amis = {"ap-northeast-1": "ami-60c77761",
 def get_ami():
     return amis[config.aws_region]
 
-def get_key_path():
-    return os.path.join(here.secrets_path,
-                        'lantern_aws',
-                        config.aws_region + ".pem")
-
 @util.memoized
 def connect():
     aws_id, aws_key = util.read_aws_credential()

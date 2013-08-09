@@ -45,9 +45,7 @@ def get_address():
 @memoized
 def read_aws_credential():
     id_, key = None, None
-    for line in file(os.path.join(here.secrets_path,
-                                  'lantern_aws',
-                                  'aws_credential')):
+    for line in file(config.aws_credential_path):
         line = line.strip()
         m = re.match(r"AWSAccessKeyId=(.*)", line)
         if m:
@@ -78,7 +76,7 @@ def set_secret_permissions():
 def ssh_cloudmaster(cmd=None, out=None):
     import region
     full_cmd = "ssh -o StrictHostKeyChecking=no -i %s ubuntu@%s" % (
-                    region.get_key_path(),
+                    config.key_path,
                     get_address())
     if cmd:
         full_cmd += " '%s'" % cmd
