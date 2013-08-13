@@ -96,15 +96,16 @@ def launch_proxy(email, refresh_token, msg):
         for entry in d[provider][:]:
             if instance_name in entry:
                 d[provider].remove(entry)
-    d[get_provider()].append({instance_name:
-                       {'minion': {'master': get_master_ip(get_provider())},
-                        'grains': {'saltversion': SALT_VERSION,
-                                   'aws_region': AWS_REGION,
-                                   'aws_id': AWS_ID,
-                                   'aws_key': AWS_KEY,
-                                   'controller': CONTROLLER,
-                                   'proxy_port': random.randint(1024, 61024),
-                                   'shell': '/bin/bash'}}})
+    d[get_provider()].append(
+        {instance_name:
+            {'minion': {'master': get_master_ip(get_provider())},
+             'grains': {'saltversion': SALT_VERSION,
+                        'aws_region': AWS_REGION,
+                        'aws_id': AWS_ID,
+                        'aws_key': AWS_KEY,
+                        'controller': CONTROLLER,
+                        'proxy_port': random.randint(1024, 61024),
+                        'shell': '/bin/bash'}}})
     yaml.dump(d, file(MAP_FILE, 'w'))
     # DRY warning: ProcessDonation at lantern-controller.
     if refresh_token == '<tokenless-donor>':
@@ -122,6 +123,7 @@ def launch_proxy(email, refresh_token, msg):
     # this user write access to /srv/pillar and to salt(-cloud) commands.
     os.system("sudo salt-cloud -y -m %s >> /home/lantern/cloudmaster.log 2>&1"
               % MAP_FILE)
+    os.system("sudo salt %s state.highstate" % instance_name)
 
 def feed_token(email, token, msg):
     logging.info("Got request to feed token to '%s'" % clip_email(email))
