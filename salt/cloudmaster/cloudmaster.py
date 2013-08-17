@@ -11,8 +11,6 @@ import time
 from functools import wraps
 
 from lockfile import LockFile
-import boto
-import boto.ec2
 import boto.sqs
 from boto.sqs.jsonmessage import JSONMessage
 import yaml
@@ -33,6 +31,10 @@ CONTROLLER = "{{ grains['controller'] }}"
 SALT_VERSION = "{{ pillar['salt_version'] }}"
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
+PROVIDERS = ['aws', 'do']
+REDIRECT = " >> /home/lantern/cloudmaster.log 2>&1 "
+INSTANCES_FILENAME = 'instance_names.yaml'
+
 
 def get_provider():
     return 'do'
@@ -72,41 +74,32 @@ def actually_check_q():
     # DRY warning: InvitedServerLauncher at lantern-controller.
     if 'launch-invsrv-as' in d:
         launch_proxy(d['launch-invsrv-as'], d['launch-refrtok'], msg)
+    # DRY warning: ShutdownProxy at lantern-controller.
+    elif 'shutdown-proxy-for' in d:
+        shutdown_proxy(d['shutdown-proxy-for'])
     else:
         assert 'feed-token-for' in d
         feed_token(d['feed-token-for'], d['feed-refrtok'], msg)
 
+
 def launch_proxy(email, refresh_token, msg):
     logging.info("Got spawn request for '%s'" % clip_email(email))
-    instance_name = get_instance_name(email)
-    if get_ip(instance_name):
-        logging.info("Instance %s already exists; killing..."
-                     % instance_name)
-        os.system("sudo salt-cloud -y -d %s >> /home/lantern/cloudmaster.log 2>&1" % instance_name)
-        time.sleep(5)
-    if get_ip(instance_name):
-        logging.warning("Couldn't kill instance! Giving up.")
-        return
-    logging.info("Spawning %s..." % instance_name)
-    if os.path.exists(MAP_FILE):
-        d = yaml.load(file(MAP_FILE))
-    else:
-        d = {'aws': [], 'do': []}
-    for provider in ['aws', 'do']:
-        for entry in d[provider][:]:
-            if instance_name in entry:
-                d[provider].remove(entry)
-    d[get_provider()].append(
+    shutdown_proxy(email)
+    instance_name = create_instance_name(email)
+    provider = get_provider()
+    d = load_map()
+    d[provider].append(
         {instance_name:
-            {'minion': {'master': get_master_ip(get_provider())},
+            {'minion': {'master': get_master_ip(provider)},
              'grains': {'saltversion': SALT_VERSION,
                         'aws_region': AWS_REGION,
                         'aws_id': AWS_ID,
                         'aws_key': AWS_KEY,
                         'controller': CONTROLLER,
                         'proxy_port': random.randint(1024, 61024),
+                        'provider': provider,
                         'shell': '/bin/bash'}}})
-    yaml.dump(d, file(MAP_FILE, 'w'))
+    save_map(d)
     # DRY warning: ProcessDonation at lantern-controller.
     if refresh_token == '<tokenless-donor>':
         runas_email = 'lanterndonors@gmail.com'
@@ -121,9 +114,29 @@ def launch_proxy(email, refresh_token, msg):
     #XXX: ugly, but we're already in sin running all this as a user with
     # passwordless sudo.  TODO: move this to a command with setuid or give
     # this user write access to /srv/pillar and to salt(-cloud) commands.
-    os.system("sudo salt-cloud -y -m %s >> /home/lantern/cloudmaster.log 2>&1"
-              % MAP_FILE)
-    os.system("sudo salt %s state.highstate" % instance_name)
+    os.system("sudo salt-cloud -y -m %s %s" % (MAP_FILE, REDIRECT))
+    os.system("sudo salt %s state.highstate %s" % (instance_name, REDIRECT))
+
+def shutdown_proxy(email):
+    proxyname = pop_instance_name(email)
+    if proxyname:
+        logging.info("Deleting proxy for %s" % clip_email(email))
+        delete_from_map(proxyname)
+        os.system("sudo salt-cloud -y -d %s %s" % (proxyname, REDIRECT))
+    else:
+        logging.info("%s has no proxy to shut down" % clip_email(email))
+
+def delete_from_map(instance):
+    d = load_map()
+    any_changes = False
+    for provider, entries in d.iteritems():
+        for entry in entries[:]:
+            k, = entry.iterkeys()
+            if k == instance:
+                any_changes = True
+                entries.remove(entry)
+    if any_changes:
+        yaml.dump(d, file(MAP_FILE, 'w'))
 
 def feed_token(email, token, msg):
     logging.info("Got request to feed token to '%s'" % clip_email(email))
@@ -133,9 +146,9 @@ def feed_token(email, token, msg):
     #XXX: ugly, but we're already in sin running all this as a user with
     # passwordless sudo.  TODO: move this to a command with setuid or give
     # this user write access to /srv/pillar and to salt(-cloud) commands.
-    os.system("sudo salt %s cmd.run 'rm /home/lantern/reported_completion'"
-              % instance)
-    os.system("sudo salt %s state.highstate" % instance)
+    os.system("sudo salt %s cmd.run 'rm /home/lantern/reported_completion' %s"
+              % (instance, REDIRECT))
+    os.system("sudo salt %s state.highstate %s" % (instance, REDIRECT))
 
 def set_pillar(runas_email, refresh_token, report_email, report_status, msg):
     filename = '/home/lantern/%s.sls' % get_instance_name(report_email)
@@ -155,32 +168,48 @@ def set_pillar(runas_email, refresh_token, report_email, report_status, msg):
     # this user write access to /srv/pillar and to salt(-cloud) commands.
     os.system("sudo mv %s /srv/pillar/" % filename)
 
+def load_map():
+    if os.path.exists(MAP_FILE):
+        return yaml.load(file(MAP_FILE))
+    else:
+        return dict((p, []) for p in PROVIDERS)
+
+def save_map(d):
+    yaml.dump(d, file(MAP_FILE, 'w'))
+
+def load_instances():
+    try:
+        return yaml.load(file(INSTANCES_FILENAME))
+    except IOError:
+        return {}
+
+def save_instances(d):
+    yaml.dump(d, file(INSTANCES_FILENAME, 'w'))
+
+
 def get_instance_name(email):
-    return "%s%x" % (FALLBACK_PROXY_PREFIX, hash(email))
+    return load_instances().get(email)
 
-def get_ip(instance_name):
-    reservations = connect().get_all_instances(
-            filters={'tag:Name': instance_name})
-    if not reservations:
+def create_instance_name(email):
+    d = load_instances()
+    assert email not in d
+    s = set(d.itervalues())
+    while True:
+        name = FALLBACK_PROXY_PREFIX + b64encode(os.urandom(9), "-_")
+        if name not in s:
+            break
+    d[email] = name
+    save_instances(d)
+    return name
+
+def pop_instance_name(email):
+    d = load_instances()
+    try:
+        ret = d.pop(email)
+        save_instances(d)
+        return ret
+    except KeyError:
         return None
-    instance, = reservations[0].instances
-    return instance.ip_address
-
-#XXX: refactor somewhere that we can share between machines.
-def memoized(f):
-    d = {}
-    @wraps(f)
-    def deco(*args):
-        try:
-            return d[args]
-        except KeyError:
-            ret = d[args] = f(*args)
-            return ret
-    return deco
-
-@memoized
-def connect():
-    return boto.ec2.connect_to_region(AWS_REGION, **aws_creds)
 
 def clip_email(email):
     at_index = email.find('@')

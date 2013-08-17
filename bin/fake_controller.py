@@ -22,11 +22,14 @@ def trigger_launch():
     for q in [req_q, notify_q]:
         q.set_message_class(JSONMessage)
     msg = JSONMessage()
-    msg.set_body(
+    msg.set_body({'shutdown-proxy-for': 'aranhoide@gmail.com'})
+        #{'feed-token-for': 'aranhoide@gmail.com',
+        # 'feed-refrtok':
+        #     file('../../secret/aranhoide.refresh_token').read().strip()})
         #XXX: put details of some test user in ../secret/lantern_aws.
-        {'launch-invsrv-as': 'aranhoide@gmail.com',
-         'launch-refrtok': '<tokenless-donor>'})
-             #file('../../secret/aranhoide.refresh_token').read().strip()})
+        #{'launch-invsrv-as': 'aranhoide@gmail.com',
+         #'launch-refrtok': '<tokenless-donor>'})
+        #file('../../secret/aranhoide.refresh_token').read().strip()})
     print "Sending request..."
     req_q.write(msg)
     print "Awaiting response..."
