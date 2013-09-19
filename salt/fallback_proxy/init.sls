@@ -1,5 +1,10 @@
+{% set jre_folder='/home/lantern/repo/install/jres' %}
+
+# Keep install/common as the last one; it's being checked to make sure all
+# folders have been initialized.
 {% set dirs=['/home/lantern/repo',
              '/home/lantern/repo/install',
+             jre_folder,
              '/home/lantern/repo/install/common'] %}
 
 {% set txtfiles=[
@@ -28,6 +33,10 @@
     ('/home/lantern/repo/install/wrapper/', 'InstallDownloader.class', 400),
     ('/home/lantern/repo/install/common/', '64on.png', 400)] %}
 
+{% set jre_files=['windows-x86-jre.tar.gz',
+                  'macosx-amd64-jre.tar.gz',
+                  'linux-x86-jre.tar.gz',
+                  'linux-amd64-jre.tar.gz'] %}
 include:
     - install4j
     - boto
@@ -73,6 +82,19 @@ openjdk-6-jre:
             - file: /home/lantern/repo/install/common
 {% endfor %}
 
+
+{% for filename in jre_files %}
+
+download-{{ filename }}:
+    cmd.run:
+        - name: 'wget -qct 3 https://s3.amazonaws.com/bundled-jres/{{ filename }}'
+        - unless: 'test -e {{ jre_folder }}/{{ filename }}'
+        - user: root
+        - group: root
+        - cwd: {{ jre_folder }}
+
+{% endfor %}
+
 install-lantern:
     cmd.script:
         - source: salt://fallback_proxy/install-lantern.bash
@@ -111,6 +133,9 @@ build-wrappers:
             - pkg: openjdk-6-jre
             # We need lantern in order to know which version to install.
             - cmd: install-lantern
+            {% for filename in jre_files %}
+            - cmd: download-{{ filename }}
+            {% endfor %}
 
 /etc/init.d/lantern:
     file.managed:
