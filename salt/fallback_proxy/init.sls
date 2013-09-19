@@ -80,6 +80,7 @@ install-lantern:
         - user: root
         - group: root
         - cwd: /root
+        - stateful: yes
 
 fallback-proxy-dirs-and-files:
     cmd.run:
@@ -155,6 +156,7 @@ lantern-service:
         - watch:
             # Restart when we get a new user to run as, or a new refresh token.
             - file: /home/lantern/user_credentials.json
+            - cmd: install-lantern
 
 report-completion:
     cmd.script:
