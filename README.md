@@ -8,7 +8,7 @@ At this moment, two types of machines are launched and managed by this project:
 
 - A single **Cloud Master**, which launches lantern peers on request from the [Lantern Controller](https://github.com/getlantern/lantern-controller).  Further operations on lantern peers (especially 'batch' operations involving many such machines) are typically done through this cloud master.
 
-As of this writing, only EC2 machines are supported, but it should be easy to add support for any cloud provider that offers Ubuntu 12.04 and is supported by [Salt Cloud](https://github.com/saltstack/salt-cloud).
+As of this writing, only EC2 and Digital Ocean machines are supported, but it should be easy to add support for any cloud provider that offers Ubuntu 12.04 and is supported by [Salt Cloud](https://github.com/saltstack/salt-cloud).
 
 ## How does it work
 
