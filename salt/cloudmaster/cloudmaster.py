@@ -195,8 +195,10 @@ def create_instance_name(email):
     assert email not in d
     s = set(d.itervalues())
     while True:
-        name = FALLBACK_PROXY_PREFIX + b64encode(os.urandom(9), "-_")
-        if name not in s:
+        # Digital Ocean doesn't like underscores nor names ending in '-'.
+        # Just to be paranoid, let's avoid names ending in '.' too.
+        name = FALLBACK_PROXY_PREFIX + b64encode(os.urandom(9), "-.")
+        if name[-1] not in "-." and name not in s:
             break
     d[email] = name
     save_instances(d)
