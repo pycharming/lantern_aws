@@ -3,6 +3,7 @@
 from base64 import b64decode
 from cPickle import loads
 import logging
+import os.path
 from functools import wraps
 
 import boto.sqs
@@ -45,8 +46,11 @@ def report_completion():
              'invsrvup-insloc': installer_location,
              'invsrvup-status': STATUS})
     ctrl_notify_q.write(msg)
-    to_delete = loads(b64decode(SQSMSG))
-    ctrl_req_q.delete_message(to_delete)
+    DEL_FLAG = '/home/lantern/deleted_sqs_message'
+    if not os.path.exists(DEL_FLAG):
+        to_delete = loads(b64decode(SQSMSG))
+        ctrl_req_q.delete_message(to_delete)
+        file(DEL_FLAG, 'w').write('OK')
     file('/home/lantern/reported_completion', 'w').write('OK')
 
 def clip_email(email):
