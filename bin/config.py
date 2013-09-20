@@ -16,8 +16,6 @@ free_for_all_sg_name = 'free-for-all'
 #controller = 'fakectrl'
 #cloudmaster_name = 'fakecloudmaster'
 #aws_region = 'us-east-1'
-controller = 'lanternctrltest'
-cloudmaster_name = 'aranhoide-cloudmaster'
 
 # Derived, but may still want to override?
 key_path = os.path.join(here.secrets_path,
