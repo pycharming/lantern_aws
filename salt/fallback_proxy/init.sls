@@ -182,6 +182,7 @@ lantern-service:
             # Restart when we get a new user to run as, or a new refresh token.
             - file: /home/lantern/user_credentials.json
             - cmd: install-lantern
+            - file: /etc/init.d/lantern
 
 report-completion:
     cmd.script:
