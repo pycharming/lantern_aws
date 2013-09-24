@@ -4,7 +4,7 @@ This project contains code and configuration scripts to launch and manage cloud 
 
 At this moment, two types of machines are launched and managed by this project:
 
-- **Fallback Proxies**, which offer access to the free internet to Lantern users that haven't authenticated yet so they can reach Google Accounts and Google Talk in order to do so.  They also double as regular kaleidoscope nodes in behalf of some inviter.  On setup, these machines also build and upload *installer wrappers*, small programs that users run to install Lantern and help it find the corresponding fallback proxy.
+- **Fallback Proxies**: These run Lantern instances configured to offer access to the free internet to Lantern users that haven't authenticated yet so they can reach Google Accounts and Google Talk in order to do so.  They also double as regular kaleidoscope nodes in behalf of some inviter.  On setup, these machines also build and upload *installer wrappers*, small programs that users run to install Lantern and help it find the corresponding fallback proxy.
 
 - A single **Cloud Master**, which launches lantern peers on request from the [Lantern Controller](https://github.com/getlantern/lantern-controller).  Further operations on lantern peers (especially 'batch' operations involving many such machines) are typically done through this cloud master.
 
@@ -105,7 +105,11 @@ In order to trigger any of these operations again, you just delete the file that
 
     bin/ssh_cloudmaster.py 'sudo salt "fp-*" cmd.run "rm /home/lantern/wrappers_built /home/lantern/uploaded_wrappers /home/lantern/reported_completion ; salt-call state.highstate"'
 
-It's quite a mouthful, and a script could be done to automate this, but once the wrappers are working I don't think we'll need to do this much anymore.
+Since this turned out to be needed quite often, a `bin/rebuild_wrappers.bash` script has been added that does just this.
+
+###### Reinstalling lantern
+
+To reinstall lantern in the proxies after a new client version has been released, just uninstall the old package through `apt-get` and then run `state.highstate` to re-apply the configuration scripts.  This takes care of restarting the lantern service too.  `bin/reinstall_lantern.bash` (which see) does this.
 
 ## Todo
 
