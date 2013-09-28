@@ -8,7 +8,6 @@
              '/home/lantern/repo/install/common'] %}
 
 {% set txtfiles=[
-    ('/home/lantern/', 'getlanternversion.py', 700),
     ('/home/lantern/', 'report_completion.py', 700),
     ('/home/lantern/', 'user_credentials.json', 400),
     ('/home/lantern/', 'client_secrets.json', 400),
@@ -131,8 +130,6 @@ build-wrappers:
             - cmd: fallback-proxy-dirs-and-files
             - cmd: install4j
             - pkg: openjdk-6-jre
-            # We need lantern in order to know which version to install.
-            - cmd: install-lantern
             {% for filename in jre_files %}
             - cmd: download-{{ filename }}
             {% endfor %}
