@@ -34,8 +34,6 @@ After you check out this repository you need to run the following to fetch secre
 
 Note that this downloads a private repository that is only accessible to the Lantern core development team.
 
-In addition, you need to copy or symlink a file called `littleproxy_keystore.jks` to a directory called `secret`, which must be a sibling of the root directory of your `lantern_aws` checkout.
-
 Finally, you need an up-to-date checkout of the `getlantern/lantern` project placed as a sibling of this one.
 
 (XXX:) Instructions to replace these secrets with your own equivalents will be added here on request to aranhoide@gmail.com.
