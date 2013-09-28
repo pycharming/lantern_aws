@@ -166,6 +166,7 @@ upload-wrappers:
         - cwd: /home/lantern/repo/install
         - require:
             - cmd: build-wrappers
+            - pip: boto==2.9.5
 
 lantern-service:
     service.running:
