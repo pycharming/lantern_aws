@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import random
+import string
 import sys
 import time
 from functools import wraps
@@ -34,6 +35,11 @@ aws_creds = {'aws_access_key_id': AWS_ID,
 PROVIDERS = ['aws', 'do']
 REDIRECT = " >> /home/lantern/cloudmaster.log 2>&1 "
 INSTANCES_FILENAME = 'instance_names.yaml'
+
+# We expect all cloud providers to accept any alphanumerics for instance names.
+# We've had trouble with about every other character.
+INSTANCE_NAME_ALPHABET = string.letters + string.digits
+INSTANCE_NAME_LENGTH = 12
 
 
 def get_provider():
@@ -195,10 +201,9 @@ def create_instance_name(email):
     assert email not in d
     s = set(d.itervalues())
     while True:
-        # Digital Ocean doesn't like underscores nor names ending in '-'.
-        # Just to be paranoid, let's avoid names ending in '.' too.
-        name = FALLBACK_PROXY_PREFIX + b64encode(os.urandom(9), "-.")
-        if name[-1] not in "-." and name not in s:
+        name = (FALLBACK_PROXY_PREFIX
+                + random_string(INSTANCE_NAME_ALPHABET, INSTANCE_NAME_LENGTH))
+        if name not in s:
             break
     d[email] = name
     save_instances(d)
@@ -217,6 +222,8 @@ def clip_email(email):
     at_index = email.find('@')
     return '%s...%s' % (email[:1], email[at_index-2:at_index])
 
+def random_string(alphabet, length):
+    return "".join([random.choice(alphabet) for _ in xrange(length)])
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
