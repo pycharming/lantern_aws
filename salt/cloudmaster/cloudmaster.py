@@ -78,20 +78,12 @@ def actually_check_q():
         return
     d = msg.get_body()
     # DRY warning: InvitedServerLauncher at lantern-controller.
-    if 'launch-invsrv-as' in d:
-        launch_proxy(d['launch-invsrv-as'], d['launch-refrtok'], msg)
-    # DRY warning: ShutdownProxy at lantern-controller.
-    elif 'shutdown-proxy-for' in d:
-        shutdown_proxy(d['shutdown-proxy-for'])
-    else:
-        assert 'feed-token-for' in d
-        feed_token(d['feed-token-for'], d['feed-refrtok'], msg)
-
+    launch_proxy(d['launch-invsrv-as'], d['launch-refrtok'], msg)
 
 def launch_proxy(email, refresh_token, msg):
     logging.info("Got spawn request for '%s'" % clip_email(email))
     shutdown_proxy(email)
-    instance_name = create_instance_name(email)
+    instance_name = create_instance_name()
     provider = get_provider()
     d = load_map()
     d[provider].append(
@@ -104,66 +96,19 @@ def launch_proxy(email, refresh_token, msg):
                         'provider': provider,
                         'shell': '/bin/bash'}}})
     save_map(d)
-    # DRY warning: ProcessDonation at lantern-controller.
-    if refresh_token == '<tokenless-donor>':
-        runas_email = 'lanterndonors@gmail.com'
-        refresh_token = '{{ pillar["lanterndonors_refrtok"] }}'
-        # DRY warning: InvitedServerLauncher.py at lantern-controller.
-        report_status = 'awaiting_token'
-    else:
-        runas_email = email
-        # DRY warning: InvitedServerLauncher.py at lantern-controller.
-        report_status = 'setup_complete'
-    set_pillar(runas_email, refresh_token, email, report_status, msg)
+    set_pillar(instance_name, email, refresh_token, msg)
     #XXX: ugly, but we're already in sin running all this as a user with
     # passwordless sudo.  TODO: move this to a command with setuid or give
     # this user write access to /srv/pillar and to salt(-cloud) commands.
     os.system("sudo salt-cloud -y -m %s %s" % (MAP_FILE, REDIRECT))
     os.system("sudo salt %s state.highstate %s" % (instance_name, REDIRECT))
 
-def shutdown_proxy(email):
-    proxyname = pop_instance_name(email)
-    if proxyname:
-        logging.info("Deleting proxy for %s" % clip_email(email))
-        delete_from_map(proxyname)
-        os.system("sudo salt-cloud -y -d %s %s" % (proxyname, REDIRECT))
-    else:
-        logging.info("%s has no proxy to shut down" % clip_email(email))
-
-def delete_from_map(instance):
-    d = load_map()
-    any_changes = False
-    for provider, entries in d.iteritems():
-        for entry in entries[:]:
-            k, = entry.iterkeys()
-            if k == instance:
-                any_changes = True
-                entries.remove(entry)
-    if any_changes:
-        yaml.dump(d, file(MAP_FILE, 'w'))
-
-def feed_token(email, token, msg):
-    logging.info("Got request to feed token to '%s'" % clip_email(email))
-    set_pillar(email, token, email, 'setup_complete', msg)
-    instance = get_instance_name(email)
-
-    #XXX: ugly, but we're already in sin running all this as a user with
-    # passwordless sudo.  TODO: move this to a command with setuid or give
-    # this user write access to /srv/pillar and to salt(-cloud) commands.
-    os.system("sudo salt %s cmd.run 'rm /home/lantern/reported_completion' %s"
-              % (instance, REDIRECT))
-    os.system("sudo salt %s state.highstate %s" % (instance, REDIRECT))
-
-def set_pillar(runas_email, refresh_token, report_email, report_status, msg):
-    filename = '/home/lantern/%s.sls' % get_instance_name(report_email)
+def set_pillar(instance_name, email, refresh_token, msg):
+    filename = '/home/lantern/%s.sls' % instance_name
     yaml.dump({
                # DRY warning:
                # lantern_aws/salt/fallback_proxy/report_completion.py
-               'report_user': report_email,
-               'report_status': report_status,
-               # DRY warning:
-               # lantern_aws/salt/fallback_proxy/user_credentials.json
-               'run_as_user': runas_email,
+               'user': email,
                'refresh_token': refresh_token,
                'sqs_msg': b64encode(dumps(msg))},
               file(filename, 'w'))
@@ -183,38 +128,27 @@ def save_map(d):
 
 def load_instances():
     try:
-        return yaml.load(file(INSTANCES_FILENAME))
+        ret = yaml.load(file(INSTANCES_FILENAME))
+        # Backwards compatibility; this used to be a dict.
+        if isinstance(ret, dict):
+            ret = ret.values()
+        return ret
     except IOError:
-        return {}
+        return []
 
-def save_instances(d):
-    yaml.dump(d, file(INSTANCES_FILENAME, 'w'))
+def save_instances(l):
+    yaml.dump(l, file(INSTANCES_FILENAME, 'w'))
 
-
-def get_instance_name(email):
-    return load_instances().get(email)
-
-def create_instance_name(email):
-    d = load_instances()
-    assert email not in d
-    s = set(d.itervalues())
+def create_instance_name():
+    l = load_instances()
     while True:
         name = (FALLBACK_PROXY_PREFIX
                 + random_string(INSTANCE_NAME_ALPHABET, INSTANCE_NAME_LENGTH))
-        if name not in s:
+        if name not in l:
             break
-    d[email] = name
-    save_instances(d)
+    l.append(name)
+    save_instances(l)
     return name
-
-def pop_instance_name(email):
-    d = load_instances()
-    try:
-        ret = d.pop(email)
-        save_instances(d)
-        return ret
-    except KeyError:
-        return None
 
 def clip_email(email):
     at_index = email.find('@')

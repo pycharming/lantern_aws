@@ -11,8 +11,7 @@ from boto.sqs.jsonmessage import JSONMessage
 
 
 # DRY warning: ../cloudmaster/cloudmaster.py
-USERID = "{{ pillar['report_user'] }}"
-STATUS = "{{ pillar['report_status'] }}"
+USERID = "{{ pillar['user'] }}"
 AWS_REGION = "{{ grains['aws_region'] }}"
 AWS_ID = "{{ pillar['aws_id'] }}"
 AWS_KEY = "{{ pillar['aws_key'] }}"
@@ -43,8 +42,7 @@ def report_completion():
     msg = JSONMessage()
     msg.set_body(
             {'invsrvup-user': USERID,
-             'invsrvup-insloc': installer_location,
-             'invsrvup-status': STATUS})
+             'invsrvup-insloc': installer_location})
     ctrl_notify_q.write(msg)
     DEL_FLAG = '/home/lantern/deleted_sqs_message'
     if not os.path.exists(DEL_FLAG):
