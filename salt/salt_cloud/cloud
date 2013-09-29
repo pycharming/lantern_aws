@@ -16,8 +16,8 @@ providers:
 
     # Set the AWS access credentials (see below)
     #
-    id: {{ grains['aws_id'] }}
-    key: "{{ grains['aws_key'] }}"
+    id: {{ pillar['aws_id'] }}
+    key: "{{ pillar['aws_key'] }}"
 
     # Make sure this key is owned by root with permissions 0400.
     #

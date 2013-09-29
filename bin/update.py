@@ -67,12 +67,9 @@ def rsync(src, dst):
 
 def upload_cloudmaster_minion_config():
     address = util.get_address()
-    aws_id, aws_key = util.read_aws_credential()
     do_id, do_key = util.read_do_credential()
     util.ssh_cloudmaster((r"""(echo "master: salt" """
                           + r""" && echo "grains:" """
-                          + r""" && echo "    aws_id: %s" """
-                          + r""" && echo "    aws_key: \"%s\"" """
                           + r""" && echo "    aws_region: %s " """
                           + r""" && echo "    aws_ami: %s " """
                           + r""" && echo "    do_id: %s " """
@@ -80,9 +77,7 @@ def upload_cloudmaster_minion_config():
                           + r""" && echo "    do_region: %s " """
                           + r""" && echo "    controller: %s " """
                           + r""" ) > /home/ubuntu/minion""")
-                         % (aws_id,
-                            aws_key,
-                            config.aws_region,
+                         % (config.aws_region,
                             region.get_ami(),
                             do_id,
                             do_key,
@@ -93,24 +88,27 @@ def upload_cloudmaster_minion_config():
                          ' && sudo chmod 600 /etc/salt/minion')
 
 def upload_pillars():
+    aws_id, aws_key = util.read_aws_credential()
     refr_tok = file(os.path.join(here.secrets_path,
                                  'lantern_aws',
                                  'lanterndonors.refresh_token')).read().strip()
     util.ssh_cloudmaster((
             'echo "lanterndonors_refrtok: %s" > cloudmaster.sls '
             ' && echo "salt_version: %s" > salt.sls '
+            ' && echo "aws_id: %s"  > aws_credential.sls'
+            ' && echo "aws_key: %s" >> aws_credential.sls'
             # Hack so every instance will read specific pillars from a file named
             # with the <instance_name>.sls scheme.
             r' && echo "include: [{{ grains[\"id\"] }}]" > fallback_proxy.sls '
-            r' && echo "base: {\"*\": [salt], '
+            r' && echo "base: {\"*\": [salt, aws_credential], '
                              r'\"cloudmaster\": [cloudmaster], '
                              r'\"fp-*\": [fallback_proxy]}" '
                 ' > top.sls '
             ' && sudo mv salt.sls top.sls cloudmaster.sls fallback_proxy.sls '
-                ' /srv/pillar/ '
+                ' aws_credential.sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
-            ) % (refr_tok, config.salt_version))
+            ) % (refr_tok, config.salt_version, aws_id, aws_key))
 
 if __name__ == '__main__':
     update()

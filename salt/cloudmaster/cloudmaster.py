@@ -26,8 +26,8 @@ PUBLIC_IP = "{{ grains['ec2_public-ipv4'] }}"
 FALLBACK_PROXY_PREFIX = "fp-"
 MAP_FILE = '/home/lantern/map'
 AWS_REGION = "{{ grains['aws_region'] }}"
-AWS_ID = "{{ grains['aws_id'] }}"
-AWS_KEY = "{{ grains['aws_key'] }}"
+AWS_ID = "{{ pillar['aws_id'] }}"
+AWS_KEY = "{{ pillar['aws_key'] }}"
 CONTROLLER = "{{ grains['controller'] }}"
 SALT_VERSION = "{{ pillar['salt_version'] }}"
 aws_creds = {'aws_access_key_id': AWS_ID,
@@ -99,8 +99,6 @@ def launch_proxy(email, refresh_token, msg):
             {'minion': {'master': get_master_ip(provider)},
              'grains': {'saltversion': SALT_VERSION,
                         'aws_region': AWS_REGION,
-                        'aws_id': AWS_ID,
-                        'aws_key': AWS_KEY,
                         'controller': CONTROLLER,
                         'proxy_port': random.randint(1024, 61024),
                         'provider': provider,

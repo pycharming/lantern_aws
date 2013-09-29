@@ -14,8 +14,8 @@ from boto.sqs.jsonmessage import JSONMessage
 USERID = "{{ pillar['report_user'] }}"
 STATUS = "{{ pillar['report_status'] }}"
 AWS_REGION = "{{ grains['aws_region'] }}"
-AWS_ID = "{{ grains['aws_id'] }}"
-AWS_KEY = "{{ grains['aws_key'] }}"
+AWS_ID = "{{ pillar['aws_id'] }}"
+AWS_KEY = "{{ pillar['aws_key'] }}"
 CONTROLLER = "{{ grains['controller'] }}"
 SQSMSG = "{{ pillar['sqs_msg'] }}"
 aws_creds = {'aws_access_key_id': AWS_ID,

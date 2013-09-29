@@ -14,8 +14,8 @@ ALLOWED_FOLDER_CHARS = string.lowercase + string.digits
 
 BUCKET = "lantern-installers"
 # DRY warning: ../cloudmaster/cloudmaster.py
-AWS_ID = "{{ grains['aws_id'] }}"
-AWS_KEY = "{{ grains['aws_key'] }}"
+AWS_ID = "{{ pillar['aws_id'] }}"
+AWS_KEY = "{{ pillar['aws_key'] }}"
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
 filename_re = re.compile(
