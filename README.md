@@ -1,5 +1,7 @@
 # Lantern Cloud
 
+**WARNING**: Restarting the lantern service (which is done automatically by the salt scripts on some circumstances) will kill all java processes in the fallback proxy.  As of this writing there are no other java processes, but if you want to add any, keep this in mind.
+
 This project contains code and configuration scripts to launch and manage cloud servers for the [Lantern](https://github.com/getlantern/lantern) censorship circunvention tool.
 
 At this moment, two types of machines are launched and managed by this project:
@@ -108,6 +110,8 @@ Since this turned out to be needed quite often, a `bin/rebuild_wrappers.bash` sc
 ###### Reinstalling lantern
 
 To reinstall lantern in the proxies after a new client version has been released, just uninstall the old package through `apt-get` and then run `state.highstate` to re-apply the configuration scripts.  This takes care of restarting the lantern service too.  `bin/reinstall_lantern.bash` (which see) does this.
+
+**WARNING**: Restarting the lantern service (which is done automatically by the salt scripts when reinstalling lantern, and possibly on some other circumstances) will kill all java processes in the fallback proxy.  As of this writing there are no other java processes, but if you want to add any, keep this in mind.
 
 ## Todo
 
