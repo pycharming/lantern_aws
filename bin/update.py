@@ -100,6 +100,8 @@ def upload_pillars():
             # Hack so every instance will read specific pillars from a file named
             # with the <instance_name>.sls scheme.
             r' && echo "include: [{{ grains[\"id\"] }}]" > fallback_proxy.sls '
+            r' && echo "installer_bucket: %s" >> fallback_proxy.sls '
+            r' && echo "installer_filename: %s" >> fallback_proxy.sls '
             r' && echo "base: {\"*\": [salt, aws_credential], '
                              r'\"cloudmaster\": [cloudmaster], '
                              r'\"fp-*\": [fallback_proxy]}" '
@@ -108,7 +110,12 @@ def upload_pillars():
                 ' aws_credential.sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
-            ) % (refr_tok, config.salt_version, aws_id, aws_key))
+            ) % (refr_tok,
+                 config.salt_version,
+                 aws_id,
+                 aws_key,
+                 config.installer_bucket,
+                 config.installer_filename))
 
 if __name__ == '__main__':
     update()

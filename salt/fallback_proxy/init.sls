@@ -97,6 +97,7 @@ download-{{ filename }}:
 install-lantern:
     cmd.script:
         - source: salt://fallback_proxy/install-lantern.bash
+        - template: jinja
         - unless: "which lantern"
         - user: root
         - group: root

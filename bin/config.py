@@ -11,6 +11,8 @@ do_region = 'Amsterdam 1'
 controller = 'lanternctrl'
 cloudmaster_name = 'cloudmaster'
 free_for_all_sg_name = 'free-for-all'
+installer_bucket = 'lantern'
+installer_filename = 'latest-64.deb'
 
 # Override with values for testing.
 #controller = 'fakectrl'

@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
-wget -cq https://s3.amazonaws.com/lantern/latest-64.deb
-dpkg -i latest-64.deb
-rm latest-64.deb
+BUCKET={{ pillar['installer_bucket'] }}
+FILENAME={{ pillar['installer_filename'] }}
+
+wget -cq https://s3.amazonaws.com/${BUCKET}/${FILENAME}
+dpkg -i $FILENAME
+rm $FILENAME
 echo
 echo 'changed=yes'
