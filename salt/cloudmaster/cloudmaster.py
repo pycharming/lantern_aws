@@ -82,7 +82,6 @@ def actually_check_q():
 
 def launch_proxy(email, refresh_token, msg):
     logging.info("Got spawn request for '%s'" % clip_email(email))
-    shutdown_proxy(email)
     instance_name = create_instance_name()
     provider = get_provider()
     d = load_map()
