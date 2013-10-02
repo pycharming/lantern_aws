@@ -28,7 +28,7 @@ nsis:
     ('/home/lantern/secure/', 'bns-osx-cert-developer-id-application.p12',
      400),
     ('/home/lantern/repo/install/win/', 'osslsigncode', 700),
-    ('/home/lantern/lantern-ui/app/img/', 'favicon.ico', 400),
+    ('/home/lantern/repo/lantern-ui/app/img/', 'favicon.ico', 400),
     ('/home/lantern/repo/install/common/', 'lantern.icns', 400),
     ('/home/lantern/repo/install/common/', '128on.png', 400),
     ('/home/lantern/repo/install/common/', '16off.png', 400),
