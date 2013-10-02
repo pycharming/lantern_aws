@@ -14,6 +14,8 @@ nsis:
     ('/home/lantern/', 'report_completion.py', 700),
     ('/home/lantern/', 'user_credentials.json', 400),
     ('/home/lantern/', 'client_secrets.json', 400),
+    ('/home/lantern/repo/install/win/', 'lantern.nsi', 400),
+    ('/home/lantern/repo/install/win/', 'osslsigncode', 700),
     ('/home/lantern/secure/', 'env-vars.txt', 400),
     ('/home/lantern/repo/', 'buildInstallerWrappers.bash', 500),
     ('/home/lantern/repo/install/wrapper/', 'wrapper.install4j', 500),
