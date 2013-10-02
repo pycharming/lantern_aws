@@ -1,0 +1,1 @@
+../../../lantern/install/win/lantern.nsi
