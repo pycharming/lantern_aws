@@ -1,3 +1,6 @@
+nsis:
+    pkg.installed
+
 {% set jre_folder='/home/lantern/repo/install/jres' %}
 
 # Keep install/common as the last one; it's being checked to make sure all
@@ -128,6 +131,7 @@ build-wrappers:
         - cwd: /home/lantern/repo
         - unless: "[ -e /home/lantern/wrappers_built ]"
         - require:
+            - pkg: nsis
             - cmd: fallback-proxy-dirs-and-files
             - cmd: install4j
             - pkg: openjdk-6-jre
