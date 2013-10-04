@@ -77,8 +77,11 @@ def actually_check_q():
         logging.info("Nothing in request queue.")
         return
     d = msg.get_body()
-    # DRY warning: InvitedServerLauncher at lantern-controller.
-    launch_proxy(d['launch-invsrv-as'], d['launch-refrtok'], msg)
+    # DRY warning: FallbackProxyLauncher at lantern-controller.
+    # TRANSITION: support old controllers for a while to make deployment less
+    # time sensitive.
+    userid = d.get('launch-fp-as', d.get('launch-invsrv-as'))
+    launch_proxy(userid, d['launch-refrtok'], msg)
 
 def launch_proxy(email, refresh_token, msg):
     logging.info("Got spawn request for '%s'" % clip_email(email))

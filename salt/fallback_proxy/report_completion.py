@@ -4,6 +4,7 @@ from base64 import b64decode
 from cPickle import loads
 import logging
 import os.path
+import socket
 from functools import wraps
 
 import boto.sqs
@@ -12,6 +13,7 @@ from boto.sqs.jsonmessage import JSONMessage
 
 # DRY warning: ../cloudmaster/cloudmaster.py
 USERID = "{{ pillar['user'] }}"
+INSTANCEID = socket.gethostname()
 AWS_REGION = "{{ grains['aws_region'] }}"
 AWS_ID = "{{ pillar['aws_id'] }}"
 AWS_KEY = "{{ pillar['aws_key'] }}"
@@ -41,7 +43,12 @@ def report_completion():
     ctrl_notify_q = sqs.get_queue("notify_%s" % CONTROLLER)
     msg = JSONMessage()
     msg.set_body(
-            {'invsrvup-user': USERID,
+            {'fp-up-user': USERID,
+             'fp-up-instance': INSTANCEID,
+             'fp-up-insloc': installer_location,
+             # TRANSITION: keep supporting old controllers for a while to make
+             # deployment less timing sensitive.
+             'invsrvup-user': USERID,
              'invsrvup-insloc': installer_location})
     ctrl_notify_q.write(msg)
     DEL_FLAG = '/home/lantern/deleted_sqs_message'

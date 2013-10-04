@@ -27,7 +27,7 @@ def trigger_launch():
         # 'feed-refrtok':
         #     file('../../secret/aranhoide.refresh_token').read().strip()})
         #XXX: put details of some test user in ../secret/lantern_aws.
-        #{'launch-invsrv-as': 'aranhoide@gmail.com',
+        #{'launch-fp-as': 'aranhoide@gmail.com',
          #'launch-refrtok': '<tokenless-donor>'})
         #file('../../secret/aranhoide.refresh_token').read().strip()})
     print "Sending request..."
