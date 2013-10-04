@@ -43,7 +43,7 @@ INSTANCE_NAME_LENGTH = 12
 
 
 def get_provider():
-    return 'do'
+    return 'aws'
 
 def get_master_ip(provider):
     return {'aws': PRIVATE_IP, 'do': PUBLIC_IP}[provider]
