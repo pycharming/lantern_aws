@@ -93,6 +93,11 @@ To run an arbitrary command (as root) in all fallback proxies:
 
 Tasks will be added here in a per need basis.
 
+###### Listing all fallback proxies
+```
+./ssh_cloudmaster.py 'sudo salt "fp-*" pillar.items user'
+```
+
 ###### Rebuilding wrappers
 
 The fallback proxies keep track of the completion status of the different subtasks by using flag files in the `/home/lantern` directory.  These are:
