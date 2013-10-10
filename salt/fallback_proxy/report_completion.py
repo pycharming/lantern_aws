@@ -35,7 +35,8 @@ def log_exceptions(f):
 
 @log_exceptions
 def report_completion():
-    installer_location = file('/home/lantern/uploaded_wrappers').read()
+    # DRY warning: upload_wrappers.py.
+    installer_location = file('/home/lantern/wrapper_location').read()
     sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
     logging.info("Reporting installers for %s are ready at %s."
                  % (clip_email(USERID), installer_location))

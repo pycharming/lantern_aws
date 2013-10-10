@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# Run this in the folder where the wrappers were built.
+
 import logging
 import os
 import random
@@ -12,6 +14,8 @@ from boto.s3.key import Key
 FOLDER_NAME_LENGTH = 8
 ALLOWED_FOLDER_CHARS = string.lowercase + string.digits
 
+# DRY warning: report_completion.py relies on this file name.
+WRAPPER_LOCATION_PATH = "/home/lantern/wrapper_location"
 BUCKET = "lantern-installers"
 # DRY warning: ../cloudmaster/cloudmaster.py
 AWS_ID = "{{ pillar['aws_id'] }}"
@@ -24,10 +28,18 @@ filename_re = re.compile(
 
 def upload_wrappers():
     conn = boto.connect_s3(**aws_creds)
-    bucket = conn.get_bucket(BUCKET)
-    folder = get_random_folder_name(bucket)
-    # Run this in the folder where the wrappers were built.
-    version = None
+    try:
+        # If we have already uploaded wrappers from this instance, use the same
+        # folder as before, so the links in old invite e-mails will point to the
+        # new wrappers.
+        loc = file(WRAPPER_LOCATION_PATH).read()
+        path, version = loc.split(",")
+        bucket_name, folder = path.split("/")
+        bucket = conn.get_bucket(bucket_name)
+    except IOError:
+        bucket = conn.get_bucket(BUCKET)
+        folder = get_random_folder_name(bucket)
+        version = None
     for filename in os.listdir("."):
         m = filename_re.match(filename)
         if m is None:
@@ -51,13 +63,15 @@ def upload_wrappers():
         if filename.endswith('.sh'):
             key.set_metadata('Content-Type', 'application/x-sh')
         logging.info("Uploading to %s" % key.name)
-        key.set_contents_from_filename(filename)
+        key.set_contents_from_filename(filename, replace=True)
         key.set_acl('public-read')
         # Delete successfully uploaded wrappers.
         os.unlink(filename)
-    file('/home/lantern/uploaded_wrappers', 'w').write(
-            # DRY warning: lantern-controller needs to understand this format.
+    # DRY warning: lantern-controller needs to understand this format.
+    file(WRAPPER_LOCATION_PATH, 'w').write(
             "%s/%s,%s" % (BUCKET, folder, newest_version))
+    # DRY warning: the salt scripts use this file name as a state flag.
+    file('/home/lantern/uploaded_wrappers', 'w').write('OK')
 
 def get_random_folder_name(bucket):
     while True:
