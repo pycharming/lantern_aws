@@ -22,16 +22,12 @@ def trigger_launch():
     for q in [req_q, notify_q]:
         q.set_message_class(JSONMessage)
     msg = JSONMessage()
-    msg.set_body({'shutdown-proxy-for': 'aranhoide@gmail.com'})
-        #{'feed-token-for': 'aranhoide@gmail.com',
-        # 'feed-refrtok':
-        #     file('../../secret/aranhoide.refresh_token').read().strip()})
-        #XXX: put details of some test user in ../secret/lantern_aws.
-        #{'launch-fp-as': 'aranhoide@gmail.com',
-         #'launch-refrtok': '<tokenless-donor>'})
-        #file('../../secret/aranhoide.refresh_token').read().strip()})
+    msg.set_body({'launch-fp-as': 'aranhoide@gmail.com',
+                  'launch-refrtok': '<redacted>',
+                  'launch-serial': 1})
     print "Sending request..."
     req_q.write(msg)
+    return  # Comment out to wait for response!
     print "Awaiting response..."
     while True:
         msg = notify_q.read()
