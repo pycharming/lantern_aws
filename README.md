@@ -93,9 +93,15 @@ To run an arbitrary command (as root) in all fallback proxies:
 
 Tasks will be added here in a per need basis.
 
-###### Listing all fallback proxies
+###### Listing the user as which each fallback proxy is running
 ```
-./ssh_cloudmaster.py 'sudo salt "fp-*" pillar.items user'
+./ssh_cloudmaster.py 'sudo salt "fp-*" pillar.get user'
+```
+
+###### List all proxies running as a given user
+
+```
+./ssh_cloudmaster.py 'sudo salt -I "user:adamfisk@smartfil.es" test.ping'
 ```
 
 ###### Rebuilding wrappers
