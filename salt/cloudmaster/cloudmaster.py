@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from base64 import b64encode
+from datetime import datetime
 from cPickle import dumps
 import json
 import logging
@@ -34,12 +35,11 @@ aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
 PROVIDERS = ['aws', 'do']
 REDIRECT = " >> /home/lantern/cloudmaster.log 2>&1 "
-INSTANCES_FILENAME = 'instance_names.yaml'
 
-# We expect all cloud providers to accept any alphanumerics for instance names.
-# We've had trouble with about every other character.
-INSTANCE_NAME_ALPHABET = string.letters + string.digits
-INSTANCE_NAME_LENGTH = 12
+# Most cloud providers will allow longer instance names, but we are using
+# this as the hostname in those machines too.  Hostnames longer than this
+# may be problematic if we want to make FQDN names out of them.
+MAX_INSTANCE_NAME_LENGTH = 64
 
 
 def get_provider():
@@ -81,13 +81,28 @@ def actually_check_q():
     # TRANSITION: support old controllers for a while to make deployment less
     # time sensitive.
     userid = d.get('launch-fp-as', d.get('launch-invsrv-as'))
-    launch_proxy(userid, d['launch-refrtok'], msg)
+    # Backwards compatibility: we'll be getting serial numbers starting from 1
+    # in the new fallback balancing scheme.  Just in case we get a new proxy
+    # launch request from an old controller, let's mark it as 0.
+    launch_proxy(userid, d.get('launch-serial', 0), d['launch-refrtok'], msg)
 
-def launch_proxy(email, refresh_token, msg):
+def launch_proxy(email, serialno, refresh_token, msg):
     logging.info("Got spawn request for '%s'" % clip_email(email))
-    instance_name = create_instance_name()
+    instance_name = create_instance_name(email, serialno)
     provider = get_provider()
     d = load_map()
+    for provider in PROVIDERS:
+        for entry in d[provider][:]:
+            entry_name, = entry.keys()
+            if entry_name.startswith(name_prefix(email, serialno)):
+                logging.info("Found match in map.  Shutting it down...")
+                d[provider].remove(entry)
+                os.system("sudo salt-cloud -y -d %s %s" % (entry_name, REDIRECT))
+                logging.info("Waiting for the instance loss to sink in...")
+                # The Digital Ocean salt-cloud implementation will still find the
+                # old instance if we try and recreate it too soon after deleting
+                # it.
+                time.sleep(20)
     d[provider].append(
         {instance_name:
             {'minion': {'master': get_master_ip(provider)},
@@ -128,36 +143,31 @@ def load_map():
 def save_map(d):
     yaml.dump(d, file(MAP_FILE, 'w'))
 
-def load_instances():
-    try:
-        ret = yaml.load(file(INSTANCES_FILENAME))
-        # Backwards compatibility; this used to be a dict.
-        if isinstance(ret, dict):
-            ret = ret.values()
-        return ret
-    except IOError:
-        return []
+def create_instance_name(email, serialno):
+    now = datetime.now()
+    return "%s%s-%s-%s" % (name_prefix(email, serialno),
+                           now.year, now.month, now.day)
 
-def save_instances(l):
-    yaml.dump(l, file(INSTANCES_FILENAME, 'w'))
+def find_instance_names(iterable, email, serialno):
+    return [name for name in iterable
+            if name.startswith(name_prefix(email, serialno))]
 
-def create_instance_name():
-    l = load_instances()
-    while True:
-        name = (FALLBACK_PROXY_PREFIX
-                + random_string(INSTANCE_NAME_ALPHABET, INSTANCE_NAME_LENGTH))
-        if name not in l:
-            break
-    l.append(name)
-    save_instances(l)
-    return name
+def name_prefix(email, serialno):
+    sanitized_email = email.replace('@', '-at-').replace('.', '-dot-')
+    # Since '-' is legal in e-mail usernames and domain names, and although
+    # I don't imagine we'd approve problematic e-mails, let's be somewhat
+    # paranoid and add some hash of the unsanitized e-mail to avoid clashes.
+    sanitized_email += "-" + hex(hash(email))[-4:]
+    # e-mail addresses can be up to 254 characters long!
+    max_email_length = MAX_INSTANCE_NAME_LENGTH - len("-##-YYYY-MM-DD")
+    if len(sanitized_email) > max_email_length:
+        sanitized_email = "%x" % hash(email)
+    return "fp-%s-%s-" % (sanitized_email, serialno)
 
 def clip_email(email):
     at_index = email.find('@')
     return '%s...%s' % (email[:1], email[at_index-2:at_index])
 
-def random_string(alphabet, length):
-    return "".join([random.choice(alphabet) for _ in xrange(length)])
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
