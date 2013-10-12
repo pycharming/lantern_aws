@@ -13,7 +13,7 @@ from boto.sqs.jsonmessage import JSONMessage
 
 # DRY warning: ../cloudmaster/cloudmaster.py
 USERID = "{{ pillar['user'] }}"
-INSTANCEID = socket.gethostname()
+INSTANCEID = "{{ pillar['instance_id'] }}"
 AWS_REGION = "{{ grains['aws_region'] }}"
 AWS_ID = "{{ pillar['aws_id'] }}"
 AWS_KEY = "{{ pillar['aws_key'] }}"

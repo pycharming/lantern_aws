@@ -123,6 +123,7 @@ def launch_proxy(email, serialno, refresh_token, msg):
 def set_pillar(instance_name, email, refresh_token, msg):
     filename = '/home/lantern/%s.sls' % instance_name
     yaml.dump({
+               'instance_id': instance_name,
                # DRY warning:
                # lantern_aws/salt/fallback_proxy/report_completion.py
                'user': email,
