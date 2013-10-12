@@ -24,6 +24,10 @@ hostname -F /etc/hostname
 # 'salt' alias is so the minion will find the local master.
 sed -i "s/^127.0.0.1.*$/127.0.0.1 $HOSTNAME localhost salt/" /etc/hosts
 
+apt-get install -y python-software-properties
+# This is necessary to get a version of python-zmq linked against libzmq3,
+# which in turn is needed for stability of long-term connections.
+add-apt-repository -y ppa:saltstack/salt
 apt-get update -y > >(tee -a $LOG) 2>&1
 #apt-get upgrade -y > >(tee -a $LOG) 2>&1
 apt-get install python python-support python-pkg-resources python-crypto python-jinja2 python-m2crypto python-yaml python-zmq dctrl-tools msgpack-python python-markupsafe python-pip debconf-utils -y -o DPkg::Options::=--force-confold > >(tee -a $LOG) 2>&1
