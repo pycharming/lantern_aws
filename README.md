@@ -106,9 +106,13 @@ These may need further looking into.  It might be a good idea to run this before
 ```
 
 ###### List all proxies running as a given user
-
 ```
 ./ssh_cloudmaster.py 'sudo salt -I "user:adamfisk@smartfil.es" test.ping'
+```
+
+###### Lists the user for a given known fallback proxy
+```
+salt 'instance_name' pillar.get user
 ```
 
 ###### Rebuilding wrappers
