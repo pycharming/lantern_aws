@@ -6,4 +6,4 @@ aws:
 do:
     provider: do
     image: "Ubuntu 12.04 x64"
-    size: 1GB
+    size: 512MB
