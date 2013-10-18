@@ -18,9 +18,8 @@ export PATH=/bin:/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 DESC="Lantern censorship circunvention tool"
 NAME=lantern
 LANTERN_DIR=/home/lantern
-DAEMON=/opt/lantern/jre/bin/java
-JAVA_ARGS=" -Xmx350m -Dinstall4j.jvmDir=/opt/lantern/jre -Dexe4j.moduleName=/opt/lantern/lantern -XX:+HeapDumpOnOutOfMemoryError -Djna.nosys=true -Dinstall4j.launcherId=580 -Dinstall4j.swt=true -Di4j.vmov=true -Di4j.vmov=true -Di4j.vmov=true -Di4j.vmov=true -Di4j.vmov=true -Di4j.vpt=true -classpath /opt/lantern/.install4j/i4jruntime.jar:/opt/lantern/lantern.jar com.install4j.runtime.launcher.Launcher launch org.lantern.Launcher true false /opt/lantern/lantern-stderr.log /opt/lantern/lantern-stdout.log false true false  true true 0 0  20 20 Arial 0,0,0 8 500 version 1.0.0-beta5 20 40 Arial 0,0,0 8 500 -1 "
-DAEMON_ARGS="$JAVA_ARGS --disable-ui --force-give --oauth2-client-secrets-file $LANTERN_DIR/client_secrets.json --oauth2-user-credentials-file $LANTERN_DIR/user_credentials.json --server-port {{ grains['proxy_port'] }} --as-fallback-proxy --keystore $LANTERN_DIR/littleproxy_keystore.jks --controller-id {{ grains['controller'] }} --instance-id {{ pillar['instance_id'] }} --report-ip {{ grains.get('ec2_public-ipv4', None) or grains['ipv4'][1] }}"
+DAEMON=/opt/lantern/lantern
+DAEMON_ARGS="--disable-ui --force-give --oauth2-client-secrets-file $LANTERN_DIR/client_secrets.json --oauth2-user-credentials-file $LANTERN_DIR/user_credentials.json --server-port {{ grains['proxy_port'] }} --as-fallback-proxy --keystore $LANTERN_DIR/littleproxy_keystore.jks --controller-id {{ grains['controller'] }} --instance-id {{ pillar['instance_id'] }} --report-ip {{ grains.get('ec2_public-ipv4', None) or grains['ipv4'][1] }}"
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
