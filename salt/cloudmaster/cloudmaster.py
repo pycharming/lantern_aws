@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from base64 import b64encode
+from contextlib import contextmanager
 from datetime import datetime
 from cPickle import dumps
 import json
@@ -81,44 +82,60 @@ def actually_check_q():
     # TRANSITION: support old controllers for a while to make deployment less
     # time sensitive.
     userid = d.get('launch-fp-as', d.get('launch-invsrv-as'))
-    # Backwards compatibility: we'll be getting serial numbers starting from 1
-    # in the new fallback balancing scheme.  Just in case we get a new proxy
-    # launch request from an old controller, let's mark it as 0.
-    launch_proxy(userid, d.get('launch-serial', 0), d['launch-refrtok'], msg)
+    if userid:
+        # Backwards compatibility: we'll be getting serial numbers starting from 1
+        # in the new fallback balancing scheme.  Just in case we get a new proxy
+        # launch request from an old controller, let's mark it as 0.
+        launch_proxy(userid, d.get('launch-serial', 0), d['launch-refrtok'], msg)
+    elif 'shutdown-fp' in d:
+        instance_id = d['shutdown-fp']
+        logging.info("Got shutdown request for %s" % instance_id)
+        nproxies = shutdown_proxy(instance_id)
+        if nproxies != 1:
+            logging.error("Expected one proxy shut down, got %s" % nproxies)
+        ctrl_req_q.delete_message(msg)
+    else:
+        logging.error("I don't understand this message: %s" % d)
 
 def launch_proxy(email, serialno, refresh_token, msg):
     logging.info("Got spawn request for '%s'" % clip_email(email))
     instance_name = create_instance_name(email, serialno)
     provider = get_provider()
-    d = load_map()
-    for provider in PROVIDERS:
-        for entry in d[provider][:]:
-            entry_name, = entry.keys()
-            if entry_name.startswith(name_prefix(email, serialno)):
-                logging.info("Found match in map.  Shutting it down...")
-                d[provider].remove(entry)
-                os.system("sudo salt-cloud -y -d %s %s" % (entry_name, REDIRECT))
-                logging.info("Waiting for the instance loss to sink in...")
-                # The Digital Ocean salt-cloud implementation will still find the
-                # old instance if we try and recreate it too soon after deleting
-                # it.
-                time.sleep(20)
-    d[provider].append(
-        {instance_name:
-            {'minion': {'master': get_master_ip(provider)},
-             'grains': {'saltversion': SALT_VERSION,
-                        'aws_region': AWS_REGION,
-                        'controller': CONTROLLER,
-                        'proxy_port': random.randint(1024, 61024),
-                        'provider': provider,
-                        'shell': '/bin/bash'}}})
-    save_map(d)
+    if shutdown_proxy(name_prefix(email, serialno)):
+        # The Digital Ocean salt-cloud implementation will still find the
+        # old instance if we try and recreate it too soon after deleting
+        # it.
+        logging.info("Waiting for the instance loss to sink in...")
+        time.sleep(20)
+    with proxy_map() as d:
+        d[provider].append(
+            {instance_name:
+                {'minion': {'master': get_master_ip(provider)},
+                 'grains': {'saltversion': SALT_VERSION,
+                            'aws_region': AWS_REGION,
+                            'controller': CONTROLLER,
+                            'proxy_port': random.randint(1024, 61024),
+                            'provider': provider,
+                            'shell': '/bin/bash'}}})
     set_pillar(instance_name, email, refresh_token, msg)
     #XXX: ugly, but we're already in sin running all this as a user with
     # passwordless sudo.  TODO: move this to a command with setuid or give
     # this user write access to /srv/pillar and to salt(-cloud) commands.
     os.system("sudo salt-cloud -y -m %s %s" % (MAP_FILE, REDIRECT))
     os.system("sudo salt %s state.highstate %s" % (instance_name, REDIRECT))
+
+def shutdown_proxy(prefix):
+    count = 0
+    with proxy_map() as d:
+        for provider in PROVIDERS:
+            for entry in d[provider][:]:
+                entry_name, = entry.keys()
+                if entry_name.startswith(prefix):
+                    logging.info("Found match in map.  Shutting it down...")
+                    d[provider].remove(entry)
+                    os.system("sudo salt-cloud -y -d %s %s" % (entry_name, REDIRECT))
+                    count += 1
+    return count
 
 def set_pillar(instance_name, email, refresh_token, msg):
     filename = '/home/lantern/%s.sls' % instance_name
@@ -134,6 +151,12 @@ def set_pillar(instance_name, email, refresh_token, msg):
     # passwordless sudo.  TODO: move this to a command with setuid or give
     # this user write access to /srv/pillar and to salt(-cloud) commands.
     os.system("sudo mv %s /srv/pillar/" % filename)
+
+@contextmanager
+def proxy_map():
+    d = load_map()
+    yield d
+    save_map(d)
 
 def load_map():
     if os.path.exists(MAP_FILE):
@@ -173,5 +196,5 @@ def clip_email(email):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         filename=os.path.join(here, 'cloudmaster.log'),
-                        format='%(levelname)-8s %(message)s')
+                        format='%(asctime)s %(levelname)-8s %(message)s')
     check_q()
