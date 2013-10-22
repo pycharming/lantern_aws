@@ -15,10 +15,13 @@ from boto.sqs.jsonmessage import JSONMessage
 USERID = "{{ pillar['user'] }}"
 INSTANCEID = "{{ pillar['instance_id'] }}"
 AWS_REGION = "{{ grains['aws_region'] }}"
-AWS_ID = "{{ pillar['aws_id'] }}"
-AWS_KEY = "{{ pillar['aws_key'] }}"
 CONTROLLER = "{{ grains['controller'] }}"
 SQSMSG = "{{ pillar['sqs_msg'] }}"
+AWS_ID = "{{ pillar['aws_id'] }}"
+AWS_KEY = "{{ pillar['aws_key'] }}"
+IP = "{{ grains.get('ec2_public-ipv4', None) or grains['ipv4'][1] }}"
+PORT = "{{ grains['proxy_port'] }}"
+
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
 
@@ -47,6 +50,8 @@ def report_completion():
             {'fp-up-user': USERID,
              'fp-up-instance': INSTANCEID,
              'fp-up-insloc': installer_location,
+             'fp-up-ip': IP,
+             'fp-up-port': PORT,
              # TRANSITION: keep supporting old controllers for a while to make
              # deployment less timing sensitive.
              'invsrvup-user': USERID,
