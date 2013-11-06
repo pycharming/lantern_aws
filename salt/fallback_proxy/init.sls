@@ -10,7 +10,8 @@ nsis:
              jre_folder,
              '/home/lantern/repo/install/common'] %}
 
-{% set txtfiles=[
+# To filter through jinja.
+{% set template_files=[
     ('/home/lantern/', 'report_completion.py', 700),
     ('/home/lantern/', 'user_credentials.json', 400),
     ('/home/lantern/', 'client_secrets.json', 400),
@@ -21,8 +22,9 @@ nsis:
     ('/home/lantern/repo/install/wrapper/', 'dpkg.bash', 500),
     ('/home/lantern/repo/install/wrapper/', 'fallback.json', 400)] %}
 
-# The only difference is jinja doesn't like these.
-{% set binaries=[
+# To send as is.
+{% set literal_files=[
+    ('/home/lantern/', 'installer_landing.html', 400),
     ('/home/lantern/', 'littleproxy_keystore.jks', 400),
     ('/home/lantern/secure/', 'bns_cert.p12', 400),
     ('/home/lantern/secure/', 'bns-osx-cert-developer-id-application.p12',
@@ -64,7 +66,7 @@ openjdk-6-jre:
         - makedirs: yes
 {% endfor %}
 
-{% for dir,filename,mode in txtfiles %}
+{% for dir,filename,mode in template_files %}
 {{ dir+filename }}:
     file.managed:
         - source: salt://fallback_proxy/{{ filename }}
@@ -76,7 +78,7 @@ openjdk-6-jre:
             - file: /home/lantern/repo/install/common
 {% endfor %}
 
-{% for dir,filename,mode in binaries %}
+{% for dir,filename,mode in literal_files %}
 {{ dir+filename }}:
     file.managed:
         - source: salt://fallback_proxy/{{ filename }}
@@ -120,10 +122,10 @@ fallback-proxy-dirs-and-files:
             {% for dir in dirs %}
             - file: {{ dir }}
             {% endfor %}
-            {% for dir,filename,mode in txtfiles %}
+            {% for dir,filename,mode in template_files %}
             - file: {{ dir+filename }}
             {% endfor %}
-            {% for dir,filename,mode in binaries %}
+            {% for dir,filename,mode in literal_files %}
             - file: {{ dir+filename }}
             {% endfor %}
 
