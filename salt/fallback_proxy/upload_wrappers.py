@@ -25,7 +25,13 @@ aws_creds = {'aws_access_key_id': AWS_ID,
 filename_re = re.compile(
     r"lantern-net-installer_([a-z]+)_(.*)\.[a-z]+")
 landing_template = file("/home/lantern/installer_landing.html").read()
-
+# Keyed by platform as it appears in the wrapper filename.
+content_types = {'windows': 'application/octet-stream',
+                 'macos': 'application/x-apple-diskimage',
+                 # By default, S3 will give .sh files a text/x-sh MIME type,
+                 # which will cause them to be displayed in the browser, not
+                 # downloaded.
+                 'unix': 'application/x-sh'}
 
 def upload_wrappers():
     conn = boto.connect_s3(**aws_creds)
@@ -67,10 +73,7 @@ def upload_wrappers():
         s3_wrapper_filename = filename.replace("_" + version, '')
         wrapper_key.name = "%s/%s" % (folder, s3_wrapper_filename)
         wrapper_key.storage_class = 'REDUCED_REDUNDANCY'
-        # By default, .sh files will be given a text/x-sh MIME type, which
-        # will cause them to be displayed in the browser, not downloaded.
-        if filename.endswith('.sh'):
-            wrapper_key.set_metadata('Content-Type', 'application/x-sh')
+        wrapper_key.set_metadata('Content-Type', content_types[platform])
         wrapper_key.set_metadata('Content-Disposition', 'attachment')
         logging.info("Uploading wrapper to %s" % wrapper_key.name)
         wrapper_key.set_contents_from_filename(filename, replace=True)
