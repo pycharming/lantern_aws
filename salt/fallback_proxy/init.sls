@@ -140,6 +140,7 @@ build-wrappers:
             - cmd: fallback-proxy-dirs-and-files
             - cmd: install4j
             - pkg: openjdk-6-jre
+            - cmd: nsis-inetc-plugin 
             {% for filename in jre_files %}
             - cmd: download-{{ filename }}
             {% endfor %}
@@ -207,3 +208,16 @@ report-completion:
             # and thus I can unpickle and delete the SQS message that
             # triggered the launching of this instance.
             - pip: boto==2.9.5
+            
+zip:
+    pkg.installed
+    
+nsis-inetc-plugin:
+    cmd.run:
+        - name: 'wget -qct 3 https://s3.amazonaws.com/lantern-aws/Inetc.zip && unzip -u Inetc.zip -d /usr/share/nsis/'
+        - unless: 'test -e /tmp/Inetc.zip'
+        - user: root
+        - group: root
+        - cwd: '/tmp'
+        - require:
+            - pkg: zip
