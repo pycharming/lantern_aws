@@ -44,7 +44,10 @@ def check_lantern():
         pid = int(pidstr)
     except ValueError:
         return "invalid Lantern pid: %r" % pidstr
-    parent = psutil.Process(pid)
+    try:
+        parent = psutil.Process(pid)
+    except psutil.NoSuchProcess:
+        return "no process for pid: %s" % pid
     if parent.name != 'lantern':
         return "Got wrong process with Lantern's pid: %r" % parent.name
     if not parent.is_running():
