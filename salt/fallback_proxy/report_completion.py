@@ -4,7 +4,6 @@ from base64 import b64decode
 from cPickle import loads
 import logging
 import os.path
-import socket
 from functools import wraps
 
 import boto.sqs
