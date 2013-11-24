@@ -8,8 +8,11 @@ import boto.sqs
 from boto.sqs.jsonmessage import JSONMessage
 
 
-# XXX: unify with lantern.init through a jinja template.
 PIDFILE = "{{ lantern_pid }}"
+USERID = "{{ pillar['user'] }}"
+INSTANCEID = "{{ pillar['instance_id'] }}"
+IP = "{{ grains.get('ec2_public-ipv4', None) or grains['ipv4'][1] }}"
+PORT = "{{ grains['proxy_port'] }}"
 AWS_REGION = "{{ grains['aws_region'] }}"
 CONTROLLER = "{{ grains['controller'] }}"
 AWS_ID = "{{ pillar['aws_id'] }}"
@@ -24,7 +27,7 @@ def run():
     if error:
         logging.error(error)
         restart_lantern()
-        report_error(error)
+        report_error_to_controller(error)
 
 def check_lantern():
     """
@@ -71,11 +74,17 @@ def restart_lantern():
     os.system("service lantern stop")
     os.system("service lantern start")
 
-def report_error(error):
+def report_error_to_controller(error):
     sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
     ctrl_notify_q = sqs.get_queue("notify_%s" % CONTROLLER)
     msg = JSONMessage()
-    msg.set_body({'fp-alarm': error, 'send-email': True})
+    # DRY: SQSChecker at lantern-controller.
+    msg.set_body({'fp-alarm': error,
+                  'user': USERID,
+                  'instance-id': INSTANCEID,
+                  'ip': IP,
+                  'port': PORT,
+                  'send-email': True})
     ctrl_notify_q.write(msg)
 
 
