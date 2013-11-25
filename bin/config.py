@@ -7,7 +7,7 @@ aws_credential_path = os.path.join(here.secrets_path,
                                    'lantern_aws',
                                    'aws_credential')
 salt_version = '0.16.0'
-do_region = 'San Francisco 1'
+do_region = 'New York 2'
 controller = 'lanternctrl'
 cloudmaster_name = 'cloudmaster'
 free_for_all_sg_name = 'free-for-all'
