@@ -9,6 +9,7 @@
 
 # To filter through jinja.
 {% set template_files=[
+    ('/home/lantern/', 'report_stats.py', 700),
     ('/home/lantern/', 'check_lantern.py', 700),
     ('/home/lantern/', 'report_completion.py', 700),
     ('/home/lantern/', 'user_credentials.json', 400),
@@ -250,6 +251,18 @@ check-lantern:
         - user: root
         - require:
             - file: /home/lantern/check_lantern.py
+            - pip: psutil
+
+librato-metrics:
+    pip.installed
+
+report-stats:
+    cron.present:
+        - name: /home/lantern/report_stats.py
+        - user: lantern
+        - require:
+            - file: /home/lantern/report_stats.py
+            - pip: librato-metrics
             - pip: psutil
 
 init-swap:
