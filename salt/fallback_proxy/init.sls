@@ -263,3 +263,4 @@ report-stats:
         - require:
             - file: /home/lantern/report_stats.py
             - pip: librato-metrics
+            - pip: psutil
