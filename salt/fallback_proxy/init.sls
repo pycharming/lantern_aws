@@ -252,6 +252,7 @@ check-lantern:
         - require:
             - file: /home/lantern/check_lantern.py
             - pip: psutil
+            - service: lantern
 
 librato-metrics:
     pip.installed
@@ -264,6 +265,7 @@ report-stats:
             - file: /home/lantern/report_stats.py
             - pip: librato-metrics
             - pip: psutil
+            - service: lantern
 
 init-swap:
     cmd.script:
