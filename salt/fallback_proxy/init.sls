@@ -264,3 +264,10 @@ report-stats:
             - file: /home/lantern/report_stats.py
             - pip: librato-metrics
             - pip: psutil
+
+init-swap:
+    cmd.script:
+        - source: salt://fallback_proxy/make-swap.bash
+        - unless: "[ $(swapon -s | wc -l) -gt 1 ]"
+        - user: root
+        - group: root
