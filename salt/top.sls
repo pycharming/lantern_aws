@@ -2,6 +2,7 @@ base:
     '*':
         - salt_minion
         - base_prereqs
+        - ulimits
         - pip
         - security
         - lantern_administrators
