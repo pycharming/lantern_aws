@@ -19,7 +19,7 @@ def run():
         java_proc, = parent_proc.get_children()
         meminfo = java_proc.get_ext_memory_info()
         process_memory = meminfo.rss - meminfo.shared
-    except psutil.NoSuchProcess:
+    except (IOError, ValueError, psutil.NoSuchProcess):
         logging.warn("Lantern not running; reporting zero stats.")
         process_memory = 0
     conn = librato.connect(LIBRATO_USERNAME, LIBRATO_TOKEN)
