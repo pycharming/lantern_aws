@@ -19,12 +19,25 @@ def run():
         java_proc, = parent_proc.get_children()
         meminfo = java_proc.get_ext_memory_info()
         process_memory = meminfo.rss - meminfo.shared
+        connections = len(java_proc.get_connections(kind='inet'))
+        io = java_proc.get_io_counters()
+        io_ops = io.read_count + io.write_count
+        io_bytes = io.read_bytes + io.write_bytes
     except (IOError, ValueError, psutil.NoSuchProcess):
         logging.warn("Lantern not running; reporting zero stats.")
-        process_memory = 0
+        process_memory = connections = io_ops = io_bytes = 0
+    net = psutil.net_io_counters()
     conn = librato.connect(LIBRATO_USERNAME, LIBRATO_TOKEN)
     q = conn.new_queue()
-    q.add("process_memory", process_memory, source=SOURCE)
+    for k, v in [('process_memory', process_memory),
+                 ('process_connections', connections),
+                 ('process_io_ops', io_ops),
+                 ('process_io_bytes', io_bytes),
+                 ('bytes_sent', net.bytes_sent),
+                 ('bytes_received', net.bytes_recv),
+                 ('net_errors', net.errin + net.errout),
+                 ('net_drops', net.dropin + net.dropout)]:
+        q.add(k, v, source=SOURCE)
     q.submit()
 
 
