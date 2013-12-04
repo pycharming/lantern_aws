@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import logging
+import subprocess
 
 import librato
 import psutil
@@ -36,10 +37,27 @@ def run():
                  ('bytes_sent', net.bytes_sent),
                  ('bytes_received', net.bytes_recv),
                  ('net_errors', net.errin + net.errout),
-                 ('net_drops', net.dropin + net.dropout)]:
+                 ('net_drops', net.dropin + net.dropout),
+                 ('page_outs', get_swapouts())]:
         q.add(k, v, source=SOURCE)
     q.submit()
 
+# vmstat will generate a report like:
+#
+#procs -----------memory---------- ---swap-- -----io---- -system-- ----cpu----
+# r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa
+# 3  0      0 4693220 200008 1207540    0    0    15    25  381  553 34  6 61  0
+# 1  0      0 4690560 200016 1207380    0    0     0    32  962 1406 26  1 73  0
+#
+# The next-to-last line is an average since system startup.  We are interested
+# in the last one, which are the results in our sampling period.
+def get_swapouts():
+    lines = [line.split()
+             for line in subprocess.check_output(["vmstat", "10", "2"]).split("\n")
+             # The report is \n terminated; drop the latest blank line.
+             if line.strip()]
+    so_index = lines[1].index("so")
+    return int(lines[-1][so_index])
 
 if __name__ == '__main__':
     # Use WARN level because librato is so chatty.
