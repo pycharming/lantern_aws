@@ -12,32 +12,48 @@ import config
 import util
 
 
-def trigger_launch():
+def launch(email, serial, refresh_token="bogus_refresh_token"):
+    send_message({'launch-fp-as': email,
+                  'launch-refrtok': refresh_token,
+                  'launch-serial': serial})
+
+def kill(email, serial):
+    send_message({'shutdown-fp': name_prefix(email, serial)})
+
+def send_message(d):
     aws_id, aws_key = util.read_aws_credential()
     aws_creds = {'aws_access_key_id': aws_id,
                  'aws_secret_access_key': aws_key}
     sqs = boto.sqs.connect_to_region(config.aws_region, **aws_creds)
     req_q = sqs.get_queue("%s_request" % config.controller)
-    notify_q = sqs.get_queue("notify_%s" % config.controller)
-    for q in [req_q, notify_q]:
-        q.set_message_class(JSONMessage)
+    req_q.set_message_class(JSONMessage)
     msg = JSONMessage()
-    msg.set_body({'launch-fp-as': 'aranhoide@gmail.com',
-                  'launch-refrtok': '<redacted>',
-                  'launch-serial': 1})
+    msg.set_body(d)
     print "Sending request..."
     req_q.write(msg)
-    return  # Comment out to wait for response!
-    print "Awaiting response..."
-    while True:
-        msg = notify_q.read()
-        if msg is not None:
-            print "Got message: %r" % msg.get_body()
-            notify_q.delete_message(msg)
-            return
-        sys.stdout.write(".")
-        sys.stdout.flush()
+    print "Sent."
 
+#DRY: Logic copied and pasted from ../salt/cloudmaster/cloudmaster.py
+def name_prefix(email, serialno):
+    sanitized_email = email.replace('@', '-at-').replace('.', '-dot-')
+    # Since '-' is legal in e-mail usernames and domain names, and although
+    # I don't imagine we'd approve problematic e-mails, let's be somewhat
+    # paranoid and add some hash of the unsanitized e-mail to avoid clashes.
+    sanitized_email += "-" + hex(hash(email))[-4:]
+    return "fp-%s-%s-" % (sanitized_email, serialno)
+
+def print_usage():
+    print "Usage: %s (launch|kill) <email> <serial> [<refresh token>]" % sys.argv[0]
 
 if __name__ == '__main__':
-    trigger_launch()
+    try:
+        cmd, email, serial = sys.argv[1:4]
+        serial = int(serial)
+        if cmd == 'launch':
+            launch(email, serial, *sys.argv[4:])
+        elif cmd == 'kill':
+            kill(email, serial)
+        else:
+            print_usage()
+    except ValueError:
+        print_usage()
