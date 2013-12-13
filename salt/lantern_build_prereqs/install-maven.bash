@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-wget -q https://d3g17h6tzzjzlu.cloudfront.net/apache-maven-3.0.5-bin.tar.gz
-tar zxf apache-maven-3.0.5-bin.tar.gz
-rm apache-maven-3.0.5-bin.tar.gz
-mv apache-maven-3.0.5 /usr/local/
-echo 'export PATH=/usr/local/apache-maven-3.0.5/bin:$PATH' >> /etc/profile
-
+VERSION=3.1.1
+wget -q https://dqkrsoj09lstx.cloudfront.net/apache-maven-${VERSION}-bin.tar.gz
+tar zxf apache-maven-${VERSION}-bin.tar.gz
+rm apache-maven-${VERSION}-bin.tar.gz
+mv apache-maven-${VERSION} /usr/local/
+echo "export PATH=/usr/local/apache-maven-${VERSION}/bin:\$PATH" >> /etc/profile
+hash -r

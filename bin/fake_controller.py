@@ -12,9 +12,13 @@ import config
 import util
 
 
-def launch(email, serial, refresh_token="bogus_refresh_token"):
+def launch(email,
+           serial,
+           refspec='fallback',
+           refresh_token="bogus_refresh_token"):
     send_message({'launch-fp-as': email,
                   'launch-refrtok': refresh_token,
+                  'launch-refspec': refspec,
                   'launch-serial': serial})
 
 def kill(email, serial):
@@ -43,7 +47,7 @@ def name_prefix(email, serialno):
     return "fp-%s-%s-" % (sanitized_email, serialno)
 
 def print_usage():
-    print "Usage: %s (launch|kill) <email> <serial> [<refresh token>]" % sys.argv[0]
+    print "Usage: %s (launch|kill) <email> <serial> [<refspec>='fallback' [<refresh token>='bogus']]" % sys.argv[0]
 
 if __name__ == '__main__':
     try:

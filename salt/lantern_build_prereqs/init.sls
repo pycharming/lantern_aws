@@ -1,9 +1,14 @@
+openjdk-6-jre:
+    pkg.removed
+
 java-prereqs:
     cmd.script:
         - source: salt://lantern_build_prereqs/install-java-prereqs.bash
         - unless: "which java"
         - user: root
         - cwd: /tmp
+        - require:
+            - pkg: openjdk-6-jre
     file.append:
         - name: /etc/profile
         - text: "export JAVA_HOME=/usr/lib/jvm/java-6-sun"

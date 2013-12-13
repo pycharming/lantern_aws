@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 
-BUCKET={{ pillar['installer_bucket'] }}
-FILENAME={{ pillar['installer_filename'] }}
+LOG=$(dirname $0)/install-lantern.log
 
 set -e
 
-wget -cq https://s3.amazonaws.com/${BUCKET}/${FILENAME}
-dpkg -i $FILENAME
-rm $FILENAME
-# Patch java args to claim 350MB.
-sed -i 's,"-XX:+HeapDumpOnOutOfMemoryError","-Xmx350m" "-XX:+HeapDumpOnOutOfMemoryError",' /opt/lantern/lantern
+[ ! -e lantern-repo ] || rm -rf lantern-repo
+git clone --depth 1 git://github.com/getlantern/lantern.git \
+                                lantern-repo > $LOG 2>&1
+cd lantern-repo
+git checkout {{ pillar['refspec'] }} >> $LOG 2>&1
+git submodule update --init >> $LOG 2>&1
+./install.bash >> $LOG 2>&1
 echo
 echo 'changed=yes'

@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
-git clone https://github.com/flexiondotorg/oab-java6.git
-cd oab-java6
-./oab-java.sh
+FILENAME=oab-java.sh
+
+set -e
+
+[ ! -e $FILENAME ] || rm $FILENAME
+wget -q https://dqkrsoj09lstx.cloudfront.net/$FILENAME
+chmod 700 $FILENAME
+./$FILENAME

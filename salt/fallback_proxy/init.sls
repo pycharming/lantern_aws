@@ -2,10 +2,10 @@
 
 # Keep install/common as the last one; it's being checked to make sure all
 # folders have been initialized.
-{% set dirs=['/home/lantern/repo',
-             '/home/lantern/repo/install',
+{% set dirs=['/home/lantern/wrapper-repo',
+             '/home/lantern/wrapper-repo/install',
              jre_folder,
-             '/home/lantern/repo/install/common'] %}
+             '/home/lantern/wrapper-repo/install/common'] %}
 
 # To filter through jinja.
 {% set template_files=[
@@ -14,12 +14,12 @@
     ('/home/lantern/', 'report_completion.py', 700),
     ('/home/lantern/', 'user_credentials.json', 400),
     ('/home/lantern/', 'client_secrets.json', 400),
-    ('/home/lantern/repo/install/win/', 'lantern.nsi', 400),
+    ('/home/lantern/wrapper-repo/install/win/', 'lantern.nsi', 400),
     ('/home/lantern/secure/', 'env-vars.txt', 400),
-    ('/home/lantern/repo/', 'buildInstallerWrappers.bash', 500),
-    ('/home/lantern/repo/install/wrapper/', 'wrapper.install4j', 500),
-    ('/home/lantern/repo/install/wrapper/', 'dpkg.bash', 500),
-    ('/home/lantern/repo/install/wrapper/', 'fallback.json', 400)] %}
+    ('/home/lantern/wrapper-repo/', 'buildInstallerWrappers.bash', 500),
+    ('/home/lantern/wrapper-repo/install/wrapper/', 'wrapper.install4j', 500),
+    ('/home/lantern/wrapper-repo/install/wrapper/', 'dpkg.bash', 500),
+    ('/home/lantern/wrapper-repo/install/wrapper/', 'fallback.json', 400)] %}
 
 # To send as is.
 {% set literal_files=[
@@ -28,16 +28,16 @@
     ('/home/lantern/secure/', 'bns_cert.p12', 400),
     ('/home/lantern/secure/', 'bns-osx-cert-developer-id-application.p12',
      400),
-    ('/home/lantern/repo/install/win/', 'osslsigncode', 700),
-    ('/home/lantern/repo/lantern-ui/app/img/', 'favicon.ico', 400),
-    ('/home/lantern/repo/install/common/', 'lantern.icns', 400),
-    ('/home/lantern/repo/install/common/', '128on.png', 400),
-    ('/home/lantern/repo/install/common/', '16off.png', 400),
-    ('/home/lantern/repo/install/common/', '16on.png', 400),
-    ('/home/lantern/repo/install/common/', '32off.png', 400),
-    ('/home/lantern/repo/install/common/', '32on.png', 400),
-    ('/home/lantern/repo/install/wrapper/', 'InstallDownloader.class', 400),
-    ('/home/lantern/repo/install/common/', '64on.png', 400)] %}
+    ('/home/lantern/wrapper-repo/install/win/', 'osslsigncode', 700),
+    ('/home/lantern/wrapper-repo/lantern-ui/app/img/', 'favicon.ico', 400),
+    ('/home/lantern/wrapper-repo/install/common/', 'lantern.icns', 400),
+    ('/home/lantern/wrapper-repo/install/common/', '128on.png', 400),
+    ('/home/lantern/wrapper-repo/install/common/', '16off.png', 400),
+    ('/home/lantern/wrapper-repo/install/common/', '16on.png', 400),
+    ('/home/lantern/wrapper-repo/install/common/', '32off.png', 400),
+    ('/home/lantern/wrapper-repo/install/common/', '32on.png', 400),
+    ('/home/lantern/wrapper-repo/install/wrapper/', 'InstallDownloader.class', 400),
+    ('/home/lantern/wrapper-repo/install/common/', '64on.png', 400)] %}
 
 {% set jre_files=['windows-x86-jre.tar.gz',
                   'macosx-amd64-jre.tar.gz',
@@ -49,9 +49,6 @@
 include:
     - install4j
     - boto
-
-openjdk-6-jre:
-    pkg.installed
 
 /home/lantern/secure:
     file.directory:
@@ -79,7 +76,7 @@ openjdk-6-jre:
         - group: lantern
         - mode: {{ mode }}
         - require:
-            - file: /home/lantern/repo/install/common
+            - file: /home/lantern/wrapper-repo/install/common
 {% endfor %}
 
 {% for dir,filename,mode in literal_files %}
@@ -90,7 +87,7 @@ openjdk-6-jre:
         - group: lantern
         - mode: {{ mode }}
         - require:
-            - file: /home/lantern/repo/install/common
+            - file: /home/lantern/wrapper-repo/install/common
 {% endfor %}
 
 
@@ -110,10 +107,10 @@ install-lantern:
     cmd.script:
         - source: salt://fallback_proxy/install-lantern.bash
         - template: jinja
-        - unless: "which lantern"
-        - user: root
-        - group: root
-        - cwd: /root
+        - unless: "[ \"$(find /home/lantern/lantern-repo/target -maxdepth 1 -name 'lantern-*.jar')\" ]"
+        - user: lantern
+        - group: lantern
+        - cwd: /home/lantern/
         - stateful: yes
 
 fallback-proxy-dirs-and-files:
@@ -140,13 +137,12 @@ build-wrappers:
     cmd.script:
         - source: salt://fallback_proxy/build-wrappers.bash
         - user: lantern
-        - cwd: /home/lantern/repo
+        - cwd: /home/lantern/wrapper-repo
         - unless: "[ -e /home/lantern/wrappers_built ]"
         - require:
             - pkg: nsis
             - cmd: fallback-proxy-dirs-and-files
             - cmd: install4j
-            - pkg: openjdk-6-jre
             - cmd: nsis-inetc-plugin
             {% for filename in jre_files %}
             - cmd: download-{{ filename }}
@@ -185,7 +181,7 @@ upload-wrappers:
         - unless: "[ -e /home/lantern/uploaded_wrappers ]"
         - user: lantern
         - group: lantern
-        - cwd: /home/lantern/repo/install
+        - cwd: /home/lantern/wrapper-repo/install
         - require:
             - cmd: build-wrappers
             - pip: boto==2.9.5
