@@ -100,6 +100,16 @@ These may need further looking into.  It might be a good idea to run this before
 ./ssh_cloudmaster.py 'sudo salt-run manage.down'
 ```
 
+###### List the ips with wich each fallback proxy is running
+```
+./ssh_cloudmaster.py 'sudo salt "fp-*" grains.get ipv4'
+```
+
+###### List the ports at which each fallback proxy is listening
+```
+./ssh_cloudmaster.py 'sudo salt "fp-*" grains.get proxy_port'
+``` 
+
 ###### Listing the user as which each fallback proxy is running
 ```
 ./ssh_cloudmaster.py 'sudo salt "fp-*" pillar.get user'
