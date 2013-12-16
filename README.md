@@ -101,8 +101,15 @@ These may need further looking into.  It might be a good idea to run this before
 ```
 
 ###### List the ips with wich each fallback proxy is running
+
+Digital Ocean:
 ```
 ./ssh_cloudmaster.py 'sudo salt "fp-*" grains.get ipv4'
+```
+
+EC2:
+```
+./ssh_cloudmaster.py 'sudo salt "fp-*" grains.get ec2_public-ipv4'
 ```
 
 ###### List the ports at which each fallback proxy is listening
