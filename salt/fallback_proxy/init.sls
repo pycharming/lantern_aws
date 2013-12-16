@@ -10,7 +10,6 @@
 # To filter through jinja.
 {% set template_files=[
     ('/home/lantern/', 'report_stats.py', 700),
-    ('/home/lantern/', 'check_lantern.py', 700),
     ('/home/lantern/', 'report_completion.py', 700),
     ('/home/lantern/', 'user_credentials.json', 400),
     ('/home/lantern/', 'client_secrets.json', 400),
@@ -240,15 +239,6 @@ psutil:
         - require:
             - pkg: build-essential
             - pkg: python-dev
-
-check-lantern:
-    cron.present:
-        - name: /home/lantern/check_lantern.py
-        - user: root
-        - require:
-            - file: /home/lantern/check_lantern.py
-            - pip: psutil
-            - service: lantern
 
 librato-metrics:
     pip.installed
