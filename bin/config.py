@@ -24,8 +24,8 @@ installer_filename = 'latest-64.deb'
 #controller = 'lanternctrltest'
 #cloudmaster_name = 'aranhoide-cloudmaster'
 
-controller = 'oxlanternctrl'
-cloudmaster_name = 'oxcloudmaster'
+#controller = 'oxlanternctrl'
+#cloudmaster_name = 'oxcloudmaster'
 
 #installer_bucket = 'lantern-installers'
 #installer_filename = 'lantern-fallback.deb'
