@@ -106,19 +106,19 @@ download-{{ filename }}:
 install-lantern:
     cmd.script:
 {% if pillar.get('install-from', 'installer') == 'git' %}
-        - source: salt://fallback_proxy/install-lantern-from-installer.bash
-        - template: jinja
+        - source: salt://fallback_proxy/install-lantern-from-git.bash
         - unless: "[ \"$(find /home/lantern/lantern-repo/target -maxdepth 1 -name 'lantern-*.jar')\" ]"
         - user: lantern
         - group: lantern
+        - cwd: /home/lantern/
 {% else %}
-        - source: salt://fallback_proxy/install-lantern-from-git.bash
+        - source: salt://fallback_proxy/install-lantern-from-installer.bash
         - unless: "which lantern"
         - user: root
         - group: root
         - cwd: /root
 {% endif %}
-        - cwd: /home/lantern/
+        - template: jinja
         - stateful: yes
 
 fallback-proxy-dirs-and-files:
