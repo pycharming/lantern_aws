@@ -14,12 +14,13 @@ import util
 
 def launch(email,
            serial,
-           branch='fallback',
-           refresh_token="bogus_refresh_token"):
+           refresh_token="bogus_refresh_token",
+           *pillars):
+    pillar_dict = dict(p.split("=") for p in pillars)
     send_message({'launch-fp-as': email,
                   'launch-refrtok': refresh_token,
-                  'launch-branch': branch,
-                  'launch-serial': serial})
+                  'launch-serial': serial,
+                  'launch-pillars': pillar_dict})
 
 def kill(email, serial):
     send_message({'shutdown-fp': name_prefix(email, serial)})
@@ -47,7 +48,7 @@ def name_prefix(email, serialno):
     return "fp-%s-%s-" % (sanitized_email, serialno)
 
 def print_usage():
-    print "Usage: %s (launch|kill) <email> <serial> [<branch>='fallback' [<refresh token>='bogus']]" % sys.argv[0]
+    print "Usage: %s (launch|kill) <email> <serial> [[<refresh-token='bogus'>] [<pillar-key>=<pillar-val>] ...]" % sys.argv[0]
 
 if __name__ == '__main__':
     try:

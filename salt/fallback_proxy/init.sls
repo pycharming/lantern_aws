@@ -10,6 +10,7 @@
 # To filter through jinja.
 {% set template_files=[
     ('/home/lantern/', 'report_stats.py', 700),
+    ('/home/lantern/', 'check_lantern.py', 700),
     ('/home/lantern/', 'report_completion.py', 700),
     ('/home/lantern/', 'user_credentials.json', 400),
     ('/home/lantern/', 'client_secrets.json', 400),
@@ -104,11 +105,19 @@ download-{{ filename }}:
 
 install-lantern:
     cmd.script:
-        - source: salt://fallback_proxy/install-lantern.bash
+{% if pillar.get('install-from', 'installer') == 'git' %}
+        - source: salt://fallback_proxy/install-lantern-from-installer.bash
         - template: jinja
         - unless: "[ \"$(find /home/lantern/lantern-repo/target -maxdepth 1 -name 'lantern-*.jar')\" ]"
         - user: lantern
         - group: lantern
+{% else %}
+        - source: salt://fallback_proxy/install-lantern-from-git.bash
+        - unless: "which lantern"
+        - user: root
+        - group: root
+        - cwd: /root
+{% endif %}
         - cwd: /home/lantern/
         - stateful: yes
 
@@ -259,3 +268,14 @@ init-swap:
         - unless: "[ $(swapon -s | wc -l) -gt 1 ]"
         - user: root
         - group: root
+
+{% if pillar.get('check-lantern', 'True') not in ['False', 'false', 'no'] %}
+check-lantern:
+    cron.present:
+        - name: /home/lantern/check_lantern.py
+        - user: root
+        - require:
+            - file: /home/lantern/check_lantern.py
+            - pip: psutil
+            - service: lantern
+{% endif %}

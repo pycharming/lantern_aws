@@ -27,6 +27,9 @@ installer_filename = 'latest-64.deb'
 #controller = 'oxlanternctrl'
 #cloudmaster_name = 'oxcloudmaster'
 
+#controller = 'pantscontroller'
+#cloudmaster_name = '_pantscloudmaster'
+
 #installer_bucket = 'lantern-installers'
 #installer_filename = 'lantern-fallback.deb'
 

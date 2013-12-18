@@ -83,14 +83,21 @@ def actually_check_q():
     # time sensitive.
     userid = d.get('launch-fp-as', d.get('launch-invsrv-as'))
     if userid:
-        # Backwards compatibility: we'll be getting serial numbers starting from 1
-        # in the new fallback balancing scheme.  Just in case we get a new proxy
-        # launch request from an old controller, let's mark it as 0.
+        # Lantern won't start without *some* refresh token.  If we don't get one
+        # from the controller let's just make up a bogus one.
+        refresh_token = d.get('launch-refrtok', '').strip() or 'bogus'
+        # Backwards compatibility: we'll be getting serial numbers starting
+        # from 1 in the new fallback balancing scheme.  Just in case we get
+        # a new proxy launch request from an old controller, let's mark it as
+        # 0.
+        serial = d.get('launch-serial', 0)
+        # Salt scripts consuming these should use backwards-compatible defaults.
+        pillars = d.get('launch-pillars', {})
         launch_proxy(userid,
-                     d.get('launch-serial', 0),
-                     d.get('launch-branch', 'fallback'),
-                     d['launch-refrtok'],
-                     msg)
+                     serial,
+                     refresh_token,
+                     msg,
+                     pillars)
     elif 'shutdown-fp' in d:
         instance_id = d['shutdown-fp']
         logging.info("Got shutdown request for %s" % instance_id)
@@ -101,7 +108,7 @@ def actually_check_q():
     else:
         logging.error("I don't understand this message: %s" % d)
 
-def launch_proxy(email, serialno, branch, refresh_token, msg):
+def launch_proxy(email, serialno, refresh_token, msg, pillars):
     logging.info("Got spawn request for '%s'" % clip_email(email))
     instance_name = create_instance_name(email, serialno)
     provider = get_provider()
@@ -121,7 +128,7 @@ def launch_proxy(email, serialno, branch, refresh_token, msg):
                             'proxy_port': random.randint(1024, 61024),
                             'provider': provider,
                             'shell': '/bin/bash'}}})
-    set_pillar(instance_name, email, branch, refresh_token, msg)
+    set_pillar(instance_name, email, refresh_token, msg, pillars)
     #XXX: ugly, but we're already in sin running all this as a user with
     # passwordless sudo.  TODO: move this to a command with setuid or give
     # this user write access to /srv/pillar and to salt(-cloud) commands.
@@ -141,16 +148,15 @@ def shutdown_proxy(prefix):
                     count += 1
     return count
 
-def set_pillar(instance_name, email, branch, refresh_token, msg):
+def set_pillar(instance_name, email, refresh_token, msg, extra_pillars):
     filename = '/home/lantern/%s.sls' % instance_name
-    yaml.dump({
-               'instance_id': instance_name,
-               # DRY warning:
-               # lantern_aws/salt/fallback_proxy/report_completion.py
-               'user': email,
-               'branch': branch,
-               'refresh_token': refresh_token,
-               'sqs_msg': b64encode(dumps(msg))},
+    yaml.dump(dict(instance_id=instance_name,
+                   # DRY warning:
+                   # lantern_aws/salt/fallback_proxy/report_completion.py
+                   user=email,
+                   refresh_token=refresh_token,
+                   sqs_msg=b64encode(dumps(msg)),
+                   **extra_pillars),
               file(filename, 'w'))
     #XXX: ugly, but we're already in sin running all this as a user with
     # passwordless sudo.  TODO: move this to a command with setuid or give
