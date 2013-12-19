@@ -64,10 +64,8 @@ The cloud master will use the Salt configuration in your local `salt/` directory
 #### Example `config_overrides.py`
 
 ```
-import config
-
-config.controller = 'oxlanternctrl'
-config.cloudmaster_name = 'oxcloudmaster'
+controller = 'oxlanternctrl'
+cloudmaster_name = 'oxcloudmaster'
 ``` 
 
 ### Updating a cloud master
