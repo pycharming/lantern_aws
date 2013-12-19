@@ -48,7 +48,7 @@ You launch a cloud master using the following command:
 
     bin/launch_cloudmaster.py
 
-By default, this will launch an instance with name 'cloudmaster' in the `ap-southeast-1` (Singapore) region.  This instance will communicate with the production Lantern Controller (app engine ID `lanternctrl`).  It will also use a security group called 'free-for-all', which is expected to be totally open (access will be restricted through in-instance firewalls).  This security group will be created if it's not found in the given region.  You can modify all the values described in this paragraph editing `config.py`.
+By default, this will launch an instance with name 'cloudmaster' in the `ap-southeast-1` (Singapore) region.  This instance will communicate with the production Lantern Controller (app engine ID `lanternctrl`).  It will also use a security group called 'free-for-all', which is expected to be totally open (access will be restricted through in-instance firewalls).  This security group will be created if it's not found in the given region.  You can modify all the values described in this paragraph editing creating `bin/config_overrides.py`.
 
 As of this writing, allowed regions are
 
@@ -58,6 +58,17 @@ As of this writing, allowed regions are
 Should you want to add support for other regions, just create a `lantern` KeyPair in that region and upload the corresponding `.pem` file to `getlantern/too-many-secrets/lantern_aws/<region-id>.pem`.
 
 The cloud master will use the Salt configuration in your local `salt/` directory (i.e., not a git commit of any sort).
+
+`config_overrides.py` is not version controller - you just keep your own local version.
+
+#### Example `config_overrides.py`
+
+```
+import config
+
+config.controller = 'oxlanternctrl'
+config.cloudmaster_name = 'oxcloudmaster'
+``` 
 
 ### Updating a cloud master
 
