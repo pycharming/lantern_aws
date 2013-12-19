@@ -93,6 +93,8 @@ def actually_check_q():
         serial = d.get('launch-serial', 0)
         # Salt scripts consuming these should use backwards-compatible defaults.
         pillars = d.get('launch-pillars', {})
+        # Default proxy_protocol to tcp
+        pillars['proxy_protocol'] = pillars.get('proxy_protocol', 'tcp')
         launch_proxy(userid,
                      serial,
                      refresh_token,
@@ -119,13 +121,15 @@ def launch_proxy(email, serialno, refresh_token, msg, pillars):
         logging.info("Waiting for the instance loss to sink in...")
         time.sleep(20)
     with proxy_map() as d:
+        proxy_port = 62443 if pillars['proxy_protocol'] == 'tcp' \
+                              else random.randint(1024, 61024) 
         d[provider].append(
             {instance_name:
                 {'minion': {'master': get_master_ip(provider)},
                  'grains': {'saltversion': SALT_VERSION,
                             'aws_region': AWS_REGION,
                             'controller': CONTROLLER,
-                            'proxy_port': random.randint(1024, 61024),
+                            'proxy_port': proxy_port,
                             'provider': provider,
                             'shell': '/bin/bash'}}})
     set_pillar(instance_name, email, refresh_token, msg, pillars)

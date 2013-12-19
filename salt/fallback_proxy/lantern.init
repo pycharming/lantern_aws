@@ -24,7 +24,7 @@ DAEMON=/home/lantern/lantern-repo/quickRun.bash
 {% else %}
 DAEMON=/opt/lantern/lantern
 {% endif %}
-DAEMON_ARGS="--disable-ui --force-give --oauth2-client-secrets-file $LANTERN_DIR/client_secrets.json --oauth2-user-credentials-file $LANTERN_DIR/user_credentials.json --server-port {{ grains['proxy_port'] }} --as-fallback-proxy --keystore $LANTERN_DIR/littleproxy_keystore.jks --controller-id {{ grains['controller'] }} --instance-id {{ pillar['instance_id'] }} --report-ip {{ grains.get('ec2_public-ipv4', None) or grains['ipv4'][1] }}"
+DAEMON_ARGS="--disable-ui --force-give --oauth2-client-secrets-file $LANTERN_DIR/client_secrets.json --oauth2-user-credentials-file $LANTERN_DIR/user_credentials.json --server-port {{ grains['proxy_port'] }} --server-protocol {{ pillar['proxy_protocol'] }} --auth-token-file $LANTERN_DIR/auth_token.txt --as-fallback-proxy --keystore $LANTERN_DIR/littleproxy_keystore.jks --controller-id {{ grains['controller'] }} --instance-id {{ pillar['instance_id'] }} --report-ip {{ grains.get('ec2_public-ipv4', None) or grains['ipv4'][1] }}"
 PIDFILE={{ lantern_pid }}
 SCRIPTNAME=/etc/init.d/$NAME
 

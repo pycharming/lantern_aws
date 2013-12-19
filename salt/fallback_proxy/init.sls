@@ -14,6 +14,7 @@
     ('/home/lantern/', 'report_completion.py', 700),
     ('/home/lantern/', 'user_credentials.json', 400),
     ('/home/lantern/', 'client_secrets.json', 400),
+    ('/home/lantern/', 'auth_token.txt', 400),
     ('/home/lantern/wrapper-repo/install/win/', 'lantern.nsi', 400),
     ('/home/lantern/secure/', 'env-vars.txt', 400),
     ('/home/lantern/wrapper-repo/', 'buildInstallerWrappers.bash', 500),
@@ -279,3 +280,27 @@ check-lantern:
             - pip: psutil
             - service: lantern
 {% endif %}
+
+/etc/default/ufw:
+    file.replace:
+        - pattern: '^DEFAULT_FORWARD_POLICY="DROP"$'
+        - repl:     'DEFAULT_FORWARD_POLICY="ACCEPT"'
+        
+/etc/ufw/sysctl.conf:
+    file.append:
+        - text: |
+            net/ipv4/ip_forward=1
+            net/ipv6/conf/default/forwarding=1                          
+
+{% if pillar['proxy_protocol'] == 'tcp' %}            
+/etc/ufw/before.rules
+    file.blockreplace:
+        -marker_start: '# Begin Proxy Port Forwarding'
+        -marker_end: '# End Proxy Port Forwarding'
+        -prepend_if_not_found: true
+        -content: |
+            *nat
+            :PREROUTING - [0:0]
+            iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 62000
+            iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 62443
+{% endif %}            

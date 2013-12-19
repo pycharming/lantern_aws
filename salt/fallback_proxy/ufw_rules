@@ -1,4 +1,4 @@
 [lantern_proxy]
 title=Lantern Proxy
 description=Lantern censorship circumvention tool
-ports={{ grains['proxy_port'] }}/tcp
+ports={{ grains['proxy_port'] }}/{{ pillar['proxy_protocol'] }}
