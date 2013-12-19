@@ -6,7 +6,7 @@ aws_region = 'ap-southeast-1'
 aws_credential_path = os.path.join(here.secrets_path,
                                    'lantern_aws',
                                    'aws_credential')
-salt_version = '0.16.0'
+salt_version = '0.17.4'
 do_region = 'New York 2'
 controller = 'lanternctrl'
 cloudmaster_name = 'cloudmaster'
@@ -24,8 +24,8 @@ installer_filename = 'latest-64.deb'
 #controller = 'lanternctrltest'
 #cloudmaster_name = 'aranhoide-cloudmaster'
 
-controller = 'oxlanternctrl'
-cloudmaster_name = 'oxcloudmaster'
+#controller = 'oxlanternctrl'
+#cloudmaster_name = 'oxcloudmaster'
 
 #controller = 'pantscontroller'
 #cloudmaster_name = '_pantscloudmaster'

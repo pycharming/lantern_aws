@@ -1,9 +1,13 @@
-{% set jre_folder='/home/lantern/repo/install/jres' %}
+{% set jre_folder='/home/lantern/wrapper-repo/install/jres' %}
 
 # Keep install/common as the last one; it's being checked to make sure all
 # folders have been initialized.
 {% set dirs=['/home/lantern/wrapper-repo',
+             '/home/lantern/wrapper-repo/lantern-ui',
+             '/home/lantern/wrapper-repo/lantern-ui/app',
+             '/home/lantern/wrapper-repo/lantern-ui/app/img',
              '/home/lantern/wrapper-repo/install',
+             '/home/lantern/wrapper-repo/install/win',
              jre_folder,
              '/home/lantern/wrapper-repo/install/common'] %}
 
@@ -285,22 +289,16 @@ check-lantern:
     file.replace:
         - pattern: '^DEFAULT_FORWARD_POLICY="DROP"$'
         - repl:     'DEFAULT_FORWARD_POLICY="ACCEPT"'
-        
+
 /etc/ufw/sysctl.conf:
     file.append:
         - text: |
             net/ipv4/ip_forward=1
-            net/ipv6/conf/default/forwarding=1                          
+            net/ipv6/conf/default/forwarding=1
 
-{% if pillar['proxy_protocol'] == 'tcp' %}            
-/etc/ufw/before.rules
-    file.blockreplace:
-        -marker_start: '# Begin Proxy Port Forwarding'
-        -marker_end: '# End Proxy Port Forwarding'
-        -prepend_if_not_found: true
-        -content: |
-            *nat
-            :PREROUTING - [0:0]
-            iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 62000
-            iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 62443
-{% endif %}            
+{% if pillar['proxy_protocol'] == 'tcp' %}
+/etc/ufw/before.rules:
+    file.patch:
+        - source: salt://fallback_proxy/before.rules.patch
+        - hash: md5=b3ddfd0046dfd98ca3b8c3ebb85ca8f2
+{% endif %}

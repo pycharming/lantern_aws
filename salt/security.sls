@@ -7,7 +7,7 @@ ufw:
         - order: 2
     service.running:
         - order: 2
-        - enabled: yes
+        - enable: yes
         - require:
             - pkg: ufw
 
