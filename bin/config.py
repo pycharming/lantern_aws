@@ -15,28 +15,28 @@ installer_bucket = 'lantern'
 installer_filename = 'latest-64.deb'
 
 # To override values locally, put them in config_overrides.py (not version controlled)
-#config.controller = 'fakectrl'
-#config.cloudmaster_name = 'fakecloudmaster'
+#controller = 'fakectrl'
+#cloudmaster_name = 'fakecloudmaster'
 
-#config.controller = 'lantern-controller-afisk'
-#config.cloudmaster_name = 'cloudmaster-afisk'
+#controller = 'lantern-controller-afisk'
+#cloudmaster_name = 'cloudmaster-afisk'
 
-#config.controller = 'lanternctrltest'
-#config.cloudmaster_name = 'aranhoide-cloudmaster'
+#controller = 'lanternctrltest'
+#cloudmaster_name = 'aranhoide-cloudmaster'
 
-#config.controller = 'oxlanternctrl'
-#config.cloudmaster_name = 'oxcloudmaster'
+#controller = 'oxlanternctrl'
+#cloudmaster_name = 'oxcloudmaster'
 
-#config.controller = 'pantscontroller'
-#config.cloudmaster_name = '_pantscloudmaster'
+#controller = 'pantscontroller'
+#cloudmaster_name = '_pantscloudmaster'
 
-#config.installer_bucket = 'lantern-installers'
-#config.installer_filename = 'lantern-fallback.deb'
+#installer_bucket = 'lantern-installers'
+#installer_filename = 'lantern-fallback.deb'
 
 try:
     # Import local config overrides if available
-    import config_overrides
-except:
+    from config_overrides import *
+except ImportError:
     pass
 
 # Derived, but may still want to override?
