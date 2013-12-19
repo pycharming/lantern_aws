@@ -308,4 +308,11 @@ check-lantern:
             -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 62443
             
             COMMIT
+
 {% endif %}
+
+restart-ufw:
+    cmd.run:
+        - name: 'service ufw restart'
+        - user: root
+        - group: root
