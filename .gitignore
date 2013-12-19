@@ -5,4 +5,5 @@ tmp
 example/*.txt
 example/*.p12
 .log
+bin/config_overrides.py
 

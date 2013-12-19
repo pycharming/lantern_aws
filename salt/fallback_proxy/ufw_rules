@@ -1,4 +1,9 @@
 [lantern_proxy]
 title=Lantern Proxy
 description=Lantern censorship circumvention tool
+{% if pillar['proxy_protocol'] == 'tcp' %}
+ports=62000,62443/tcp
+{% else %}
 ports={{ grains['proxy_port'] }}/{{ pillar['proxy_protocol'] }}
+{% endif %}
+

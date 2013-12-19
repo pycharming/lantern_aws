@@ -14,26 +14,35 @@ free_for_all_sg_name = 'free-for-all'
 installer_bucket = 'lantern'
 installer_filename = 'latest-64.deb'
 
-# Override with values for testing.
-#controller = 'fakectrl'
-#cloudmaster_name = 'fakecloudmaster'
+# To override values locally, put them in config_overrides.py (not version controlled)
+#config.controller = 'fakectrl'
+#config.cloudmaster_name = 'fakecloudmaster'
 
-#controller = 'lantern-controller-afisk'
-#cloudmaster_name = 'cloudmaster-afisk'
+#config.controller = 'lantern-controller-afisk'
+#config.cloudmaster_name = 'cloudmaster-afisk'
 
-#controller = 'lanternctrltest'
-#cloudmaster_name = 'aranhoide-cloudmaster'
+#config.controller = 'lanternctrltest'
+#config.cloudmaster_name = 'aranhoide-cloudmaster'
 
-#controller = 'oxlanternctrl'
-#cloudmaster_name = 'oxcloudmaster'
+#config.controller = 'oxlanternctrl'
+#config.cloudmaster_name = 'oxcloudmaster'
 
-#controller = 'pantscontroller'
-#cloudmaster_name = '_pantscloudmaster'
+#config.controller = 'pantscontroller'
+#config.cloudmaster_name = '_pantscloudmaster'
 
-#installer_bucket = 'lantern-installers'
-#installer_filename = 'lantern-fallback.deb'
+#config.installer_bucket = 'lantern-installers'
+#config.installer_filename = 'lantern-fallback.deb'
+
+try:
+    # Import local config overrides if available
+    import config_overrides
+except:
+    pass
 
 # Derived, but may still want to override?
 key_path = os.path.join(here.secrets_path,
                         'lantern_aws',
                         aws_region + ".pem")
+
+print "Using controller: %s" % controller
+print "Using cloudmaster: %s" % cloudmaster_name

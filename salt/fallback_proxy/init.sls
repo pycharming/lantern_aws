@@ -298,7 +298,14 @@ check-lantern:
 
 {% if pillar['proxy_protocol'] == 'tcp' %}
 /etc/ufw/before.rules:
-    file.patch:
-        - source: salt://fallback_proxy/before.rules.patch
-        - hash: md5=b3ddfd0046dfd98ca3b8c3ebb85ca8f2
+    file.append:
+        - text: |
+            *nat
+            :PREROUTING ACCEPT - [0:0]
+            
+            # Redirect ports 80 and 443 to the Lantern proxy
+            -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 62000
+            -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 62443
+            
+            COMMIT
 {% endif %}
