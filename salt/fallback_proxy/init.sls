@@ -13,6 +13,7 @@
 
 # To filter through jinja.
 {% set template_files=[
+    ('/home/lantern/', 'kill_lantern.py', 700),
     ('/home/lantern/', 'report_stats.py', 700),
     ('/home/lantern/', 'check_lantern.py', 700),
     ('/home/lantern/', 'report_completion.py', 700),
