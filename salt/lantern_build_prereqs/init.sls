@@ -1,10 +1,11 @@
+{% if pillar.get('install-from') == 'git' %}
 openjdk-6-jre:
     pkg.removed
 
 java-prereqs:
     cmd.script:
         - source: salt://lantern_build_prereqs/install-java-prereqs.bash
-        - unless: "which java"
+        - unless: "[ -e /usr/lib/jvm/java-6-sun/bin/java ]"
         - user: root
         - cwd: /tmp
         - require:
@@ -23,13 +24,20 @@ java:
         - require:
             - cmd: java-prereqs
             - file: java-prereqs
+{% else %}
+openjdk-6-jre:
+    pkg.installed:
+        - order: 2
+{% endif %}
 
+{% set maven_version='3.1.1' %}
 maven:
     cmd.script:
         - order: 2
         - source: salt://lantern_build_prereqs/install-maven.bash
-        - unless: "which mvn"
+        - template: jinja
+        - context:
+            maven_version: {{ maven_version }}
+        - unless: "[ -e  /usr/local/apache-maven-{{ maven_version }}/bin/mvn ] "
         - user: root
         - cwd: /tmp
-        - require:
-            - pkg: java

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERSION=3.1.1
+VERSION={{ maven_version }}
 wget -q https://dqkrsoj09lstx.cloudfront.net/apache-maven-${VERSION}-bin.tar.gz
 tar zxf apache-maven-${VERSION}-bin.tar.gz
 rm apache-maven-${VERSION}-bin.tar.gz

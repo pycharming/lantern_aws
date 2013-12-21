@@ -1,6 +1,9 @@
 {"ip" : "{{ grains.get('ec2_public-ipv4', None) or grains['ipv4'][1] }}",
- "port" : "{% if pillar['proxy_protocol'] == 'tcp' %}443{% else %}{{ grains['proxy_port'] }}{% endif %}",
- "auth_token" : "{{ pillar['auth_token'] }}",
- "protocol" : "{{ pillar['proxy_protocol'] }}"
+ "port" : "{% if proxy_protocol == 'tcp' %}443{% else %}{{ grains['proxy_port'] }}{% endif %}",
+
+{% if install_from == 'git' %}
+ "auth_token" : "{{ auth_token }}",
+ "protocol" : "{{ proxy_protocol }}"
+{% endif %}
 }
- 
+

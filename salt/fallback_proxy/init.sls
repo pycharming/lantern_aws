@@ -1,4 +1,8 @@
 {% set jre_folder='/home/lantern/wrapper-repo/install/jres' %}
+{% set install_from=pillar.get('install-from', 'installer') %}
+{% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
+{% set auth_token=pillar.get('auth_token') %}
+
 
 # Keep install/common as the last one; it's being checked to make sure all
 # folders have been initialized.
@@ -13,19 +17,21 @@
 
 # To filter through jinja.
 {% set template_files=[
-    ('/home/lantern/', 'kill_lantern.py', 700),
-    ('/home/lantern/', 'report_stats.py', 700),
-    ('/home/lantern/', 'check_lantern.py', 700),
-    ('/home/lantern/', 'report_completion.py', 700),
-    ('/home/lantern/', 'user_credentials.json', 400),
-    ('/home/lantern/', 'client_secrets.json', 400),
-    ('/home/lantern/', 'auth_token.txt', 400),
-    ('/home/lantern/wrapper-repo/install/win/', 'lantern.nsi', 400),
-    ('/home/lantern/secure/', 'env-vars.txt', 400),
-    ('/home/lantern/wrapper-repo/', 'buildInstallerWrappers.bash', 500),
-    ('/home/lantern/wrapper-repo/install/wrapper/', 'wrapper.install4j', 500),
-    ('/home/lantern/wrapper-repo/install/wrapper/', 'dpkg.bash', 500),
-    ('/home/lantern/wrapper-repo/install/wrapper/', 'fallback.json', 400)] %}
+    ('/etc/ufw/applications.d/', 'lantern', 'ufw_rules', 'root', 644),
+    ('/etc/init.d/', 'lantern', 'lantern.init', 'root', 700),
+    ('/home/lantern/', 'kill_lantern.py', 'kill_lantern.py', 'lantern', 700),
+    ('/home/lantern/', 'report_stats.py', 'report_stats.py', 'lantern', 700),
+    ('/home/lantern/', 'check_lantern.py', 'check_lantern.py', 'lantern',  700),
+    ('/home/lantern/', 'report_completion.py', 'report_completion.py', 'lantern', 700),
+    ('/home/lantern/', 'user_credentials.json', 'user_credentials.json', 'lantern', 400),
+    ('/home/lantern/', 'client_secrets.json', 'client_secrets.json', 'lantern', 400),
+    ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
+    ('/home/lantern/wrapper-repo/install/win/', 'lantern.nsi', 'lantern.nsi', 'lantern', 400),
+    ('/home/lantern/secure/', 'env-vars.txt', 'env-vars.txt', 'lantern', 400),
+    ('/home/lantern/wrapper-repo/', 'buildInstallerWrappers.bash', 'buildInstallerWrappers.bash', 'lantern', 500),
+    ('/home/lantern/wrapper-repo/install/wrapper/', 'wrapper.install4j', 'wrapper.install4j', 'lantern', 500),
+    ('/home/lantern/wrapper-repo/install/wrapper/', 'dpkg.bash', 'dpkg.bash', 'lantern', 500),
+    ('/home/lantern/wrapper-repo/install/wrapper/', 'fallback.json', 'fallback.json', 'lantern', 400)] %}
 
 # To send as is.
 {% set literal_files=[
@@ -71,15 +77,18 @@ include:
         - makedirs: yes
 {% endfor %}
 
-{% for dir,filename,mode in template_files %}
-{{ dir+filename }}:
+{% for dir,dst_filename,src_filename,user,mode in template_files %}
+{{ dir+dst_filename }}:
     file.managed:
-        - source: salt://fallback_proxy/{{ filename }}
+        - source: salt://fallback_proxy/{{ src_filename }}
         - template: jinja
         - context:
             lantern_pid: {{ lantern_pid }}
-        - user: lantern
-        - group: lantern
+            install_from: {{ install_from }}
+            proxy_protocol: {{ proxy_protocol }}
+            auth_token: {{ auth_token }}
+        - user: {{ user }}
+        - group: {{ user }}
         - mode: {{ mode }}
         - require:
             - file: /home/lantern/wrapper-repo/install/common
@@ -111,7 +120,7 @@ download-{{ filename }}:
 
 install-lantern:
     cmd.script:
-{% if pillar.get('install-from', 'installer') == 'git' %}
+{% if install_from == 'git' %}
         - source: salt://fallback_proxy/install-lantern-from-git.bash
         - unless: "[ \"$(find /home/lantern/lantern-repo/target -maxdepth 1 -name 'lantern-*.jar')\" ]"
         - user: lantern
@@ -137,8 +146,8 @@ fallback-proxy-dirs-and-files:
             {% for dir in dirs %}
             - file: {{ dir }}
             {% endfor %}
-            {% for dir,filename,mode in template_files %}
-            - file: {{ dir+filename }}
+            {% for dir,dst_filename,src_filename,user,mode in template_files %}
+            - file: {{ dir+dst_filename }}
             {% endfor %}
             {% for dir,filename,mode in literal_files %}
             - file: {{ dir+filename }}
@@ -161,26 +170,6 @@ build-wrappers:
             {% for filename in jre_files %}
             - cmd: download-{{ filename }}
             {% endfor %}
-
-# We don't put these in template_files because they're owned by root and it's not
-# worth adding an owner column there for this.
-/etc/init.d/lantern:
-    file.managed:
-        - source: salt://fallback_proxy/lantern.init
-        - template: jinja
-        - context:
-            lantern_pid: {{ lantern_pid }}
-        - user: root
-        - group: root
-        - mode: 700
-
-/etc/ufw/applications.d/lantern:
-    file.managed:
-        - source: salt://fallback_proxy/ufw_rules
-        - template: jinja
-        - user: root
-        - group: root
-        - mode: 644
 
 open-proxy-port:
     cmd.run:
@@ -297,17 +286,17 @@ check-lantern:
             net/ipv4/ip_forward=1
             net/ipv6/conf/default/forwarding=1
 
-{% if pillar['proxy_protocol'] == 'tcp' %}
+{% if proxy_protocol == 'tcp' %}
 /etc/ufw/before.rules:
     file.append:
         - text: |
             *nat
+
             :PREROUTING ACCEPT - [0:0]
-            
             # Redirect ports 80 and 443 to the Lantern proxy
             -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 62000
             -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 62443
-            
+
             COMMIT
 
 {% endif %}
