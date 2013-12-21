@@ -4,7 +4,7 @@ providers:
   aws:
     # Set up the location of the salt master
     minion:
-      master: {{ grains['ipv4'][0] }}
+      master: {{ grains['ec2_local-ipv4'] }}
 
     # Specify whether to use public or private IP for deploy script.
     #
