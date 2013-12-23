@@ -48,8 +48,6 @@ def check_lantern():
         parent = psutil.Process(pid)
     except psutil.NoSuchProcess:
         return "no process for pid: %s" % pid
-    if parent.name != 'lantern':
-        return "Got wrong process with Lantern's pid: %r" % parent.name
     if not parent.is_running():
         return "Lantern is not running"
     children = parent.get_children()
@@ -60,7 +58,7 @@ def check_lantern():
         return "unexpected name for Lantern child process: %r" % child.name
     if not child.is_running():
         return "Lantern child process not running"
-    return check_pids('lantern', parent.pid) or check_pids('java', child.pid)
+    return check_pids('java', child.pid)
 
 def check_pids(name, expected_pid):
     pids = [proc.pid for proc in psutil.process_iter()
