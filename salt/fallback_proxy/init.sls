@@ -250,6 +250,7 @@ librato-metrics:
 report-stats:
     cron.present:
         - name: /home/lantern/report_stats.py
+        - minute: '*/10'
         - user: lantern
         - require:
             - file: /home/lantern/report_stats.py
