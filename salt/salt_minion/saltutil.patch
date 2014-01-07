@@ -1,0 +1,10 @@
+--- saltutil.py	2014-01-07 01:56:29.482524992 +0000
++++ saltutil.py	2014-01-07 01:56:14.538524995 +0000
+@@ -20,6 +20,7 @@
+ import salt.state
+ import salt.client
+ import salt.utils
++import salt.utils.process
+ from salt.exceptions import SaltReqTimeoutError
+ from salt._compat import string_types
+ 
