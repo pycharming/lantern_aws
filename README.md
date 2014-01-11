@@ -161,6 +161,30 @@ To reinstall lantern in the proxies after a new client version has been released
 
 **WARNING**: Restarting the lantern service (which is done automatically by the salt scripts when reinstalling lantern, and possibly on some other circumstances) will kill all java processes in the fallback proxy.  As of this writing there are no other java processes, but if you want to add any, keep this in mind.
 
+## Misc notes
+
+The following policy is set on the `lantern-config` bucket to allow everyone access to config files therein through HTTPS, while still disallowing listing the bucket contents.
+
+    {
+      "Id": "Policy1389413034380",
+      "Statement": [
+        {
+          "Sid": "Stmt1389413025721",
+          "Action": [
+            "s3:GetObject"
+          ],
+          "Effect": "Allow",
+          "Resource": "arn:aws:s3:::lantern-config/*",
+          "Principal": {
+            "AWS": [
+              "*"
+            ]
+          }
+          "Condition":{"Bool":{"aws:SecureTransport":"true"}}
+        }
+      ]
+    }
+
 ## Todo
 
 Script to reparent orphaned lantern peers if cloud master dies catastrophically (note: we can probably repurpose some script from the salt-cloud codebase).
