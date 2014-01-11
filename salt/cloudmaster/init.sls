@@ -24,7 +24,7 @@ include:
         - user: lantern
         - require:
             - pip: lockfile==0.9.1
-            - pip: salt-cloud==0.8.9
+            - pip: salt-cloud
 
 lockfile==0.9.1:
     pip.installed

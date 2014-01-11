@@ -34,28 +34,9 @@ apache-libcloud:
     pip.installed:
         - upgrade: yes
 
-salt-cloud==0.8.9:
+salt-cloud:
     pip.installed:
+        - name: salt-cloud==0.8.11
         - require:
               - pip: apache-libcloud
 
-# A pull request for this one is pending, so hopefully we get this fixed
-# upstream in next release.
-/usr/local/lib/python2.7/dist-packages/saltcloud/clouds/digital_ocean.py:
-    file.patch:
-        - source: salt://salt_cloud/state_fix.patch
-        - hash: md5=9abeac151f4f6abf1baadfbf7aa46364
-        - require:
-            - pip: salt-cloud==0.8.9
-
-bootstrap-script:
-    file.managed:
-        - name: /usr/local/lib/python2.7/dist-packages/saltcloud/deploy/bootstrap-salt.sh
-        - source: salt://salt_cloud/bootstrap.bash
-        # This is how the pip installation of salt-cloud has them.
-        - mode: 644
-        - user: root
-        - group: staff
-        - require:
-            # To make sure we override the default version.
-            - pip: salt-cloud==0.8.9
