@@ -1,4 +1,5 @@
 {% set jre_folder='/home/lantern/wrapper-repo/install/jres' %}
+{% set config_url='/home/lantern/config_url' %}
 {% set install_from=pillar.get('install-from', 'installer') %}
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
@@ -22,7 +23,6 @@
     ('/home/lantern/', 'kill_lantern.py', 'kill_lantern.py', 'lantern', 700),
     ('/home/lantern/', 'report_stats.py', 'report_stats.py', 'lantern', 700),
     ('/home/lantern/', 'check_lantern.py', 'check_lantern.py', 'lantern',  700),
-    ('/home/lantern/', 'report_completion.py', 'report_completion.py', 'lantern', 700),
     ('/home/lantern/', 'user_credentials.json', 'user_credentials.json', 'lantern', 400),
     ('/home/lantern/', 'client_secrets.json', 'client_secrets.json', 'lantern', 400),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
@@ -31,7 +31,7 @@
     ('/home/lantern/wrapper-repo/', 'buildInstallerWrappers.bash', 'buildInstallerWrappers.bash', 'lantern', 500),
     ('/home/lantern/wrapper-repo/install/wrapper/', 'wrapper.install4j', 'wrapper.install4j', 'lantern', 500),
     ('/home/lantern/wrapper-repo/install/wrapper/', 'dpkg.bash', 'dpkg.bash', 'lantern', 500),
-    ('/home/lantern/wrapper-repo/install/wrapper/', 'fallback.json', 'fallback.json', 'lantern', 400)] %}
+    ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400)] %}
 
 # To send as is.
 {% set literal_files=[
@@ -156,20 +156,20 @@ fallback-proxy-dirs-and-files:
 nsis:
     pkg.installed
 
-build-wrappers:
-    cmd.script:
-        - source: salt://fallback_proxy/build-wrappers.bash
-        - user: lantern
-        - cwd: /home/lantern/wrapper-repo
-        - unless: "[ -e /home/lantern/wrappers_built ]"
-        - require:
-            - pkg: nsis
-            - cmd: fallback-proxy-dirs-and-files
-            - cmd: install4j
-            - cmd: nsis-inetc-plugin
-            {% for filename in jre_files %}
-            - cmd: download-{{ filename }}
-            {% endfor %}
+#build-wrappers:
+#    cmd.script:
+#        - source: salt://fallback_proxy/build-wrappers.bash
+#        - user: lantern
+#        - cwd: /home/lantern/wrapper-repo
+#        - unless: "[ -e /home/lantern/wrappers_built ]"
+#        - require:
+#            - pkg: nsis
+#            - cmd: fallback-proxy-dirs-and-files
+#            - cmd: install4j
+#            - cmd: nsis-inetc-plugin
+#            {% for filename in jre_files %}
+#            - cmd: download-{{ filename }}
+#            {% endfor %}
 
 open-proxy-port:
     cmd.run:
@@ -177,16 +177,30 @@ open-proxy-port:
         - require:
             - cmd: fallback-proxy-dirs-and-files
 
-upload-wrappers:
+#upload-wrappers:
+#    cmd.script:
+#        - source: salt://fallback_proxy/upload_wrappers.py
+#        - template: jinja
+#        - unless: "[ -e /home/lantern/uploaded_wrappers ]"
+#        - user: lantern
+#        - group: lantern
+#        - cwd: /home/lantern/wrapper-repo/install
+#        - require:
+#            - cmd: build-wrappers
+#            - pip: boto==2.9.5
+
+upload-config:
     cmd.script:
-        - source: salt://fallback_proxy/upload_wrappers.py
+        - source: salt://fallback_proxy/upload_config.py
         - template: jinja
-        - unless: "[ -e /home/lantern/uploaded_wrappers ]"
+        - context:
+            config_url: {{ config_url }}
+        - unless: "[ -e {{ config_url }} ]"
         - user: lantern
         - group: lantern
-        - cwd: /home/lantern/wrapper-repo/install
+        - cwd: /home/lantern
         - require:
-            - cmd: build-wrappers
+            - file: /home/lantern/fallback.json
             - pip: boto==2.9.5
 
 lantern-service:
@@ -195,7 +209,6 @@ lantern-service:
         - enable: yes
         - require:
             - cmd: open-proxy-port
-            - cmd: upload-wrappers
             - cmd: fallback-proxy-dirs-and-files
         - watch:
             # Restart when we get a new user to run as, or a new refresh token.
@@ -207,13 +220,15 @@ report-completion:
     cmd.script:
         - source: salt://fallback_proxy/report_completion.py
         - template: jinja
+        - context:
+            config_url: {{ config_url }}
         - unless: "[ -e /home/lantern/reported_completion ]"
         - user: lantern
         - group: lantern
         - cwd: /home/lantern
         - require:
             - service: lantern-service
-            - cmd: upload-wrappers
+            - cmd: upload-config
             # I need boto updated so I have the same version as the cloudmaster
             # and thus I can unpickle and delete the SQS message that
             # triggered the launching of this instance.
