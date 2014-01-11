@@ -8,6 +8,7 @@ base:
         - lantern_administrators
         - unattended_upgrades
         - boto
+        - locales
     'cloudmaster':
         - salt_master
         - salt_cloud
