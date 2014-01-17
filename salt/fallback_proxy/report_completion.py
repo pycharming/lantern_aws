@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 from base64 import b64decode
+import json
 from cPickle import loads
 import logging
 import os.path
 from functools import wraps
+import subprocess
 
 import boto.sqs
 from boto.sqs.jsonmessage import JSONMessage
@@ -37,7 +39,13 @@ def log_exceptions(f):
 
 @log_exceptions
 def report_completion():
-    access_data = file('{{ access_data_file }}').read()
+    access_data = json.load(file('{{ access_data_file }}'))
+    access_data['cert'] = subprocess.check_output(
+            ["keytool", "-exportcert",
+             "-alias", "fallback",
+             "-storepass", "lantern",
+             "-rfc",
+             "-keystore", "/home/lantern/littleproxy_keystore.jks"])
     sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
     logging.info("Reporting fallback is ready.")
     ctrl_req_q = sqs.get_queue("%s_request" % CONTROLLER)
@@ -45,7 +53,7 @@ def report_completion():
     msg = JSONMessage()
     msg.set_body({'fp-up-user': USERID,
                   'fp-up-instance': INSTANCEID,
-                  'fp-up-access-data': access_data,
+                  'fp-up-access-data': json.dumps(access_data),
                   # This info is in the access data, but we send it anyway so the
                   # controller itself doesn't need to parse that.
                   'fp-up-ip': IP,
