@@ -1,5 +1,5 @@
 {% set jre_folder='/home/lantern/wrapper-repo/install/jres' %}
-{% set config_url='/home/lantern/config_url' %}
+{% set access_data_file='/home/lantern/fallback.json' %}
 {% set install_from=pillar.get('install-from', 'installer') %}
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
@@ -156,6 +156,7 @@ fallback-proxy-dirs-and-files:
 nsis:
     pkg.installed
 
+# XXX: Turn this into a file.
 #build-wrappers:
 #    cmd.script:
 #        - source: salt://fallback_proxy/build-wrappers.bash
@@ -177,6 +178,7 @@ open-proxy-port:
         - require:
             - cmd: fallback-proxy-dirs-and-files
 
+# XXX: Turn this into a file.
 #upload-wrappers:
 #    cmd.script:
 #        - source: salt://fallback_proxy/upload_wrappers.py
@@ -188,20 +190,6 @@ open-proxy-port:
 #        - require:
 #            - cmd: build-wrappers
 #            - pip: boto==2.9.5
-
-upload-config:
-    cmd.script:
-        - source: salt://fallback_proxy/upload_config.py
-        - template: jinja
-        - context:
-            config_url: {{ config_url }}
-        - unless: "[ -e {{ config_url }} ]"
-        - user: lantern
-        - group: lantern
-        - cwd: /home/lantern
-        - require:
-            - file: /home/lantern/fallback.json
-            - pip: boto==2.9.5
 
 lantern-service:
     service.running:
@@ -221,18 +209,18 @@ report-completion:
         - source: salt://fallback_proxy/report_completion.py
         - template: jinja
         - context:
-            config_url: {{ config_url }}
+            access_data_file: {{ access_data_file }}
         - unless: "[ -e /home/lantern/reported_completion ]"
         - user: lantern
         - group: lantern
         - cwd: /home/lantern
         - require:
             - service: lantern-service
-            - cmd: upload-config
             # I need boto updated so I have the same version as the cloudmaster
             # and thus I can unpickle and delete the SQS message that
             # triggered the launching of this instance.
             - pip: boto==2.9.5
+            - file: {{ access_data_file }}
 
 zip:
     pkg.installed
