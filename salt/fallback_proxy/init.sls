@@ -39,7 +39,6 @@
 # To send as is.
 {% set literal_files=[
     ('/home/lantern/', 'installer_landing.html', 400),
-    ('/home/lantern/', 'littleproxy_keystore.jks', 400),
     ('/home/lantern/secure/', 'bns_cert.p12', 400),
     ('/home/lantern/secure/', 'bns-osx-cert-developer-id-application.p12',
      400),
@@ -197,6 +196,7 @@ report-completion:
             # triggered the launching of this instance.
             - pip: boto==2.9.5
             - file: {{ access_data_file }}
+            - cmd: generate-cert
 
 zip:
     pkg.installed
@@ -286,3 +286,16 @@ restart-ufw:
         - name: 'service ufw restart'
         - user: root
         - group: root
+
+# Dictionary of American English words for the dname generator in
+# generate-cert.
+wamerican:
+    pkg.installed
+
+generate-cert:
+    cmd.script:
+        - source: salt://fallback_proxy/gencert.py
+        # Don't clobber the keystore of old fallbacks.
+        - unless: '[ -e /home/lantern/littleproxy_keystore.jks ]'
+        - require:
+            - pkg: wamerican
