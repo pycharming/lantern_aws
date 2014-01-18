@@ -63,7 +63,9 @@ def check_lantern():
 def check_pids(name, expected_pid):
     pids = [proc.pid for proc in psutil.process_iter()
             if proc.name == name]
-    if pids == [expected_pid]:
+    # It's OK that there are other Java processes (e.g. install4j for building
+    # wrappers.)
+    if expected_pid in pids:
         return None
     else:
         return ("unexpected %r processes(es): we expected %r, but got %r"

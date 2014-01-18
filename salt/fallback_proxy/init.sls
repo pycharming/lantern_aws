@@ -1,5 +1,5 @@
 {% set jre_folder='/home/lantern/wrapper-repo/install/jres' %}
-{% set config_url='/home/lantern/config_url' %}
+{% set access_data_file='/home/lantern/fallback.json' %}
 {% set install_from=pillar.get('install-from', 'installer') %}
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
@@ -20,6 +20,9 @@
 {% set template_files=[
     ('/etc/ufw/applications.d/', 'lantern', 'ufw_rules', 'root', 644),
     ('/etc/init.d/', 'lantern', 'lantern.init', 'root', 700),
+    ('/home/lantern/', 'build-wrappers.bash', 'build-wrappers.bash', 'lantern', 700),
+    ('/home/lantern/', 'percent_mem.py', 'percent_mem.py', 'lantern', 700),
+    ('/home/lantern/', 'upload_wrappers.py', 'upload_wrappers.py', 'lantern', 700),
     ('/home/lantern/', 'kill_lantern.py', 'kill_lantern.py', 'lantern', 700),
     ('/home/lantern/', 'report_stats.py', 'report_stats.py', 'lantern', 700),
     ('/home/lantern/', 'check_lantern.py', 'check_lantern.py', 'lantern',  700),
@@ -59,8 +62,9 @@
 {% set lantern_pid='/var/run/lantern.pid' %}
 
 include:
-    - install4j
     - boto
+    - install4j
+    - lockfile
 
 /home/lantern/secure:
     file.directory:
@@ -92,6 +96,7 @@ include:
         - mode: {{ mode }}
         - require:
             - file: /home/lantern/wrapper-repo/install/common
+            - pip: lockfile
 {% endfor %}
 
 {% for dir,filename,mode in literal_files %}
@@ -156,52 +161,11 @@ fallback-proxy-dirs-and-files:
 nsis:
     pkg.installed
 
-#build-wrappers:
-#    cmd.script:
-#        - source: salt://fallback_proxy/build-wrappers.bash
-#        - user: lantern
-#        - cwd: /home/lantern/wrapper-repo
-#        - unless: "[ -e /home/lantern/wrappers_built ]"
-#        - require:
-#            - pkg: nsis
-#            - cmd: fallback-proxy-dirs-and-files
-#            - cmd: install4j
-#            - cmd: nsis-inetc-plugin
-#            {% for filename in jre_files %}
-#            - cmd: download-{{ filename }}
-#            {% endfor %}
-
 open-proxy-port:
     cmd.run:
         - name: "ufw allow lantern_proxy"
         - require:
             - cmd: fallback-proxy-dirs-and-files
-
-#upload-wrappers:
-#    cmd.script:
-#        - source: salt://fallback_proxy/upload_wrappers.py
-#        - template: jinja
-#        - unless: "[ -e /home/lantern/uploaded_wrappers ]"
-#        - user: lantern
-#        - group: lantern
-#        - cwd: /home/lantern/wrapper-repo/install
-#        - require:
-#            - cmd: build-wrappers
-#            - pip: boto==2.9.5
-
-upload-config:
-    cmd.script:
-        - source: salt://fallback_proxy/upload_config.py
-        - template: jinja
-        - context:
-            config_url: {{ config_url }}
-        - unless: "[ -e {{ config_url }} ]"
-        - user: lantern
-        - group: lantern
-        - cwd: /home/lantern
-        - require:
-            - file: /home/lantern/fallback.json
-            - pip: boto==2.9.5
 
 lantern-service:
     service.running:
@@ -221,18 +185,18 @@ report-completion:
         - source: salt://fallback_proxy/report_completion.py
         - template: jinja
         - context:
-            config_url: {{ config_url }}
+            access_data_file: {{ access_data_file }}
         - unless: "[ -e /home/lantern/reported_completion ]"
         - user: lantern
         - group: lantern
         - cwd: /home/lantern
         - require:
             - service: lantern-service
-            - cmd: upload-config
             # I need boto updated so I have the same version as the cloudmaster
             # and thus I can unpickle and delete the SQS message that
             # triggered the launching of this instance.
             - pip: boto==2.9.5
+            - file: {{ access_data_file }}
 
 zip:
     pkg.installed

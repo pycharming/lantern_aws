@@ -1,23 +1,26 @@
 #!/usr/bin/env python
 
-# Run this in the folder where the wrappers were built.
-
+from base64 import b64decode
+from cPickle import loads
 import logging
 import os
 import random
 import re
 import string
+import sys
 
 import boto
 from boto.s3.key import Key
+import boto.sqs
+from boto.sqs.jsonmessage import JSONMessage
+from lockfile import LockFile
 
-FOLDER_NAME_LENGTH = 8
-ALLOWED_FOLDER_CHARS = string.lowercase + string.digits
 
-# DRY warning: report_completion.py relies on this file name.
-WRAPPER_LOCATION_PATH = "/home/lantern/wrapper_location"
-BUCKET = "lantern-installers"
+UPLOAD_CWD = '/home/lantern/wrapper-repo/install'
+BUCKET = "lantern-config"
+CONTROLLER = "{{ grains['controller'] }}"
 # DRY warning: ../cloudmaster/cloudmaster.py
+AWS_REGION = "{{ grains['aws_region'] }}"
 AWS_ID = "{{ pillar['aws_id'] }}"
 AWS_KEY = "{{ pillar['aws_key'] }}"
 aws_creds = {'aws_access_key_id': AWS_ID,
@@ -32,22 +35,32 @@ content_types = {'windows': 'application/octet-stream',
                  # which will cause them to be displayed in the browser, not
                  # downloaded.
                  'unix': 'application/x-sh'}
+# DRY
+CONFIGURL_PATH = '/home/lantern/wrapper-repo/install/wrapper/configurl.txt'
+LEGACY_PATH = '/home/lantern/wrapper-repo/install/wrapper/fallback.json'
 
-def upload_wrappers():
+def build_and_upload_wrappers(sqs_msg):
+    sqs_msg = loads(b64decode(sqs_msg))
+    folder = sqs_msg.get_body()['upload-wrappers-to']
+    id_ = sqs_msg.get_body()['upload-wrappers-id']
+    build_wrappers(folder)
+    upload_wrappers(folder)
+    sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
+    report_wrappers_uploaded(sqs, id_)
+    sqs.get_queue("%s_request" % CONTROLLER).delete_message(sqs_msg)
+
+def build_wrappers(folder):
+    # DRY: controller, cloudmaster.
+    file(CONFIGURL_PATH, 'w').write(folder)
+    file(LEGACY_PATH, 'w').write('{"no": "more"}')
+    ret = os.system("/home/lantern/build-wrappers.bash")
+    assert ret == 0
+
+def upload_wrappers(folder):
+    os.chdir(UPLOAD_CWD)
     conn = boto.connect_s3(**aws_creds)
-    try:
-        # If we have already uploaded wrappers from this instance, use the same
-        # folder as before, so the links in old invite e-mails will point to the
-        # new wrappers.
-        loc = file(WRAPPER_LOCATION_PATH).read()
-        path, version = loc.split(",")
-        bucket_name, folder = path.split("/")
-        bucket = conn.get_bucket(bucket_name)
-    except IOError:
-        bucket = conn.get_bucket(BUCKET)
-        folder = get_random_folder_name(bucket)
-        version = None
-    newest_version = version
+    bucket = conn.get_bucket(BUCKET)
+    newest_version = version = None
     for filename in os.listdir("."):
         m = filename_re.match(filename)
         if m is None:
@@ -65,11 +78,8 @@ def upload_wrappers():
             # ones.
             newest_version = max(newest_version, version)
         wrapper_key = Key(bucket)
-        # We use the original name for the landing page, so we have to rename
-        # the wrappers somehow.  Since the wrappers are supposed to get the
-        # latest installer, their version number is misleading (and we've had
-        # comments against such low version numbers at this stage).  So let's
-        # take that out.
+        # Strip version info from wrapper filenames, since we're not really
+        # maintaining it.
         s3_wrapper_filename = filename.replace("_" + version, '')
         wrapper_key.name = "%s/%s" % (folder, s3_wrapper_filename)
         wrapper_key.storage_class = 'REDUCED_REDUNDANCY'
@@ -82,10 +92,7 @@ def upload_wrappers():
         os.unlink(filename)
         # Generate landing page.
         landing_key = Key(bucket)
-        # We give it the URL that we used to give to the wrappers, to keep old
-        # invite email links working, and to avoid having to change anything
-        # in the controller and deal with whatever transition issues ensue.
-        landing_key.name = "%s/%s" % (folder, filename)
+        landing_key.name = "%s/%s.html" % (folder, s3_wrapper_filename)
         landing_key.storage_class = 'REDUCED_REDUNDANCY'
         logging.info("Uploading landing to %s" % landing_key.name)
         landing_key.set_metadata('Content-Type', 'text/html')
@@ -96,24 +103,21 @@ def upload_wrappers():
                 replace=True)
         landing_key.set_acl('public-read')
 
-    # DRY warning: lantern-controller needs to understand this format.
-    file(WRAPPER_LOCATION_PATH, 'w').write(
-            "%s/%s,%s" % (BUCKET, folder, newest_version))
-    # DRY warning: the salt scripts use this file name as a state flag.
-    file('/home/lantern/uploaded_wrappers', 'w').write('OK')
+def report_wrappers_uploaded(sqs, id_):
+    msg = JSONMessage()
+    msg.set_body({'wrappers-uploaded-for': id_})
+    sqs.get_queue("notify_%s" % CONTROLLER).write(msg)
 
-def get_random_folder_name(bucket):
-    while True:
-        attempt = ''.join(random.choice(ALLOWED_FOLDER_CHARS)
-                          for _ in xrange(FOLDER_NAME_LENGTH))
+def serialize(lock_filename, thunk):
+    with LockFile(lock_filename):
         try:
-            iter(bucket.list(prefix=attempt)).next()
-        except StopIteration:
-            return attempt
+            thunk()
+        except Exception as e:
+            logging.exception(e)
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         filename="/home/lantern/upload_wrappers.log",
                         format='%(levelname)-8s %(message)s')
-    upload_wrappers()
+    serialize(sys.argv[0], lambda: build_and_upload_wrappers(sys.argv[1]))

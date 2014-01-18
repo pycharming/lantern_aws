@@ -1,5 +1,6 @@
 include:
     - salt_cloud
+    - lockfile
 
 /etc/ufw/applications.d/salt:
     file.managed:
@@ -17,14 +18,12 @@ include:
     file.managed:
         - source: salt://cloudmaster/cloudmaster.py
         - template: jinja
-        - user: lantern
-        - group: lantern
+        - user: root
+        - group: root
         - mode: 700
     cron.present:
-        - user: lantern
+        - user: root
         - require:
-            - pip: lockfile==0.9.1
+            - pip: lockfile
             - pip: salt-cloud
 
-lockfile==0.9.1:
-    pip.installed
