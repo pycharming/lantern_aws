@@ -90,9 +90,10 @@ def upload_wrappers(folder):
         wrapper_key.set_acl('public-read')
         # Delete successfully uploaded wrappers.
         os.unlink(filename)
-        # Generate landing page.
+        # Generate landing page (just substitute .html for file extension.)
         landing_key = Key(bucket)
-        landing_key.name = "%s/%s.html" % (folder, s3_wrapper_filename)
+        extensionless = s3_wrapper_filename[:s3_wrapper_filename.rfind('.')]
+        landing_key.name = "%s/%s.html" % (folder, extensionless)
         landing_key.storage_class = 'REDUCED_REDUNDANCY'
         logging.info("Uploading landing to %s" % landing_key.name)
         landing_key.set_metadata('Content-Type', 'text/html')
