@@ -170,10 +170,11 @@ def upload_wrappers(sqs_msg):
     file("/home/lantern/last_wrapper_msg", 'w').write(encoded_msg)
     jobid = LocalClient().cmd_async(fallback,
                                     'cmd.run',
-                                    ('/home/lantern/upload_wrappers.py',
-                                    encoded_msg))
+                                    ['/home/lantern/upload_wrappers.py ' + encoded_msg])
     if jobid == 0:
         log.error("upload_wrappers returned 0.")
+    else:
+        log.info("jobid: %r" % jobid)
 
 def set_pillar(instance_name, email, refresh_token, msg, extra_pillars):
     filename = '/home/lantern/%s.sls' % instance_name

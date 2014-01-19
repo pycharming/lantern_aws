@@ -120,5 +120,5 @@ def serialize(lock_filename, thunk):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         filename="/home/lantern/upload_wrappers.log",
-                        format='%(levelname)-8s %(message)s')
+                        format='%(asctime)s %(levelname)-8s %(message)s')
     serialize(sys.argv[0], lambda: build_and_upload_wrappers(sys.argv[1]))
