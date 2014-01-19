@@ -36,6 +36,8 @@ aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
 PROVIDERS = ['aws', 'do']
 REDIRECT = " >> /home/lantern/cloudmaster.log 2>&1 "
+SALT_PATH = '/usr/local/bin/salt'
+SALT_CLOUD_PATH = '/usr/local/bin/salt-cloud'
 
 # Most cloud providers will allow longer instance names, but we are using
 # this as the hostname in those machines too.  Hostnames longer than this
@@ -138,8 +140,8 @@ def launch_proxy(email, serialno, refresh_token, msg, pillars):
                             'provider': provider,
                             'shell': '/bin/bash'}}})
     set_pillar(instance_name, email, refresh_token, msg, pillars)
-    os.system("salt-cloud -y -m %s %s" % (MAP_FILE, REDIRECT))
-    os.system("salt %s state.highstate %s" % (instance_name, REDIRECT))
+    os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, MAP_FILE, REDIRECT))
+    os.system("%s %s state.highstate %s" % (SALT_PATH, instance_name, REDIRECT))
 
 def shutdown_proxy(prefix):
     count = 0
@@ -150,7 +152,7 @@ def shutdown_proxy(prefix):
                 if entry_name.startswith(prefix):
                     log.info("Found match in map.  Shutting it down...")
                     d[provider].remove(entry)
-                    os.system("salt-cloud -y -d %s %s" % (entry_name, REDIRECT))
+                    os.system("%s -y -d %s %s" % (SALT_CLOUD_PATH, entry_name, REDIRECT))
                     count += 1
     return count
 
