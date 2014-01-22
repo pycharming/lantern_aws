@@ -7,7 +7,7 @@ from cPickle import dumps
 import json
 import logging
 import os
-import random
+from random import SystemRandom
 import string
 import sys
 import time
@@ -19,6 +19,7 @@ from boto.sqs.jsonmessage import JSONMessage
 import yaml
 
 
+random = SystemRandom()
 here = os.path.dirname(sys.argv[0]) if __name__ == '__main__' else __file__
 
 
@@ -43,6 +44,9 @@ SALT_CLOUD_PATH = '/usr/local/bin/salt-cloud'
 # this as the hostname in those machines too.  Hostnames longer than this
 # may be problematic if we want to make FQDN names out of them.
 MAX_INSTANCE_NAME_LENGTH = 64
+
+AUTH_TOKEN_ALPHABET = string.letters + string.digits
+AUTH_TOKEN_LENGTH = 64
 
 
 def get_provider():
@@ -99,7 +103,15 @@ def actually_check_q():
         # Salt scripts consuming these should use backwards-compatible defaults.
         pillars = d.get('launch-pillars', {})
         # Default proxy_protocol to tcp
-        pillars['proxy_protocol'] = pillars.get('proxy_protocol', 'tcp')
+        pillars.setdefault('proxy_protocol', 'tcp')
+        # Make new fallbacks install from git by default.  We can't do this in
+        # the fallback Salt config because there the defaults need to be
+        # backwards compatible with old-style fallbacks.  We can't upgrade
+        # those until we EOL old clients, since the new style of fallback
+        # requires an auth token, that old fallbacks don't know to provide.
+        pillars.setdefault('install-from', 'git')
+        if 'auth_token' not in pillars:
+            pillars['auth_token'] = random_auth_token()
         launch_proxy(userid,
                      serial,
                      refresh_token,
@@ -230,6 +242,9 @@ def clip_email(email):
     at_index = email.find('@')
     return '%s...%s' % (email[:1], email[at_index-2:at_index])
 
+def random_auth_token():
+    return ''.join(random.choice(AUTH_TOKEN_ALPHABET)
+                   for _ in xrange(AUTH_TOKEN_LENGTH))
 
 if __name__ == '__main__':
     # I have to do all this crap because salt hijacks the root logger.
