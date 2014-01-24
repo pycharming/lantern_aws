@@ -1,4 +1,5 @@
 {% set jre_folder='/home/lantern/wrapper-repo/install/jres' %}
+{% set access_data_file='/home/lantern/fallback.json' %}
 {% set install_from=pillar.get('install-from', 'installer') %}
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
@@ -19,10 +20,12 @@
 {% set template_files=[
     ('/etc/ufw/applications.d/', 'lantern', 'ufw_rules', 'root', 644),
     ('/etc/init.d/', 'lantern', 'lantern.init', 'root', 700),
+    ('/home/lantern/', 'build-wrappers.bash', 'build-wrappers.bash', 'lantern', 700),
+    ('/home/lantern/', 'percent_mem.py', 'percent_mem.py', 'lantern', 700),
+    ('/home/lantern/', 'upload_wrappers.py', 'upload_wrappers.py', 'lantern', 700),
     ('/home/lantern/', 'kill_lantern.py', 'kill_lantern.py', 'lantern', 700),
     ('/home/lantern/', 'report_stats.py', 'report_stats.py', 'lantern', 700),
     ('/home/lantern/', 'check_lantern.py', 'check_lantern.py', 'lantern',  700),
-    ('/home/lantern/', 'report_completion.py', 'report_completion.py', 'lantern', 700),
     ('/home/lantern/', 'user_credentials.json', 'user_credentials.json', 'lantern', 400),
     ('/home/lantern/', 'client_secrets.json', 'client_secrets.json', 'lantern', 400),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
@@ -31,12 +34,11 @@
     ('/home/lantern/wrapper-repo/', 'buildInstallerWrappers.bash', 'buildInstallerWrappers.bash', 'lantern', 500),
     ('/home/lantern/wrapper-repo/install/wrapper/', 'wrapper.install4j', 'wrapper.install4j', 'lantern', 500),
     ('/home/lantern/wrapper-repo/install/wrapper/', 'dpkg.bash', 'dpkg.bash', 'lantern', 500),
-    ('/home/lantern/wrapper-repo/install/wrapper/', 'fallback.json', 'fallback.json', 'lantern', 400)] %}
+    ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400)] %}
 
 # To send as is.
 {% set literal_files=[
     ('/home/lantern/', 'installer_landing.html', 400),
-    ('/home/lantern/', 'littleproxy_keystore.jks', 400),
     ('/home/lantern/secure/', 'bns_cert.p12', 400),
     ('/home/lantern/secure/', 'bns-osx-cert-developer-id-application.p12',
      400),
@@ -59,8 +61,9 @@
 {% set lantern_pid='/var/run/lantern.pid' %}
 
 include:
-    - install4j
     - boto
+    - install4j
+    - lockfile
 
 /home/lantern/secure:
     file.directory:
@@ -92,6 +95,7 @@ include:
         - mode: {{ mode }}
         - require:
             - file: /home/lantern/wrapper-repo/install/common
+            - pip: lockfile
 {% endfor %}
 
 {% for dir,filename,mode in literal_files %}
@@ -156,38 +160,11 @@ fallback-proxy-dirs-and-files:
 nsis:
     pkg.installed
 
-build-wrappers:
-    cmd.script:
-        - source: salt://fallback_proxy/build-wrappers.bash
-        - user: lantern
-        - cwd: /home/lantern/wrapper-repo
-        - unless: "[ -e /home/lantern/wrappers_built ]"
-        - require:
-            - pkg: nsis
-            - cmd: fallback-proxy-dirs-and-files
-            - cmd: install4j
-            - cmd: nsis-inetc-plugin
-            {% for filename in jre_files %}
-            - cmd: download-{{ filename }}
-            {% endfor %}
-
 open-proxy-port:
     cmd.run:
         - name: "ufw allow lantern_proxy"
         - require:
             - cmd: fallback-proxy-dirs-and-files
-
-upload-wrappers:
-    cmd.script:
-        - source: salt://fallback_proxy/upload_wrappers.py
-        - template: jinja
-        - unless: "[ -e /home/lantern/uploaded_wrappers ]"
-        - user: lantern
-        - group: lantern
-        - cwd: /home/lantern/wrapper-repo/install
-        - require:
-            - cmd: build-wrappers
-            - pip: boto==2.9.5
 
 lantern-service:
     service.running:
@@ -195,7 +172,6 @@ lantern-service:
         - enable: yes
         - require:
             - cmd: open-proxy-port
-            - cmd: upload-wrappers
             - cmd: fallback-proxy-dirs-and-files
         - watch:
             # Restart when we get a new user to run as, or a new refresh token.
@@ -207,17 +183,20 @@ report-completion:
     cmd.script:
         - source: salt://fallback_proxy/report_completion.py
         - template: jinja
+        - context:
+            access_data_file: {{ access_data_file }}
         - unless: "[ -e /home/lantern/reported_completion ]"
         - user: lantern
         - group: lantern
         - cwd: /home/lantern
         - require:
             - service: lantern-service
-            - cmd: upload-wrappers
             # I need boto updated so I have the same version as the cloudmaster
             # and thus I can unpickle and delete the SQS message that
             # triggered the launching of this instance.
             - pip: boto==2.9.5
+            - file: {{ access_data_file }}
+            - cmd: generate-cert
 
 zip:
     pkg.installed
@@ -307,3 +286,16 @@ restart-ufw:
         - name: 'service ufw restart'
         - user: root
         - group: root
+
+# Dictionary of American English words for the dname generator in
+# generate-cert.
+wamerican:
+    pkg.installed
+
+generate-cert:
+    cmd.script:
+        - source: salt://fallback_proxy/gencert.py
+        # Don't clobber the keystore of old fallbacks.
+        - unless: '[ -e /home/lantern/littleproxy_keystore.jks ]'
+        - require:
+            - pkg: wamerican

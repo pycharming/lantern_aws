@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 
-source ../secure/env-vars.txt && ./buildInstallerWrappers.bash && touch ../wrappers_built
+set -e
+cd /home/lantern/wrapper-repo
+source ../secure/env-vars.txt && ./buildInstallerWrappers.bash
 
