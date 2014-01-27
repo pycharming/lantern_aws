@@ -20,7 +20,7 @@ CONTROLLER = "{{ grains['controller'] }}"
 SQSMSG = "{{ pillar['sqs_msg'] }}"
 AWS_ID = "{{ pillar['aws_id'] }}"
 AWS_KEY = "{{ pillar['aws_key'] }}"
-IP = "{{ grains.get('ec2_public-ipv4', None) or grains['ipv4'][1] }}"
+IP = "{{ public_ip }}"
 PORT = "{{ grains['proxy_port'] }}"
 
 aws_creds = {'aws_access_key_id': AWS_ID,

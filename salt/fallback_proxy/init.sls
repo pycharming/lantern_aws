@@ -3,7 +3,12 @@
 {% set install_from=pillar.get('install-from', 'installer') %}
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
-
+#XXX: hotfix; do a proper grain to fetch public IP.
+{% if grains['ipv4'][0] == '127.0.0.1' %}
+    {% set public_ip=(grains.get('public_ipv4') or grains['ipv4'][1]) %}
+{% else %}
+    {% set public_ip=(grains.get('public_ipv4') or grains['ipv4'][0]) %}
+{% endif %}
 
 # Keep install/common as the last one; it's being checked to make sure all
 # folders have been initialized.
@@ -90,6 +95,7 @@ include:
             install_from: {{ install_from }}
             proxy_protocol: {{ proxy_protocol }}
             auth_token: {{ auth_token }}
+            public_ip: {{ public_ip }}
         - user: {{ user }}
         - group: {{ user }}
         - mode: {{ mode }}
@@ -184,6 +190,7 @@ report-completion:
         - source: salt://fallback_proxy/report_completion.py
         - template: jinja
         - context:
+            public_ip: {{ public_ip }}
             access_data_file: {{ access_data_file }}
         - unless: "[ -e /home/lantern/reported_completion ]"
         - user: lantern
