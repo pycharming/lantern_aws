@@ -87,7 +87,8 @@ def gen_cert_call():
     args['validity'] = weighted_choice((365, 8), (365*2, 4), (365*3, 1))
 
     argstr = " ".join("-%s %s" % (key, val) for key, val in args.iteritems())
-    return "keytool -genkeypair -alias fallback -keypass lantern -storepass lantern -keystore /home/lantern/littleproxy_keystore.jks " + argstr
+    # DRY: org.lantern.proxy.CertTrackingSslEngineSource in the client.
+    return "keytool -genkeypair -alias fallback -keypass 'Be Your Own Lantern' -storepass 'Be Your Own Lantern' -keystore /home/lantern/littleproxy_keystore.jks " + argstr
 
 
 if __name__ == '__main__':

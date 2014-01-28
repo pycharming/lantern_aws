@@ -43,7 +43,7 @@ def report_completion():
     access_data['cert'] = subprocess.check_output(
             ["keytool", "-exportcert",
              "-alias", "fallback",
-             "-storepass", "lantern",
+             "-storepass", "Be Your Own Lantern",
              "-rfc",
              "-keystore", "/home/lantern/littleproxy_keystore.jks"])
     sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
