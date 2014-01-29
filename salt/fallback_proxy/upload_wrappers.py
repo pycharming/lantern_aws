@@ -36,8 +36,7 @@ content_types = {'windows': 'application/octet-stream',
                  # downloaded.
                  'unix': 'application/x-sh'}
 # DRY
-CONFIGURL_PATH = '/home/lantern/wrapper-repo/install/wrapper/configurl.txt'
-LEGACY_PATH = '/home/lantern/wrapper-repo/install/wrapper/fallback.json'
+CONFIGURL_PATH = '/home/lantern/wrapper-repo/install/wrapper/.lantern-configurl.txt'
 
 def build_and_upload_wrappers(sqs_msg):
     sqs_msg = loads(b64decode(sqs_msg))
@@ -52,7 +51,6 @@ def build_and_upload_wrappers(sqs_msg):
 def build_wrappers(folder):
     # DRY: controller, cloudmaster.
     file(CONFIGURL_PATH, 'w').write(folder)
-    file(LEGACY_PATH, 'w').write('{"no": "more"}')
     ret = os.system("/home/lantern/build-wrappers.bash")
     assert ret == 0
 

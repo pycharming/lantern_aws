@@ -18,6 +18,7 @@
              '/home/lantern/wrapper-repo/lantern-ui/app/img',
              '/home/lantern/wrapper-repo/install',
              '/home/lantern/wrapper-repo/install/win',
+             '/home/lantern/wrapper-repo/install/wrapper',
              jre_folder,
              '/home/lantern/wrapper-repo/install/common'] %}
 
