@@ -8,8 +8,8 @@ aws_credential_path = os.path.join(here.secrets_path,
                                    'aws_credential')
 salt_version = '0.17.4'
 do_region = 'New York 2'
-controller = 'lanternctrl'
-cloudmaster_name = 'cloudmaster'
+controller = 'lanternctrl1-2'
+cloudmaster_name = 'cloudmaster1-2'
 free_for_all_sg_name = 'free-for-all'
 installer_bucket = 'lantern'
 installer_filename = 'latest-64.deb'
