@@ -141,20 +141,6 @@ EC2:
 salt 'instance_name' pillar.get user
 ```
 
-###### Rebuilding wrappers
-
-The fallback proxies keep track of the completion status of the different subtasks by using flag files in the `/home/lantern` directory.  These are:
-
-- `/home/lantern/wrappers_built` signals that wrappers have been built,
-- `/home/lantern/uploaded_wrappers` signals that wrappers have been uploaded, and
-- `/home/lantern/reported_completion` signals that we have notified lantern-controller that this server is up (and where to find the wrappers).
-
-In order to trigger any of these operations again, you just delete the file that flags its completion and ask the machine to apply its Salt config again.  For example, to request that all wrappers be rebuilt, uploaded again, and that lantern-controller be notified of the new locations so it will send new invite e-mails out, you say:
-
-    bin/ssh_cloudmaster.py 'sudo salt "fp-*" cmd.run "rm /home/lantern/wrappers_built /home/lantern/uploaded_wrappers /home/lantern/reported_completion ; salt-call state.highstate"'
-
-Since this turned out to be needed quite often, a `bin/rebuild_wrappers.bash` script has been added that does just this.
-
 ###### Reinstalling lantern
 
 To reinstall lantern in the proxies after a new client version has been released, just uninstall the old package through `apt-get` and then run `state.highstate` to re-apply the configuration scripts.  This takes care of restarting the lantern service too.  `bin/reinstall_lantern.bash` (which see) does this.
