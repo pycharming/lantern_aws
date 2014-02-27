@@ -141,6 +141,11 @@ EC2:
 salt 'instance_name' pillar.get user
 ```
 
+###### Launch a fallback proxy with fteproxy enabled
+```
+bin/fake_controller.py launch "ox@getlantern.org" 102 '{"branch": "pluggabletransports", "pt_type": "FTE", "pt_props": { "key": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000000000000000000F", "upstream-regex": "^GET\\ \\/([a-z\\.\\/]*) HTTP/1\\.1\\r\\n\\r\\n$", "downstream-regex": "^HTTP/1\\.1\\ 200 OK\\r\\nContent-Type:\\ ([a-z]+)\\r\\n\\r\\n\\C*$" }}'
+```
+
 ###### Reinstalling lantern
 
 To reinstall lantern in the proxies after a new client version has been released, just uninstall the old package through `apt-get` and then run `state.highstate` to re-apply the configuration scripts.  This takes care of restarting the lantern service too.  `bin/reinstall_lantern.bash` (which see) does this.

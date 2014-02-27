@@ -10,17 +10,16 @@ from boto.sqs.jsonmessage import JSONMessage
 
 import config
 import util
+import json
 
 
 def launch(email,
            serial,
-           refresh_token="bogus_refresh_token",
-           *pillars):
-    pillar_dict = dict(p.split("=") for p in pillars)
+           pillars):
     send_message({'launch-fp-as': email,
-                  'launch-refrtok': refresh_token,
+                  'launch-refrtok': 'bogus',
                   'launch-serial': serial,
-                  'launch-pillars': pillar_dict})
+                  'launch-pillars': json.loads(pillars)})
 
 def kill(email, serial):
     send_message({'shutdown-fp': name_prefix(email, serial)})
@@ -48,14 +47,14 @@ def name_prefix(email, serialno):
     return "fp-%s-%s-" % (sanitized_email, serialno)
 
 def print_usage():
-    print "Usage: %s (launch|kill) <email> <serial> [[<refresh-token='bogus'>] [<pillar-key>=<pillar-val>] ...]" % sys.argv[0]
+    print "Usage: %s (launch|kill) <email> <serial> [{pillar_key: pillar_value[, pillar_key: pillar_value]...}]" % sys.argv[0]
 
 if __name__ == '__main__':
     try:
         cmd, email, serial = sys.argv[1:4]
         serial = int(serial)
         if cmd == 'launch':
-            launch(email, serial, *sys.argv[4:])
+            launch(email, serial, sys.argv[4])
         elif cmd == 'kill':
             kill(email, serial)
         else:
