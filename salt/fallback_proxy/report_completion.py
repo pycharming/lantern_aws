@@ -50,8 +50,7 @@ def report_completion():
              "-rfc",
              "-keystore", "/home/lantern/littleproxy_keystore.jks"])
     if PT_TYPE is not None:
-        ptProps = {{ pillar.get('pt_props') }} 
-        access_data['pt'] = ptProps.copy()
+        access_data['pt'] = {{ pillar.get('pt_props')|python }} 
         access_data['pt']['type'] = PT_TYPE
     sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
     logging.info("Reporting fallback is ready.")
