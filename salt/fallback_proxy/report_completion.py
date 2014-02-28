@@ -22,6 +22,9 @@ AWS_ID = "{{ pillar['aws_id'] }}"
 AWS_KEY = "{{ pillar['aws_key'] }}"
 IP = "{{ public_ip }}"
 PORT = "{{ grains['proxy_port'] }}"
+PT_TYPE = "{{ pillar['pt_type'] }}"
+if PT_TYPE == 'None':
+    PT_TYPE = None
 
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
@@ -46,6 +49,9 @@ def report_completion():
              "-storepass", "Be Your Own Lantern",
              "-rfc",
              "-keystore", "/home/lantern/littleproxy_keystore.jks"])
+    if PT_TYPE is not None:
+        access_data['pt'] = {{ pillar.get('pt_props')|python }} 
+        access_data['pt']['type'] = PT_TYPE
     sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
     logging.info("Reporting fallback is ready.")
     ctrl_req_q = sqs.get_queue("%s_request" % CONTROLLER)

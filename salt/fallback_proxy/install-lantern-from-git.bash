@@ -11,6 +11,8 @@ set -e
 [ ! -e lantern-repo ] || rm -rf lantern-repo
 git clone --depth 1 --recursive --branch {{ pillar.get('branch', 'fallback') }} git://github.com/getlantern/lantern.git lantern-repo > $LOG 2>&1
 cd lantern-repo
+# Symlink pt to the right version of pt in install to get PluggableTransports support
+ln -s install/linux_x86_64/pt pt
 ./install.bash >> $LOG 2>&1
 
 # Restore check_lantern iff we've built Lantern successfully.

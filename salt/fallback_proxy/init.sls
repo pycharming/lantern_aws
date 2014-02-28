@@ -40,7 +40,8 @@
     ('/home/lantern/wrapper-repo/', 'buildInstallerWrappers.bash', 'buildInstallerWrappers.bash', 'lantern', 500),
     ('/home/lantern/wrapper-repo/install/wrapper/', 'wrapper.install4j', 'wrapper.install4j', 'lantern', 500),
     ('/home/lantern/wrapper-repo/install/wrapper/', 'dpkg.bash', 'dpkg.bash', 'lantern', 500),
-    ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400)] %}
+    ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400),
+    ('/home/lantern/', 'fte.props', 'fte.props', 'lantern', 400)] %}
 
 # To send as is.
 {% set literal_files=[
