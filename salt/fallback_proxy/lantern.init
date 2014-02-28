@@ -22,10 +22,7 @@ LANTERN_DIR=/home/lantern
 DAEMON_ARGS="--disable-ui --force-give --oauth2-client-secrets-file $LANTERN_DIR/client_secrets.json --oauth2-user-credentials-file $LANTERN_DIR/user_credentials.json --server-port {{ grains['proxy_port'] }} --as-fallback-proxy --keystore $LANTERN_DIR/littleproxy_keystore.jks --controller-id {{ grains['controller'] }} --instance-id {{ pillar['instance_id'] }} --report-ip {{ public_ip }}"
 
 {% if pillar.get('pt_type') != None %}
-DAEMON_ARGS="$DAEMON_ARGS --pt type={{ pillar.get('pt_type') }}"
-    {% for key, value in pillar.get('pt_props').iteritems() %}
-DAEMON_ARGS="$DAEMON_ARGS --pt {{ key }}='{{ value }}'"
-    {% endfor %}
+DAEMON_ARGS="$DAEMON_ARGS --pt type={{ pillar.get('pt_type') }} --pt file=../fte.props"
 {% endif %}
 
 {% if install_from == 'git' %}
