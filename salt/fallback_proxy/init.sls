@@ -253,7 +253,8 @@ init-swap:
         - user: root
         - group: root
 
-{% if pillar.get('check-lantern', 'True') not in ['False', 'false', 'no'] %}
+
+{% if grains['controller'] == 'lanternctrl1-2' %}
 check-lantern:
     cron.present:
         - name: /home/lantern/check_lantern.py
