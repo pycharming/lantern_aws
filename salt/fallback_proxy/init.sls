@@ -134,7 +134,7 @@ install-lantern:
     cmd.script:
 {% if install_from == 'git' %}
         - source: salt://fallback_proxy/install-lantern-from-git.bash
-        - unless: "[ \"$(find /home/lantern/lantern-repo/target -maxdepth 1 -name 'lantern-*.jar')\" ]"
+        - unless: "[ -e /home/lantern/lantern-repo/target ] && [ \"$(find /home/lantern/lantern-repo/target -maxdepth 1 -name 'lantern-*.jar')\" ]"
         - user: lantern
         - group: lantern
         - cwd: /home/lantern/

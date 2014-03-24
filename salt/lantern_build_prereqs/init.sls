@@ -1,29 +1,29 @@
 {% if pillar.get('install-from') == 'git' %}
-openjdk-6-jre:
-    pkg.removed
 
-java-prereqs:
-    cmd.script:
-        - source: salt://lantern_build_prereqs/install-java-prereqs.bash
-        - unless: "[ -e /usr/lib/jvm/java-6-sun/bin/java ]"
-        - user: root
-        - cwd: /tmp
-        - require:
-            - pkg: openjdk-6-jre
+java-ppa:
+  pkgrepo.managed:
+    - ppa: webupd8team/java
+
+java-home:
     file.append:
         - name: /etc/profile
-        - text: "export JAVA_HOME=/usr/lib/jvm/java-6-sun"
+        - text: "export JAVA_HOME=/usr/lib/jvm/java-8-oracle"
 
+accept-oracle-terms:
+    cmd.run:
+        - name: "echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections"
+        - user: root
 java:
     pkg.installed:
         - order: 2
         - names:
-            - sun-java6-jre
-            - sun-java6-bin
-            - sun-java6-jdk
+            - oracle-java8-installer
+            - oracle-java8-set-default
         - require:
-            - cmd: java-prereqs
-            - file: java-prereqs
+            - pkgrepo: java-ppa
+            - file: java-home
+            - cmd: accept-oracle-terms
+
 {% else %}
 openjdk-6-jre:
     pkg.installed:

@@ -62,7 +62,7 @@ def rsync(src, dst):
                          util.get_address(),
                          dst))
     if not error:
-        print "Rsynced successfuly."
+        print "Rsynced successfully."
     return error
 
 def upload_cloudmaster_minion_config():

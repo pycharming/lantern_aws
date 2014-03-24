@@ -25,5 +25,4 @@ include:
         - user: root
         - require:
             - pip: lockfile
-            - pip: salt-cloud
 

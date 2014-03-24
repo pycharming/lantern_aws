@@ -40,11 +40,9 @@ salt:
         - require:
             - pip: salt-nodeps
 
-# A pull request for this one is pending, so hopefully we get this fixed
-# upstream in next release.
-/usr/local/lib/python2.7/dist-packages/salt/modules/saltutil.py:
-    file.patch:
-        - source: salt://salt_minion/saltutil.patch
-        - hash: md5=735d6df105e3722de9f209c2e72994fa
-        - require:
-            - pip: salt
+# In theory this is only required for salt-cloud, but now that salt-cloud is
+# a part of the salt project this requirement seems to apply even if you don't
+# use any salt-cloud functionality.
+apache-libcloud:
+    pip.installed:
+        - upgrade: yes
