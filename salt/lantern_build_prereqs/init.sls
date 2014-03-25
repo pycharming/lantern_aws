@@ -7,22 +7,29 @@ java-ppa:
 java-home:
     file.append:
         - name: /etc/profile
-        - text: "export JAVA_HOME=/usr/lib/jvm/java-8-oracle"
+        - text: "export JAVA_HOME=/usr/lib/jvm/java-7-oracle"
 
 accept-oracle-terms:
     cmd.run:
-        - name: "echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections"
+        - name: "echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections"
         - user: root
+
 java:
     pkg.installed:
         - order: 2
         - names:
-            - oracle-java8-installer
-            - oracle-java8-set-default
+            - oracle-java7-installer
+            - oracle-java7-set-default
         - require:
             - pkgrepo: java-ppa
             - file: java-home
             - cmd: accept-oracle-terms
+    cmd.run:
+        - order: 2
+        - name: "update-java-alternatives -s java-7-oracle"
+        - user: root
+        - require:
+            - pkg: java
 
 {% else %}
 openjdk-6-jre:
