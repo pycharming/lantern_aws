@@ -39,6 +39,7 @@ salt:
         - name: salt=={{ pillar['salt_version'] }}
         - require:
             - pip: salt-nodeps
+            - pkg: salt-prereqs
 
 # In theory this is only required for salt-cloud, but now that salt-cloud is
 # a part of the salt project this requirement seems to apply even if you don't
@@ -46,3 +47,15 @@ salt:
 apache-libcloud:
     pip.installed:
         - upgrade: yes
+
+salt-prereqs:
+    pkg.installed:
+        - names:
+            - swig
+            - libssl-dev
+            - python-dev
+            - libzmq3-dev
+            # For some reason this was required in cloudmaster1-2, but not in
+            # my test cloudmaster.  -aranhoide
+            - python-libcloud
+
