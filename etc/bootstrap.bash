@@ -30,7 +30,7 @@ apt-get install -y python-software-properties
 add-apt-repository -y ppa:saltstack/salt
 apt-get update -y > >(tee -a $LOG) 2>&1
 #apt-get upgrade -y > >(tee -a $LOG) 2>&1
-apt-get install python python-support python-pkg-resources python-crypto python-jinja2 python-m2crypto python-yaml libzmq3-dev python-zmq dctrl-tools msgpack-python python-markupsafe python-pip debconf-utils swig libssl-dev python-dev -y -o DPkg::Options::=--force-confold > >(tee -a $LOG) 2>&1
+apt-get install python python-support python-pkg-resources python-crypto python-jinja2 python-m2crypto python-yaml libzmq3-dev python-zmq dctrl-tools msgpack-python python-markupsafe python-pip debconf-utils swig libssl-dev python-dev python-libcloud -y -o DPkg::Options::=--force-confold > >(tee -a $LOG) 2>&1
 apt-get autoremove -y > >(tee -a $LOG) 2>&1
 pip install --upgrade pip > >(tee -a $LOG) 2>&1
 hash -r
