@@ -31,7 +31,6 @@
     ('/home/lantern/', 'upload_wrappers.py', 'upload_wrappers.py', 'lantern', 700),
     ('/home/lantern/', 'kill_lantern.py', 'kill_lantern.py', 'lantern', 700),
     ('/home/lantern/', 'report_stats.py', 'report_stats.py', 'lantern', 700),
-    ('/home/lantern/', 'check_lantern.py', 'check_lantern.py', 'lantern',  700),
     ('/home/lantern/', 'user_credentials.json', 'user_credentials.json', 'lantern', 400),
     ('/home/lantern/', 'client_secrets.json', 'client_secrets.json', 'lantern', 400),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
@@ -254,16 +253,16 @@ init-swap:
         - group: root
 
 
-{% if grains['controller'] == 'lanternctrl1-2' %}
-check-lantern:
-    cron.present:
-        - name: /home/lantern/check_lantern.py
-        - user: root
-        - require:
-            - file: /home/lantern/check_lantern.py
-            - pip: psutil
-            - service: lantern
-{% endif %}
+#{% if grains['controller'] == 'lanternctrl1-2' %}
+#check-lantern:
+#    cron.present:
+#        - name: /home/lantern/check_lantern.py
+#        - user: root
+#        - require:
+#            - file: /home/lantern/check_lantern.py
+#            - pip: psutil
+#            - service: lantern
+#{% endif %}
 
 /etc/default/ufw:
     file.replace:
