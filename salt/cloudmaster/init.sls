@@ -14,7 +14,8 @@ include:
         - require:
             - file: /etc/ufw/applications.d/salt
 
-{% for script_name in ['cloudmaster', 'check_unresponsive_fallbacks'] %}
+{% for script_name, minutes in [('cloudmaster', '2'),
+                                ('check_unresponsive_fallbacks', '15')] %}
 /home/lantern/{{ script_name }}.py:
     file.managed:
         - source: salt://cloudmaster/{{ script_name }}.py
@@ -24,6 +25,7 @@ include:
         - mode: 700
     cron.present:
         - user: root
+        - minute: "*/{{ minutes }}"
         - require:
             - pip: lockfile
 {% endfor %}

@@ -32,7 +32,9 @@ def check():
     responsive_fps = set(c.cmd('fp-*', 'test.ping').iterkeys())
     unresponsive_fps = all_fps - responsive_fps
     if unresponsive_fps:
-        log.info("We have unresponsive fallbacks!")
+        log.warn("We have unresponsive fallbacks!")
+        for name in sorted(unresponsive_fps):
+            log.warn("   " + name)
         sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
         report_q = sqs.get_queue("notify_%s" % CONTROLLER)
         msg = JSONMessage()
@@ -57,11 +59,11 @@ if __name__ == '__main__':
     handler = logging.FileHandler(os.path.join(here, "check_unresponsive_fallbacks.log"))
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(message)s'))
     log.addHandler(handler)
-    log.info("cloudmaster starting...")
+    log.info("check starting...")
     try:
         check()
     except Exception as e:
         log.exception(e)
-    log.info("cloudmaster done.")
+    log.info("check done.")
 
 
