@@ -14,9 +14,10 @@ include:
         - require:
             - file: /etc/ufw/applications.d/salt
 
-/home/lantern/cloudmaster.py:
+{% for script_name in ['cloudmaster', 'check_unresponsive_fallbacks'] %}
+/home/lantern/{{ script_name }}.py:
     file.managed:
-        - source: salt://cloudmaster/cloudmaster.py
+        - source: salt://cloudmaster/{{ script_name }}.py
         - template: jinja
         - user: root
         - group: root
@@ -25,4 +26,4 @@ include:
         - user: root
         - require:
             - pip: lockfile
-
+{% endfor %}
