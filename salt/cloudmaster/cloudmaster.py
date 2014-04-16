@@ -32,6 +32,7 @@ AWS_REGION = "{{ grains['aws_region'] }}"
 AWS_ID = "{{ pillar['aws_id'] }}"
 AWS_KEY = "{{ pillar['aws_key'] }}"
 CONTROLLER = "{{ grains['controller'] }}"
+PRODUCTION_CONTROLLER = "{{ grains['production_controller'] }}"
 SALT_VERSION = "{{ pillar['salt_version'] }}"
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
@@ -148,6 +149,7 @@ def launch_proxy(email, serialno, refresh_token, msg, pillars):
                  'grains': {'saltversion': SALT_VERSION,
                             'aws_region': AWS_REGION,
                             'controller': CONTROLLER,
+                            'production_controller': PRODUCTION_CONTROLLER,
                             'proxy_port': proxy_port,
                             'provider': provider,
                             'shell': '/bin/bash'}}})
