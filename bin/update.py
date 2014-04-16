@@ -76,13 +76,15 @@ def upload_cloudmaster_minion_config():
                           + r""" && echo "    do_key: %s " """
                           + r""" && echo "    do_region: %s " """
                           + r""" && echo "    controller: %s " """
+                          + r""" && echo "    production_controller: %s " """
                           + r""" ) > /home/ubuntu/minion""")
                          % (config.aws_region,
                             region.get_ami(),
                             do_id,
                             do_key,
                             config.do_region,
-                            config.controller))
+                            config.controller,
+                            'lanternctrl1-2'))
     util.ssh_cloudmaster('sudo mv /home/ubuntu/minion /etc/salt/minion'
                          ' && sudo chown root:root /etc/salt/minion'
                          ' && sudo chmod 600 /etc/salt/minion')

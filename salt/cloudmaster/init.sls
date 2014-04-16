@@ -14,8 +14,11 @@ include:
         - require:
             - file: /etc/ufw/applications.d/salt
 
-{% for script_name, minutes in [('cloudmaster', '2'),
-                                ('check_unresponsive_fallbacks', '15')] %}
+{% set scripts = [('cloudmaster', '1')] %}
+{% if grains['controller'] == grains['production_controller'] %}
+    {% set scripts=scripts + [('check_unresponsive_fallbacks', '15')] %}
+{% endif %}
+{% for script_name, minutes in scripts %}
 /home/lantern/{{ script_name }}.py:
     file.managed:
         - source: salt://cloudmaster/{{ script_name }}.py

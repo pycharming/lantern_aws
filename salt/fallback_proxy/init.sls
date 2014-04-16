@@ -253,7 +253,7 @@ init-swap:
         - group: root
 
 
-#{% if grains['controller'] == 'lanternctrl1-2' %}
+#{% if grains['controller'] == grains['production_controller'] %}
 #check-lantern:
 #    cron.present:
 #        - name: /home/lantern/check_lantern.py
