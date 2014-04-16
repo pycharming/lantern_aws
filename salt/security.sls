@@ -1,5 +1,5 @@
 fail2ban:
-    pkg.installed:
+    pkg.removed:
         - order: 2
 
 ufw:
