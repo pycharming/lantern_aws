@@ -29,6 +29,7 @@
     ('/home/lantern/', 'build-wrappers.bash', 'build-wrappers.bash', 'lantern', 700),
     ('/home/lantern/', 'percent_mem.py', 'percent_mem.py', 'lantern', 700),
     ('/home/lantern/', 'upload_wrappers.py', 'upload_wrappers.py', 'lantern', 700),
+    ('/home/lantern/', 'check_lantern.py', 'check_lantern.py', 'lantern', 700),
     ('/home/lantern/', 'kill_lantern.py', 'kill_lantern.py', 'lantern', 700),
     ('/home/lantern/', 'report_stats.py', 'report_stats.py', 'lantern', 700),
     ('/home/lantern/', 'user_credentials.json', 'user_credentials.json', 'lantern', 400),
@@ -227,6 +228,7 @@ build-essential:
 
 psutil:
     pip.installed:
+        - name: psutil==2.1.0
         - require:
             - pkg: build-essential
             - pkg: python-dev
@@ -253,16 +255,17 @@ init-swap:
         - group: root
 
 
-#{% if grains['controller'] == grains['production_controller'] %}
-#check-lantern:
-#    cron.present:
-#        - name: /home/lantern/check_lantern.py
-#        - user: root
-#        - require:
-#            - file: /home/lantern/check_lantern.py
-#            - pip: psutil
-#            - service: lantern
-#{% endif %}
+{% if grains['controller'] == grains.get('production_controller', 'lanternctrl1-2') %}
+check-lantern:
+    cron.present:
+        - name: /home/lantern/check_lantern.py
+        - user: root
+        - minute: '*/5'
+        - require:
+            - file: /home/lantern/check_lantern.py
+            - pip: psutil
+            - service: lantern
+{% endif %}
 
 /etc/default/ufw:
     file.replace:

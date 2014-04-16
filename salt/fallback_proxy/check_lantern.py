@@ -54,15 +54,15 @@ def check_lantern():
     if len(children) != 1:
         return "wrong number of children found: %s" % len(children)
     child = children[0]
-    if child.name != 'java':
-        return "unexpected name for Lantern child process: %r" % child.name
+    if child.name() != 'java':
+        return "unexpected name for Lantern child process: %r" % child.name()
     if not child.is_running():
         return "Lantern child process not running"
     return check_pids('java', child.pid)
 
 def check_pids(name, expected_pid):
     pids = [proc.pid for proc in psutil.process_iter()
-            if proc.name == name]
+            if proc.name() == name]
     # It's OK that there are other Java processes (e.g. install4j for building
     # wrappers.)
     if expected_pid in pids:
