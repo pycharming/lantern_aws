@@ -14,7 +14,8 @@ include:
         - require:
             - file: /etc/ufw/applications.d/salt
 
-{% set scripts = [('cloudmaster', '1')] %}
+{% set scripts = [('cloudmaster', '1'),
+                  ('alert_fallbacks_failing_to_proxy', '8')] %}
 {% if grains['controller'] == grains['production_controller'] %}
     {% set scripts=scripts + [('check_unresponsive_fallbacks', '15')] %}
 {% endif %}
