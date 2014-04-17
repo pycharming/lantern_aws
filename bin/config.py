@@ -6,7 +6,7 @@ aws_region = 'ap-southeast-1'
 aws_credential_path = os.path.join(here.secrets_path,
                                    'lantern_aws',
                                    'aws_credential')
-salt_version = '2014.1.1'
+salt_version = '2014.1.3'
 do_region = 'New York 2'
 controller = 'lanternctrl1-2'
 cloudmaster_name = 'cloudmaster1-2'
