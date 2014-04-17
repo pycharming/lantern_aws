@@ -15,9 +15,9 @@ LANTERN_ARGS = set(['java', '-Djna.nosys=true', '-jar', '--disable-ui',
 def run():
     any_killed = False
     for proc in psutil.process_iter():
-        if (len(LANTERN_ARGS.intersection(proc.cmdline))
+        if (len(LANTERN_ARGS.intersection(proc.cmdline()))
             > len(LANTERN_ARGS) / 2):
-            logging.info("Terminating %r..." % proc.cmdline)
+            logging.info("Terminating %r..." % proc.cmdline())
 	    proc.terminate()
             any_killed = True
     if not any_killed:
