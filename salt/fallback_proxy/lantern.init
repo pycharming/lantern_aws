@@ -15,7 +15,7 @@
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 export PATH=/bin:/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
-export BUMP_LANTERN_RAM=350
+export LANTERN_JAVA_ARGS='-Xmx400m'
 DESC="Lantern censorship circunvention tool"
 NAME=lantern
 LANTERN_DIR=/home/lantern
