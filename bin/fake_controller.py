@@ -54,7 +54,10 @@ if __name__ == '__main__':
         cmd, email, serial = sys.argv[1:4]
         serial = int(serial)
         if cmd == 'launch':
-            launch(email, serial, sys.argv[4])
+            pillars = '{}'
+            if len(sys.argv) > 4:
+                pillars = sys.argv[4]
+            launch(email, serial, pillars)
         elif cmd == 'kill':
             kill(email, serial)
         else:
