@@ -28,6 +28,7 @@ def report(failures):
     report_q = sqs.get_queue("notify_%s" % CONTROLLER)
     msg = JSONMessage()
     msg.set_body({'fp-alarm': "Fallbacks not proxying",
+                  'subject': "ALARM: fallback(s) failing to proxy",
                   'send-email': True,
                   'ip': fps_str,
                   # These fields are expected by the controller, but they
