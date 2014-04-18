@@ -2,6 +2,7 @@
 
 import os
 
+# sudo pip install -U python-digitalocean
 import digitalocean
 
 
@@ -139,7 +140,7 @@ def run_command(ip, cmd):
 for name in all_fallbacks:
     ip = droplets_by_name[name].ip_address
     print "\nChecking %s (%s)" % (name, ip)
-    run_command(ip, "/home/lantern/lantern-repo/quickRun.bash --version")
+    run_command(ip, "ps aux | grep Xmx")
 
 
 
