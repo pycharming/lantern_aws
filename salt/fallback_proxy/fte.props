@@ -1,5 +1,5 @@
 {% if pillar.get('pt_type') != None %}
     {% for key, value in pillar.get('pt_props').iteritems() %}
-{{ key }}={{ value }}
+{{ key }}={{ value|replace('\\', '\\\\') }}
     {% endfor %}
 {% endif %}
