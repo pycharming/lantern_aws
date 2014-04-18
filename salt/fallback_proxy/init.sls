@@ -1,6 +1,3 @@
-include:
-    - lantern
-
 {% set jre_folder='/home/lantern/wrapper-repo/install/jres' %}
 {% set access_data_file='/home/lantern/fallback.json' %}
 {% set install_from=pillar.get('install-from', 'installer') %}
@@ -74,6 +71,7 @@ include:
     - boto
     - install4j
     - lockfile
+    - lantern
 
 /home/lantern/secure:
     file.directory:
