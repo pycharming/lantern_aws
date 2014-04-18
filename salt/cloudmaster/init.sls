@@ -1,7 +1,9 @@
 include:
     - salt_cloud
     - lockfile
+{% if grains['controller'] == grains['production_controller'] %}
     - lantern
+{% endif %}
 
 {% set config_folder_path = "/home/lantern/allfallbacks_config_folder.txt" %}
 
@@ -18,6 +20,7 @@ include:
             - file: /etc/ufw/applications.d/salt
 
 {% set scripts = [('cloudmaster', '1')] %}
+
 {% if grains['controller'] == grains['production_controller'] %}
 
 {% set scripts=scripts + [('check_unresponsive_fallbacks', '15')] %}
