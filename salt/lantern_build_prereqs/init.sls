@@ -1,5 +1,3 @@
-{% if pillar.get('install-from') == 'git' %}
-
 java-ppa:
   pkgrepo.managed:
     - ppa: webupd8team/java
@@ -30,12 +28,6 @@ java:
         - user: root
         - require:
             - pkg: java
-
-{% else %}
-openjdk-6-jre:
-    pkg.installed:
-        - order: 2
-{% endif %}
 
 {% set maven_version='3.1.1' %}
 maven:

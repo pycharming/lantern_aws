@@ -1,3 +1,6 @@
+include:
+    - lantern
+
 {% set jre_folder='/home/lantern/wrapper-repo/install/jres' %}
 {% set access_data_file='/home/lantern/fallback.json' %}
 {% set install_from=pillar.get('install-from', 'installer') %}
@@ -129,24 +132,6 @@ download-{{ filename }}:
         - cwd: {{ jre_folder }}
 
 {% endfor %}
-
-install-lantern:
-    cmd.script:
-{% if install_from == 'git' %}
-        - source: salt://fallback_proxy/install-lantern-from-git.bash
-        - unless: "[ -e /home/lantern/lantern-repo/target ] && [ \"$(find /home/lantern/lantern-repo/target -maxdepth 1 -name 'lantern-*.jar')\" ]"
-        - user: lantern
-        - group: lantern
-        - cwd: /home/lantern/
-{% else %}
-        - source: salt://fallback_proxy/install-lantern-from-installer.bash
-        - unless: "which lantern"
-        - user: root
-        - group: root
-        - cwd: /root
-{% endif %}
-        - template: jinja
-        - stateful: yes
 
 fallback-proxy-dirs-and-files:
     cmd.run:
