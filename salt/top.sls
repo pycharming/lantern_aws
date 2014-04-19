@@ -10,6 +10,7 @@ base:
         - boto
         - locales
         - lantern_build_prereqs
+        - enable_swap
     'cloudmaster':
         - salt_master
         - salt_cloud
