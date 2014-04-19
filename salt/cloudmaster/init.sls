@@ -42,7 +42,7 @@ include:
 
 check-fallbacks-proxying:
     cron.present:
-        - name: "/home/lantern/lantern-repo/quickRun.bash --force-get --check-fallbacks={{ config_folder_path }}"
+        - name: "rm -rf /home/lantern/.lantern /home/lantern/.littleproxy ; /home/lantern/lantern-repo/quickRun.bash --force-get --check-fallbacks={{ config_folder_path }}"
         - user: lantern
         - minute: "*/8"
         - require:
