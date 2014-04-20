@@ -27,7 +27,7 @@ DAEMON_ARGS="$DAEMON_ARGS --pt type={{ pillar.get('pt_type') }} --pt file=../fte
 
 {% if install_from == 'git' %}
 DAEMON=/home/lantern/lantern-repo/launch
-DAEMON_ARGS="-Xmx400m org.lantern.simple.Give -instanceid {{ pillar['instance_id'] }} -host 127.0.0.1 -http {{ grains['proxy_port'] - 443 }} -https {{ grains['proxy_port'] }} -udt {{ grains['proxy_port'] + 1 }} -keystore $LANTERN_DIR/littleproxy_keystore.jks -authtoken {{ auth_token }}"
+DAEMON_ARGS="-Xmx400m org.lantern.simple.Give -instanceid {{ pillar['instance_id'] }} -host 127.0.0.1 -http {{ grains['proxy_port'] - 443 }} -https {{ grains['proxy_port'] }} -keystore $LANTERN_DIR/littleproxy_keystore.jks -authtoken {{ auth_token }}"
 {% if pillar.get('pt_type') != None %}
 DAEMON_ARGS="$DAEMON_ARGS --pt type={{ pillar.get('pt_type') }} --pt file=../fte.props"
 {% endif %}
