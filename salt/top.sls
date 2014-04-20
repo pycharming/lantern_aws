@@ -9,6 +9,8 @@ base:
         - unattended_upgrades
         - boto
         - locales
+        - lantern_build_prereqs
+        - enable_swap
     'cloudmaster':
         - salt_master
         - salt_cloud
@@ -16,5 +18,4 @@ base:
     #DRY warning: cloudmaster/cloudmaster.py
     'fp-*':
         - apt_upgrade
-        - lantern_build_prereqs
         - fallback_proxy

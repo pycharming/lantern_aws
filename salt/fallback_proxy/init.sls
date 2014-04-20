@@ -71,6 +71,7 @@ include:
     - boto
     - install4j
     - lockfile
+    - lantern
 
 /home/lantern/secure:
     file.directory:
@@ -129,24 +130,6 @@ download-{{ filename }}:
         - cwd: {{ jre_folder }}
 
 {% endfor %}
-
-install-lantern:
-    cmd.script:
-{% if install_from == 'git' %}
-        - source: salt://fallback_proxy/install-lantern-from-git.bash
-        - unless: "[ -e /home/lantern/lantern-repo/target ] && [ \"$(find /home/lantern/lantern-repo/target -maxdepth 1 -name 'lantern-*.jar')\" ]"
-        - user: lantern
-        - group: lantern
-        - cwd: /home/lantern/
-{% else %}
-        - source: salt://fallback_proxy/install-lantern-from-installer.bash
-        - unless: "which lantern"
-        - user: root
-        - group: root
-        - cwd: /root
-{% endif %}
-        - template: jinja
-        - stateful: yes
 
 fallback-proxy-dirs-and-files:
     cmd.run:
@@ -246,14 +229,6 @@ report-stats:
             - pip: librato-metrics
             - pip: psutil
             - service: lantern
-
-init-swap:
-    cmd.script:
-        - source: salt://fallback_proxy/make-swap.bash
-        - unless: "[ $(swapon -s | wc -l) -gt 1 ]"
-        - user: root
-        - group: root
-
 
 {% if grains['controller'] == grains.get('production_controller', 'lanternctrl1-2') %}
 check-lantern:

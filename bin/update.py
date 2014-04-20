@@ -91,11 +91,8 @@ def upload_cloudmaster_minion_config():
 
 def upload_pillars():
     aws_id, aws_key = util.read_aws_credential()
-    refr_tok = file(os.path.join(here.secrets_path,
-                                 'lantern_aws',
-                                 'lanterndonors.refresh_token')).read().strip()
     util.ssh_cloudmaster((
-            'echo "lanterndonors_refrtok: %s" > cloudmaster.sls '
+            'echo "branch: check-all-fallbacks" > cloudmaster.sls '
             ' && echo "salt_version: %s" > salt.sls '
             ' && echo "aws_id: %s"  > aws_credential.sls'
             ' && echo "aws_key: %s" >> aws_credential.sls'
@@ -112,8 +109,7 @@ def upload_pillars():
                 ' aws_credential.sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
-            ) % (refr_tok,
-                 config.salt_version,
+            ) % (config.salt_version,
                  aws_id,
                  aws_key,
                  config.installer_bucket,

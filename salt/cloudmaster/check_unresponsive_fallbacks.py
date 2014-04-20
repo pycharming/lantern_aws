@@ -38,7 +38,7 @@ def check():
         sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
         report_q = sqs.get_queue("notify_%s" % CONTROLLER)
         msg = JSONMessage()
-        msg.set_body({'fp-alarm': "Unresponsive fallbacks",
+        msg.set_body({'fp-alarm': "Fallbacks not responsive to Salt master",
                       'instance-id': " ".join(sorted(unresponsive_fps)),
                       'send-email': True,
                       # These fields are expected by the controller, but they
