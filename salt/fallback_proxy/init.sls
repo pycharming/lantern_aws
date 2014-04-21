@@ -9,6 +9,14 @@
     {% set public_ip=(grains.get('public_ipv4') or grains['ipv4'][0]) %}
 {% endif %}
 
+{% set lantern_args = "-Xmx400m org.lantern.simple.Give "
+                    + "-instanceid " + pillar['instance_id']
+                    + " -host 127.0.0.1 "
+                    + " -http " + (grains['proxy_port'] - 443)|string
+                    + " -https " + (grains['proxy_port'])|string
+                    + " -keystore /home/lantern/littleproxy_keystore.jks "
+                    + " -authtoken " + auth_token %}
+
 # Keep install/common as the last one; it's being checked to make sure all
 # folders have been initialized.
 {% set dirs=['/home/lantern/wrapper-repo',
@@ -93,6 +101,7 @@ include:
         - source: salt://fallback_proxy/{{ src_filename }}
         - template: jinja
         - context:
+            lantern_args: {{ lantern_args }}
             lantern_pid: {{ lantern_pid }}
             proxy_protocol: {{ proxy_protocol }}
             auth_token: {{ auth_token }}

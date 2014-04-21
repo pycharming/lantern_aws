@@ -5,20 +5,21 @@ import logging
 import psutil
 
 
-LANTERN_ARGS = set(['java', '-Djna.nosys=true', '-jar', '--disable-ui',
-    '--force-give', '--oauth2-client-secrets-file',
-    '--oauth2-user-credentials-file', '--server-port',
-    '--server-protocol', '--auth-token-file', '--as-fallback-proxy',
-    '--keystore', '--controller-id', '--instance-id', '--report-ip'])
-
+LANTERN_ARGS = set("{{ lantern_args }}".split())
 
 def run():
     any_killed = False
+    try:
+        lantern_pid = int(file('{{ lantern_pid }}').read().strip())
+    except Exception as e:
+        logging.exception(e)
+        lantern_pid = "<this is not a pid>"
     for proc in psutil.process_iter():
-        if (len(LANTERN_ARGS.intersection(proc.cmdline()))
-            > len(LANTERN_ARGS) / 2):
+        if (proc.pid == lantern_pid
+            or (len(LANTERN_ARGS.intersection(proc.cmdline()))
+               > len(LANTERN_ARGS) / 2)):
             logging.info("Terminating %r..." % proc.cmdline())
-	    proc.terminate()
+            proc.terminate()
             any_killed = True
     if not any_killed:
         logging.info("No Lantern found.");
