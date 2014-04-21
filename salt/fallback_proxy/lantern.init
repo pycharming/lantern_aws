@@ -15,24 +15,14 @@
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 export PATH=/bin:/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
-export LANTERN_JAVA_ARGS='-Xmx450m'
 DESC="Lantern censorship circunvention tool"
 NAME=lantern
 LANTERN_DIR=/home/lantern
-DAEMON_ARGS="--disable-ui --force-give --oauth2-client-secrets-file $LANTERN_DIR/client_secrets.json --oauth2-user-credentials-file $LANTERN_DIR/user_credentials.json --server-port {{ grains['proxy_port'] }} --as-fallback-proxy --keystore $LANTERN_DIR/littleproxy_keystore.jks --controller-id {{ grains['controller'] }} --instance-id {{ pillar['instance_id'] }} --report-ip {{ public_ip }}"
 
-{% if pillar.get('pt_type') != None %}
-DAEMON_ARGS="$DAEMON_ARGS --pt type={{ pillar.get('pt_type') }} --pt file=../fte.props"
-{% endif %}
-
-{% if install_from == 'git' %}
 DAEMON=/home/lantern/lantern-repo/launch
 DAEMON_ARGS="-Xmx400m org.lantern.simple.Give -instanceid {{ pillar['instance_id'] }} -host 127.0.0.1 -http {{ grains['proxy_port'] - 443 }} -https {{ grains['proxy_port'] }} -keystore $LANTERN_DIR/littleproxy_keystore.jks -authtoken {{ auth_token }}"
 {% if pillar.get('pt_type') != None %}
 DAEMON_ARGS="$DAEMON_ARGS --pt type={{ pillar.get('pt_type') }} --pt file=../fte.props"
-{% endif %}
-{% else %}
-DAEMON=/opt/lantern/lantern
 {% endif %}
 PIDFILE={{ lantern_pid }}
 SCRIPTNAME=/etc/init.d/$NAME

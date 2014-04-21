@@ -1,6 +1,5 @@
 {% set jre_folder='/home/lantern/wrapper-repo/install/jres' %}
 {% set access_data_file='/home/lantern/fallback.json' %}
-{% set install_from=pillar.get('install-from', 'installer') %}
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
 #XXX: hotfix; do a proper grain to fetch public IP.
@@ -95,7 +94,6 @@ include:
         - template: jinja
         - context:
             lantern_pid: {{ lantern_pid }}
-            install_from: {{ install_from }}
             proxy_protocol: {{ proxy_protocol }}
             auth_token: {{ auth_token }}
             public_ip: {{ public_ip }}

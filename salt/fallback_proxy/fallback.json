@@ -1,9 +1,6 @@
 {"ip" : "{{ public_ip }}",
- "port" : "{% if proxy_protocol == 'tcp' %}443{% else %}{{ grains['proxy_port'] }}{% endif %}"
-
-{% if install_from == 'git' %}
- , "auth_token" : "{{ auth_token }}",
+ "port" : "{% if proxy_protocol == 'tcp' %}443{% else %}{{ grains['proxy_port'] }}{% endif %}",
+ "auth_token" : "{{ auth_token }}",
  "protocol" : "{{ proxy_protocol }}"
-{% endif %}
 }
 
