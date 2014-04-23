@@ -23,7 +23,7 @@ include:
 
 {% if grains['controller'] == grains['production_controller'] %}
 
-{% set scripts=scripts + [('check_unresponsive_fallbacks', '15')] %}
+{% set scripts=scripts + [('check_unresponsive_fallbacks', '30')] %}
 
 /home/lantern/alert_fallbacks_failing_to_proxy.py:
     file.managed:
