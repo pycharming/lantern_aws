@@ -16,6 +16,7 @@ AWS_REGION = "{{ grains['aws_region'] }}"
 CONTROLLER = "{{ grains['controller'] }}"
 AWS_ID = "{{ pillar['aws_id'] }}"
 AWS_KEY = "{{ pillar['aws_key'] }}"
+LOGFILE = "/home/lantern/check_lantern.log"
 
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
@@ -25,6 +26,8 @@ def run():
     error = check_lantern()
     if error:
         logging.error(error)
+        print >> file(LOGFILE, 'a'), "`top` output just prior to restarting Lantern:"
+        os.system("top -b -n 1 >> %s" % LOGFILE)
         restart_lantern()
         report_error_to_controller(error)
 
@@ -91,7 +94,7 @@ def report_error_to_controller(error):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
-                        filename='/home/lantern/check_lantern.log',
+                        filename=LOGFILE,
                         format='%(asctime)s %(levelname)-8s %(message)s')
     try:
         run()
