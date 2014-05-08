@@ -39,7 +39,6 @@
     ('/home/lantern/', 'check_lantern.py', 'check_lantern.py', 'lantern', 700),
     ('/home/lantern/', 'kill_lantern.py', 'kill_lantern.py', 'lantern', 700),
     ('/home/lantern/', 'report_stats.py', 'report_stats.py', 'lantern', 700),
-    ('/home/lantern/', 'user_credentials.json', 'user_credentials.json', 'lantern', 400),
     ('/home/lantern/', 'client_secrets.json', 'client_secrets.json', 'lantern', 400),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
     ('/home/lantern/wrapper-repo/install/win/', 'lantern.nsi', 'lantern.nsi', 'lantern', 400),
@@ -173,7 +172,6 @@ lantern-service:
             - cmd: fallback-proxy-dirs-and-files
         - watch:
             # Restart when we get a new user to run as, or a new refresh token.
-            - file: /home/lantern/user_credentials.json
             - cmd: install-lantern
             - file: /etc/init.d/lantern
 

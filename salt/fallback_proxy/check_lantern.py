@@ -9,7 +9,6 @@ from boto.sqs.jsonmessage import JSONMessage
 
 
 PIDFILE = "{{ lantern_pid }}"
-USERID = "{{ pillar['user'] }}"
 INSTANCEID = "{{ pillar['instance_id'] }}"
 IP = "{{ grains.get('ec2_public-ipv4', None) or grains['ipv4'][1] }}"
 PORT = "{{ grains['proxy_port'] }}"
@@ -83,7 +82,6 @@ def report_error_to_controller(error):
     msg = JSONMessage()
     # DRY: SQSChecker at lantern-controller.
     msg.set_body({'fp-alarm': error,
-                  'user': USERID,
                   'instance-id': INSTANCEID,
                   'ip': IP,
                   'port': PORT,
