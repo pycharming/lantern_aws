@@ -11,6 +11,7 @@ base:
         - locales
         - lantern_build_prereqs
         - enable_swap
+        - timezone
     'cloudmaster':
         - salt_master
         - salt_cloud
