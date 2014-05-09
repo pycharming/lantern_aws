@@ -15,7 +15,7 @@
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 export PATH=/bin:/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
-DESC="Lantern censorship circunvention tool"
+DESC="Lantern censorship circumvention tool"
 NAME=lantern
 
 DAEMON=/home/lantern/lantern-repo/launch

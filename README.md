@@ -1,12 +1,12 @@
-# Lantern Cloud
+ # Lantern Cloud
 
 **WARNING**: Restarting the lantern service (which is done automatically by the salt scripts on some circumstances) will kill all java processes in the fallback proxy.  As of this writing there are no other java processes, but if you want to add any, keep this in mind.
 
-This project contains code and configuration scripts to launch and manage cloud servers for the [Lantern](https://github.com/getlantern/lantern) censorship circunvention tool.
+This project contains code and configuration scripts to launch and manage cloud servers for the [Lantern](https://github.com/getlantern/lantern) censorship circumvention tool.
 
 At this moment, two types of machines are launched and managed by this project:
 
-- **Fallback Proxies**: These run Lantern instances configured to offer access to the free internet to Lantern users that haven't authenticated yet so they can reach Google Accounts and Google Talk in order to do so.  They also double as regular kaleidoscope nodes in behalf of some inviter.  On setup, these machines also build and upload *installer wrappers*, small programs that users run to install Lantern and help it find the corresponding fallback proxy.
+- **Fallback Proxies**: These run Lantern instances configured to offer access to the free internet to Lantern users that haven't authenticated yet so they can reach Google Accounts and Google Talk in order to do so.  They also double as regular kaleidoscope nodes on behalf of some inviter.  On setup, these machines also build and upload *installer wrappers*, small programs that users run to install Lantern and help it find the corresponding fallback proxy.
 
 - A single **Cloud Master**, which launches lantern peers on request from the [Lantern Controller](https://github.com/getlantern/lantern-controller).  Further operations on lantern peers (especially 'batch' operations involving many such machines) are typically done through this cloud master.
 
@@ -40,11 +40,11 @@ Finally, you need an up-to-date checkout of the `getlantern/lantern` project pla
 
 (XXX:) Instructions to replace these secrets with your own equivalents will be added here on request to aranhoide@gmail.com.
 
-[XXX: fallback proxy certs (keystores) are not in the secret repo, but we are feeding them manually to the Cloud Master.  Consider using the same scheme for all secret files.] 
+[XXX: fallback proxy certs (keystores) are not in the secret repo, but we are feeding them manually to the Cloud Master.  Consider using the same scheme for all secret files.]
 
 ### Launching a cloud master
 
-You launch a cloud master using the following command: 
+You launch a cloud master using the following command:
 
     bin/launch_cloudmaster.py
 
@@ -66,7 +66,7 @@ The cloud master will use the Salt configuration in your local `salt/` directory
 ```
 controller = 'oxlanternctrl'
 cloudmaster_name = 'oxcloudmaster'
-``` 
+```
 
 ### Updating a cloud master
 
@@ -124,7 +124,7 @@ EC2:
 ###### List the ports at which each fallback proxy is listening
 ```
 ./ssh_cloudmaster.py 'sudo salt "fp-*" grains.get proxy_port'
-``` 
+```
 
 ###### Listing the user as which each fallback proxy is running
 ```
