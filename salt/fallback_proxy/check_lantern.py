@@ -23,11 +23,10 @@ aws_creds = {'aws_access_key_id': AWS_ID,
 
 
 def run():
+    os.system("top -b -n 1 >> %s" % LOGFILE)
     error = check_lantern()
     if error:
         logging.error(error)
-        print >> file(LOGFILE, 'a'), "`top` output just prior to restarting Lantern:"
-        os.system("top -b -n 1 >> %s" % LOGFILE)
         restart_lantern()
         report_error_to_controller(error)
 
