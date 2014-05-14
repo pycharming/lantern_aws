@@ -121,12 +121,18 @@ def actually_check_q():
     elif 'shutdown-fp' in d:
         instance_id = d['shutdown-fp']
         log.info("Got shutdown request for %s" % instance_id)
-        nproxies = shutdown_proxy(instance_id)
+        nproxies = shutdown_instance(instance_id)
         if nproxies != 1:
             log.error("Expected one proxy shut down, got %s" % nproxies)
         ctrl_req_q.delete_message(msg)
-    elif 'upload-wrappers-to' in d:
-        upload_wrappers(msg)
+    elif 'launch-wb' in d:
+        log.info("Got launch request for wrapper builder")
+        wbid = d['id']
+        if not wbid.startswith("wb-"):
+            log.error("Expected id starting with 'wb-'")
+        else:
+            launch_wrapper_builder(wbid)
+        ctrl_req_q.delete_message(msg)
     else:
         log.error("I don't understand this message: %s" % d)
 
@@ -134,7 +140,7 @@ def launch_proxy(email, serialno, refresh_token, msg, pillars):
     log.info("Got spawn request for '%s'" % clip_email(email))
     instance_name = create_instance_name(email, serialno)
     provider = get_provider()
-    if shutdown_proxy(name_prefix(email, serialno)):
+    if shutdown_instance(name_prefix(email, serialno)):
         # The Digital Ocean salt-cloud implementation will still find the
         # old instance if we try and recreate it too soon after deleting
         # it.
@@ -157,7 +163,17 @@ def launch_proxy(email, serialno, refresh_token, msg, pillars):
     os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, MAP_FILE, REDIRECT))
     os.system("%s %s state.highstate %s" % (SALT_PATH, instance_name, REDIRECT))
 
-def shutdown_proxy(prefix):
+def launch_wrapper_builder(id):
+    if shutdown_instance(name_prefix(email, serialno)):
+        # The Digital Ocean salt-cloud implementation will still find the
+        # old instance if we try and recreate it too soon after deleting
+        # it.
+        log.info("Waiting for the instance loss to sink in...")
+        time.sleep(20)
+    os.system("%s -y -p do %s" % (SALT_CLOUD_PATH, REDIRECT))
+    os.system("%s %s state.highstate %s" % (SALT_PATH, id, REDIRECT))
+    
+def shutdown_instance(prefix):
     count = 0
     with proxy_map() as d:
         for provider in PROVIDERS:
@@ -169,28 +185,6 @@ def shutdown_proxy(prefix):
                     os.system("%s -y -d %s %s" % (SALT_CLOUD_PATH, entry_name, REDIRECT))
                     count += 1
     return count
-
-def upload_wrappers(sqs_msg):
-    log.info("Uploading wrappers.")
-    from salt.client import LocalClient
-    load, fallback = min((float(v), k)
-                         for k, v in LocalClient().cmd(
-                                 'fp-*',
-                                 'cmd.run',
-                                 ("/home/lantern/percent_mem.py",))
-                            .iteritems())
-    log.info("upload_wrappers: chose %r" % fallback)
-    log.info("memory usage: %s%%" % load)
-    encoded_msg = b64encode(dumps(sqs_msg))
-    # For debugging.
-    file("/home/lantern/last_wrapper_msg", 'w').write(encoded_msg)
-    jobid = LocalClient().cmd_async(fallback,
-                                    'cmd.run',
-                                    ['/home/lantern/upload_wrappers.py ' + encoded_msg])
-    if jobid == 0:
-        log.error("upload_wrappers returned 0.")
-    else:
-        log.info("jobid: %r" % jobid)
 
 def set_pillar(instance_name, email, refresh_token, msg, extra_pillars):
     filename = '/home/lantern/%s.sls' % instance_name

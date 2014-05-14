@@ -13,13 +13,16 @@ import util
 import json
 
 
-def launch(email,
+def launch_fallback(email,
            serial,
            pillars):
     send_message({'launch-fp-as': email,
                   'launch-refrtok': 'bogus',
                   'launch-serial': serial,
                   'launch-pillars': json.loads(pillars)})
+    
+def launch_wb(wbid):
+    send_message({'launch-wb-as': wbid})
 
 def kill(email, serial):
     send_message({'shutdown-fp': name_prefix(email, serial)})
@@ -51,16 +54,20 @@ def print_usage():
 
 if __name__ == '__main__':
     try:
-        cmd, email, serial = sys.argv[1:4]
-        serial = int(serial)
-        if cmd == 'launch':
-            pillars = '{}'
-            if len(sys.argv) > 4:
-                pillars = sys.argv[4]
-            launch(email, serial, pillars)
-        elif cmd == 'kill':
-            kill(email, serial)
+        cmd = sys.argv[1]
+        if cmd == 'launch-wb':
+            launch_wrapper_builder(sys.argv[2])
         else:
-            print_usage()
-    except ValueError:
+            email, serial = sys.argv[2:4]
+            serial = int(serial)
+            if cmd == 'launch-fp':
+                pillars = '{}'
+                if len(sys.argv) > 4:
+                    pillars = sys.argv[4]
+                launch_fallback(email, serial, pillars)
+            elif cmd == 'kill':
+                kill(email, serial)
+            else:
+                print_usage()
+    except (ValueError, IndexError):
         print_usage()
