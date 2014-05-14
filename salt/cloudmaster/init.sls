@@ -23,7 +23,7 @@ include:
 
 {% if grains['controller'] == grains['production_controller'] %}
 
-{% set scripts=scripts + [('check_unresponsive_fallbacks', '30')] %}
+{% set scripts=scripts + [('check_unresponsive_fallbacks', '29')] %}
 
 /home/lantern/alert_fallbacks_failing_to_proxy.py:
     file.managed:
@@ -44,7 +44,7 @@ check-fallbacks-proxying:
     cron.present:
         - name: "rm -rf /home/lantern/.lantern /home/lantern/.littleshoot ; /home/lantern/lantern-repo/quickRun.bash --force-get --check-fallbacks={{ config_folder_path }}"
         - user: lantern
-        - minute: "*/8"
+        - minute: "*/30"
         - require:
             - cmd: install-lantern
 
