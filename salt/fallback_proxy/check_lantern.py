@@ -16,6 +16,7 @@ AWS_REGION = "{{ grains['aws_region'] }}"
 CONTROLLER = "{{ grains['controller'] }}"
 AWS_ID = "{{ pillar['aws_id'] }}"
 AWS_KEY = "{{ pillar['aws_key'] }}"
+LOGFILE = "/home/lantern/check_lantern.log"
 
 SEP = "--------------------------------------------------"
 
