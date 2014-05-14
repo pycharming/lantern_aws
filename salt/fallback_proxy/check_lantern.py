@@ -18,12 +18,18 @@ AWS_ID = "{{ pillar['aws_id'] }}"
 AWS_KEY = "{{ pillar['aws_key'] }}"
 LOGFILE = "/home/lantern/check_lantern.log"
 
+SEP = "--------------------------------------------------"
+
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
 
 
 def run():
-    os.system("top -b -n 1 >> %s" % LOGFILE)
+    logCommand("top -b -n 1")
+    logCommand("ps aux --sort -rss | head -10")
+    logCommand("free -lm")
+    logCommand("vmstat")
+ 
     error = check_lantern()
     if error:
         logging.error(error)
@@ -45,6 +51,7 @@ def check_lantern():
         pid = int(pidstr)
     except ValueError:
         return "invalid Lantern pid: %r" % pidstr
+   
     try:
         parent = psutil.Process(pid)
     except psutil.NoSuchProcess:
@@ -57,6 +64,9 @@ def check_lantern():
     child = children[0]
     if child.name() != 'java':
         return "unexpected name for Lantern child process: %r" % child.name()
+
+    logCommand('cat /proc/%d/status' % child.pid)
+
     if not child.is_running():
         return "Lantern child process not running"
     return check_pids('java', child.pid)
@@ -90,6 +100,10 @@ def report_error_to_controller(error):
                   'send-email': True})
     ctrl_notify_q.write(msg)
 
+def logCommand(cmd):
+    logging.info(SEP + "\n")
+    logging.info(cmd)
+    os.system("%s >> %s" % (cmd, LOGFILE))
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
