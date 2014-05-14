@@ -9,7 +9,7 @@
     {% set public_ip=(grains.get('public_ipv4') or grains['ipv4'][0]) %}
 {% endif %}
 
-{% set lantern_args = "-Xmx400m org.lantern.simple.Give "
+{% set lantern_args = "-Xmx350m org.lantern.simple.Give "
                     + "-instanceid " + pillar['instance_id']
                     + " -host 127.0.0.1 "
                     + " -http " + (grains['proxy_port'] - 443)|string
