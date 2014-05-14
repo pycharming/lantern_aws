@@ -11,7 +11,7 @@ function fatal() {
 
 set -e
 
-fallocate -l 2048M /swapfile
+fallocate -l 4096M /swapfile
 chown root:root /swapfile
 chmod 0600 /swapfile
 
