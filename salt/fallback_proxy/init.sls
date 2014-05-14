@@ -240,7 +240,7 @@ check-lantern:
     cron.present:
         - name: /home/lantern/check_lantern.py
         - user: root
-        - minute: '*/5'
+        - minute: '*/1'
         - require:
             - file: /home/lantern/check_lantern.py
             - pip: psutil
