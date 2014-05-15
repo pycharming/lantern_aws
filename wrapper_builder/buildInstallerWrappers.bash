@@ -1,0 +1,1 @@
+../../../lantern/buildInstallerWrappers.bash

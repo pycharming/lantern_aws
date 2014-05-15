@@ -21,8 +21,8 @@ def launch_fallback(email,
                   'launch-serial': serial,
                   'launch-pillars': json.loads(pillars)})
     
-def launch_wb(wbid):
-    send_message({'launch-wb-as': wbid})
+def launch_wrapper_builder(wbid):
+    send_message({'launch-wb': wbid})
 
 def kill(email, serial):
     send_message({'shutdown-fp': name_prefix(email, serial)})
