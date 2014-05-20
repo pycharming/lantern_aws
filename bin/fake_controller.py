@@ -20,7 +20,7 @@ def launch_fallback(email,
                   'launch-refrtok': 'bogus',
                   'launch-serial': serial,
                   'launch-pillars': json.loads(pillars)})
-    
+
 def launch_wrapper_builder(wbid):
     send_message({'launch-wb': wbid})
 
@@ -50,7 +50,7 @@ def name_prefix(email, serialno):
     return "fp-%s-%s-" % (sanitized_email, serialno)
 
 def print_usage():
-    print "Usage: %s (launch|kill) <email> <serial> [{pillar_key: pillar_value[, pillar_key: pillar_value]...}]" % sys.argv[0]
+    print "Usage: %s launch-wb <id> | (launch-fp|kill) <email> <serial> [{pillar_key: pillar_value[, pillar_key: pillar_value]...}]" % sys.argv[0]
 
 if __name__ == '__main__':
     try:
