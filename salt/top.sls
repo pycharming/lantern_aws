@@ -20,3 +20,5 @@ base:
     'fp-*':
         - apt_upgrade
         - fallback_proxy
+    'wb-*':
+        - wrapper_builder

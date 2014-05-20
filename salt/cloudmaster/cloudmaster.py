@@ -28,6 +28,7 @@ PUBLIC_IP = "{{ grains['ec2_public-ipv4'] }}"
 #DRY warning: ../top.sls
 FALLBACK_PROXY_PREFIX = "fp-"
 MAP_FILE = '/home/lantern/map'
+WB_MAP_FILE = '/home/lantern/wb_map'
 AWS_REGION = "{{ grains['aws_region'] }}"
 AWS_ID = "{{ pillar['aws_id'] }}"
 AWS_KEY = "{{ pillar['aws_key'] }}"
@@ -121,12 +122,20 @@ def actually_check_q():
     elif 'shutdown-fp' in d:
         instance_id = d['shutdown-fp']
         log.info("Got shutdown request for %s" % instance_id)
-        nproxies = shutdown_proxy(instance_id)
+        nproxies = shutdown_instance(instance_id)
         if nproxies != 1:
             log.error("Expected one proxy shut down, got %s" % nproxies)
         ctrl_req_q.delete_message(msg)
     elif 'upload-wrappers-to' in d:
         upload_wrappers(msg)
+    elif 'launch-wb' in d:
+        log.info("Got launch request for wrapper builder")
+        wbid = d['launch-wb']
+        if not wbid.startswith("wb-"):
+            log.error("Expected id starting with 'wb-'")
+        else:
+            launch_wrapper_builder(wbid)
+        ctrl_req_q.delete_message(msg)
     else:
         log.error("I don't understand this message: %s" % d)
 
@@ -134,7 +143,7 @@ def launch_proxy(email, serialno, refresh_token, msg, pillars):
     log.info("Got spawn request for '%s'" % clip_email(email))
     instance_name = create_instance_name(email, serialno)
     provider = get_provider()
-    if shutdown_proxy(name_prefix(email, serialno)):
+    if shutdown_instance(name_prefix(email, serialno)):
         # The Digital Ocean salt-cloud implementation will still find the
         # old instance if we try and recreate it too soon after deleting
         # it.
@@ -157,7 +166,32 @@ def launch_proxy(email, serialno, refresh_token, msg, pillars):
     os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, MAP_FILE, REDIRECT))
     os.system("%s %s state.highstate %s" % (SALT_PATH, instance_name, REDIRECT))
 
-def shutdown_proxy(prefix):
+def launch_wrapper_builder(wbid):
+    if shutdown_instance(wbid):
+        # The Digital Ocean salt-cloud implementation will still find the
+        # old instance if we try and recreate it too soon after deleting
+        # it.
+        log.info("Waiting for the instance loss to sink in...")
+        time.sleep(20)
+    
+    # Only launch on Digital Ocean
+    provider = "do"
+    
+    with wb_map() as d:
+        d[provider].append(
+            {wbid:
+                {'minion': {'master': get_master_ip(provider)},
+                 'grains': {'saltversion': SALT_VERSION,
+                            'aws_region': AWS_REGION,
+                            'controller': CONTROLLER,
+                            'production_controller': PRODUCTION_CONTROLLER,
+                            'provider': provider,
+                            'shell': '/bin/bash'}}})
+    
+    os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, WB_MAP_FILE, REDIRECT))
+    os.system("%s %s state.highstate %s" % (SALT_PATH, wbid, REDIRECT))
+    
+def shutdown_instance(prefix):
     count = 0
     with proxy_map() as d:
         for provider in PROVIDERS:
@@ -173,25 +207,25 @@ def shutdown_proxy(prefix):
 def upload_wrappers(sqs_msg):
     log.info("Uploading wrappers.")
     from salt.client import LocalClient
-    load, fallback = min((float(v), k)
+    load, builder = min((float(v), k)
                          for k, v in LocalClient().cmd(
-                                 'fp-*',
+                                 'wb-*',
                                  'cmd.run',
                                  ("/home/lantern/percent_mem.py",))
                             .iteritems())
-    log.info("upload_wrappers: chose %r" % fallback)
+    log.info("upload_wrappers: chose %r" % builder)
     log.info("memory usage: %s%%" % load)
     encoded_msg = b64encode(dumps(sqs_msg))
     # For debugging.
     file("/home/lantern/last_wrapper_msg", 'w').write(encoded_msg)
-    jobid = LocalClient().cmd_async(fallback,
+    jobid = LocalClient().cmd_async(builder,
                                     'cmd.run',
                                     ['/home/lantern/upload_wrappers.py ' + encoded_msg])
     if jobid == 0:
         log.error("upload_wrappers returned 0.")
     else:
         log.info("jobid: %r" % jobid)
-
+ 
 def set_pillar(instance_name, email, refresh_token, msg, extra_pillars):
     filename = '/home/lantern/%s.sls' % instance_name
     yaml.dump(dict(instance_id=instance_name,
@@ -206,18 +240,24 @@ def set_pillar(instance_name, email, refresh_token, msg, extra_pillars):
 
 @contextmanager
 def proxy_map():
-    d = load_map()
+    d = load_map(MAP_FILE)
     yield d
-    save_map(d)
+    save_map(MAP_FILE, d)
+    
+@contextmanager
+def wb_map():
+    d = load_map(WB_MAP_FILE)
+    yield d
+    save_map(WB_MAP_FILE, d)
 
-def load_map():
-    if os.path.exists(MAP_FILE):
-        return yaml.load(file(MAP_FILE))
+def load_map(filename):
+    if os.path.exists(filename):
+        return yaml.load(file(filename))
     else:
         return dict((p, []) for p in PROVIDERS)
 
-def save_map(d):
-    yaml.dump(d, file(MAP_FILE, 'w'))
+def save_map(filename, d):
+    yaml.dump(d, file(filename, 'w'))
 
 def create_instance_name(email, serialno):
     now = datetime.now()
