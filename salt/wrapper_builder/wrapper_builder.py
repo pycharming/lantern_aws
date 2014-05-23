@@ -13,7 +13,6 @@ import boto
 from boto.s3.key import Key
 import boto.sqs
 from boto.sqs.jsonmessage import JSONMessage
-from lockfile import LockFile
 
 
 UPLOAD_CWD = '/home/lantern/wrapper-repo/install'
@@ -38,21 +37,12 @@ content_types = {'windows': 'application/octet-stream',
 # DRY
 CONFIGURL_PATH = '/home/lantern/wrapper-repo/install/wrapper/.lantern-configurl.txt'
 
-def build_and_upload_wrappers(sqs_msg):
-    sqs_msg = loads(b64decode(sqs_msg))
-    folder = sqs_msg.get_body()['upload-wrappers-to']
-    id_ = sqs_msg.get_body()['upload-wrappers-id']
-    build_wrappers(folder)
-    upload_wrappers(folder)
-    sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
-    report_wrappers_uploaded(sqs, id_)
-    sqs.get_queue("%s_request" % CONTROLLER).delete_message(sqs_msg)
 
 def build_wrappers(folder):
     # DRY: controller, cloudmaster.
     file(CONFIGURL_PATH, 'w').write(folder)
     ret = os.system("/home/lantern/build-wrappers.bash")
-    assert ret == 0
+    return ret == 0
 
 def upload_wrappers(folder):
     os.chdir(UPLOAD_CWD)
@@ -107,16 +97,38 @@ def report_wrappers_uploaded(sqs, id_):
     msg.set_body({'wrappers-uploaded-for': id_})
     sqs.get_queue("notify_%s" % CONTROLLER).write(msg)
 
-def serialize(lock_filename, thunk):
-    with LockFile(lock_filename):
-        try:
-            thunk()
-        except Exception as e:
-            logging.exception(e)
-
+def run():
+    sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
+    # DRY: SQSUtil.WRAPPER_BUILD_REQUEST_Q_NAME in controller.
+    ctrl_req_q = sqs.get_queue("%s_wrapper_build_request" % CONTROLLER)
+    ctrl_req_q.set_message_class(JSONMessage)
+    while True:
+        logging.info("Checking queue...")
+        # Wait time is not terribly important, since we're checking all the
+        # time anyway.  This is just to prevent proliferation of "Nothing in
+        # request queue." log messages.  So we set it to as much as AWS will
+        # allow, which happens to be 20 seconds.
+        msg = ctrl_req_q.read(wait_time_seconds=20)
+        if msg is None:
+            logging.info("Nothing in request queue.")
+            continue
+        d = msg.get_body()
+        # DRY: S3Config.enqueueWrapperUploadRequest in controller.
+        folder = d['upload-wrappers-to']
+        id_ = d['upload-wrappers-id']
+        while not build_wrappers(folder):
+            logging.error("Failed to build wrappers!")
+            # Let's hope this is a temporary condition.
+            time.sleep(5)
+        upload_wrappers(folder)
+        report_wrappers_uploaded(sqs, id_)
+        ctrl_req_q.delete_message(msg)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
-                        filename="/home/lantern/upload_wrappers.log",
+                        filename="/home/lantern/wrapper_builder.log",
                         format='%(asctime)s %(levelname)-8s %(message)s')
-    serialize(sys.argv[0], lambda: build_and_upload_wrappers(sys.argv[1]))
+    try:
+        run()
+    except:
+        logging.exception("Uncaught top-level exception")

@@ -167,16 +167,17 @@ def launch_proxy(email, serialno, refresh_token, msg, pillars):
     os.system("%s %s state.highstate %s" % (SALT_PATH, instance_name, REDIRECT))
 
 def launch_wrapper_builder(wbid):
-    if shutdown_instance(wbid):
+    # Only launch these on EC2
+    provider = "aws"
+    if shutdown_instance(wbid) and provider == "do":
         # The Digital Ocean salt-cloud implementation will still find the
         # old instance if we try and recreate it too soon after deleting
         # it.
+        #
+        # Although we are launching these in EC2 at the moment, I'll leave
+        # this around, should we switch back sometime.
         log.info("Waiting for the instance loss to sink in...")
         time.sleep(20)
-    
-    # Only launch on Digital Ocean
-    provider = "do"
-    
     with wb_map() as d:
         d[provider].append(
             {wbid:
@@ -187,10 +188,9 @@ def launch_wrapper_builder(wbid):
                             'production_controller': PRODUCTION_CONTROLLER,
                             'provider': provider,
                             'shell': '/bin/bash'}}})
-    
     os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, WB_MAP_FILE, REDIRECT))
     os.system("%s %s state.highstate %s" % (SALT_PATH, wbid, REDIRECT))
-    
+
 def shutdown_instance(prefix):
     count = 0
     with proxy_map() as d:
@@ -225,7 +225,7 @@ def upload_wrappers(sqs_msg):
         log.error("upload_wrappers returned 0.")
     else:
         log.info("jobid: %r" % jobid)
- 
+
 def set_pillar(instance_name, email, refresh_token, msg, extra_pillars):
     filename = '/home/lantern/%s.sls' % instance_name
     yaml.dump(dict(instance_id=instance_name,
@@ -243,7 +243,7 @@ def proxy_map():
     d = load_map(MAP_FILE)
     yield d
     save_map(MAP_FILE, d)
-    
+
 @contextmanager
 def wb_map():
     d = load_map(WB_MAP_FILE)

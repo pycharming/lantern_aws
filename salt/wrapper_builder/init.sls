@@ -1,4 +1,11 @@
 {% set jre_folder='/home/lantern/wrapper-repo/install/jres' %}
+{% set wrapper_builder_pid='/var/run/wrapper_builder.pid' %}
+#XXX: hotfix; do a proper grain to fetch public IP.
+{% if grains['ipv4'][0] == '127.0.0.1' %}
+    {% set public_ip=(grains.get('ec2-public_ipv4') or grains['ipv4'][1]) %}
+{% else %}
+    {% set public_ip=(grains.get('ec2-public_ipv4') or grains['ipv4'][0]) %}
+{% endif %}
 
 # Keep install/common as the last one; it's being checked to make sure all
 # folders have been initialized.
@@ -14,11 +21,12 @@
 
 # To filter through jinja.
 {% set template_files=[
-    ('/home/lantern/', 'upload_wrappers.py', 'upload_wrappers.py', 'lantern', 700)] %}
+    ('/etc/init.d/', 'wrapper_builder', 'wrapper_builder.init', 'root', 700),
+    ('/home/lantern/', 'wrapper_builder.py', 'wrapper_builder.py', 'lantern', 700),
+    ('/home/lantern/', 'check_wrapper_builder.py', 'check_wrapper_builder.py', 'root', 700)] %}
 
 # To send as is
 {% set literal_files=[
-    ('/home/lantern/', 'percent_mem.py', 700),
     ('/home/lantern/', 'build-wrappers.bash', 700),
     ('/home/lantern/wrapper-repo/install/win/', 'lantern.nsi', 400),
     ('/home/lantern/secure/', 'env-vars.txt', 400),
@@ -47,7 +55,6 @@
 include:
     - boto
     - install4j
-    - lockfile
 
 /home/lantern/secure:
     file.directory:
@@ -72,9 +79,11 @@ include:
         - user: {{ user }}
         - group: {{ user }}
         - mode: {{ mode }}
+        - context:
+            wrapper_builder_pid: {{ wrapper_builder_pid }}
+            public_ip: {{ public_ip }}
         - require:
             - file: /home/lantern/wrapper-repo/install/common
-            - pip: lockfile
 {% endfor %}
 
 {% for dir,filename,mode in literal_files %}
@@ -117,6 +126,9 @@ all-dirs-and-files:
             {% for dir,filename,mode in literal_files %}
             - file: {{ dir+filename }}
             {% endfor %}
+            {% for filename in jre_files %}
+            - cmd: download-{{ filename }}
+            {% endfor %}
 
 nsis:
     pkg.installed
@@ -139,10 +151,33 @@ python-dev:
 
 build-essential:
     pkg.installed
-    
+
 psutil:
     pip.installed:
         - name: psutil==2.1.0
         - require:
             - pkg: build-essential
             - pkg: python-dev
+
+wrapper_builder:
+    service.running:
+        - enable: yes
+        - require:
+            - cmd: all-dirs-and-files
+            - cmd: nsis-inetc-plugin
+        - watch:
+            - file: /home/lantern/wrapper_builder.py
+            - file: /etc/init.d/wrapper_builder
+
+
+{% if grains['controller'] == grains.get('production_controller', 'lanternctrl1-2') %}
+check-wrapper-builder:
+    cron.present:
+        - name: /home/lantern/check_wrapper_builder.py
+        - user: root
+        - minute: '*/1'
+        - require:
+            - file: /home/lantern/check_wrapper_builder.py
+            - pip: psutil
+            - service: wrapper_builder
+{% endif %}

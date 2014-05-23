@@ -4,9 +4,9 @@
 {% set auth_token=pillar.get('auth_token') %}
 #XXX: hotfix; do a proper grain to fetch public IP.
 {% if grains['ipv4'][0] == '127.0.0.1' %}
-    {% set public_ip=(grains.get('public_ipv4') or grains['ipv4'][1]) %}
+    {% set public_ip=(grains.get('ec2-public_ipv4') or grains['ipv4'][1]) %}
 {% else %}
-    {% set public_ip=(grains.get('public_ipv4') or grains['ipv4'][0]) %}
+    {% set public_ip=(grains.get('ec2-public_ipv4') or grains['ipv4'][0]) %}
 {% endif %}
 
 {% set lantern_args = "-Xmx350m org.lantern.simple.Give "
@@ -36,7 +36,7 @@
     ('/home/lantern/', 'build-wrappers.bash', 'build-wrappers.bash', 'lantern', 700),
     ('/home/lantern/', 'percent_mem.py', 'percent_mem.py', 'lantern', 700),
     ('/home/lantern/', 'upload_wrappers.py', 'upload_wrappers.py', 'lantern', 700),
-    ('/home/lantern/', 'check_lantern.py', 'check_lantern.py', 'lantern', 700),
+    ('/home/lantern/', 'check_lantern.py', 'check_lantern.py', 'root', 700),
     ('/home/lantern/', 'kill_lantern.py', 'kill_lantern.py', 'lantern', 700),
     ('/home/lantern/', 'report_stats.py', 'report_stats.py', 'lantern', 700),
     ('/home/lantern/', 'client_secrets.json', 'client_secrets.json', 'lantern', 400),
