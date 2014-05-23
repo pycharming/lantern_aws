@@ -118,6 +118,7 @@ def run():
         if msg is None:
             logging.info("Nothing in request queue.")
             continue
+        logging.info("Got a request; building...")
         d = msg.get_body()
         # DRY: S3Config.enqueueWrapperUploadRequest in controller.
         folder = d['upload-wrappers-to']
