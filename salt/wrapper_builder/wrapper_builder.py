@@ -8,6 +8,7 @@ import random
 import re
 import string
 import sys
+import time
 
 import boto
 from boto.s3.key import Key
@@ -99,8 +100,13 @@ def report_wrappers_uploaded(sqs, id_):
 
 def run():
     sqs = boto.sqs.connect_to_region(AWS_REGION, **aws_creds)
-    # DRY: SQSUtil.WRAPPER_BUILD_REQUEST_Q_NAME in controller.
-    ctrl_req_q = sqs.get_queue("%s_wrapper_build_request" % CONTROLLER)
+    while True:
+        # DRY: SQSUtil.WRAPPER_BUILD_REQUEST_Q_NAME in controller.
+        ctrl_req_q = sqs.get_queue("%s_wrapper_build_request" % CONTROLLER)
+        if ctrl_req_q is not None:
+            break
+        logging.warn("Queue doesn't exist yet.")
+        time.sleep(60)
     ctrl_req_q.set_message_class(JSONMessage)
     while True:
         logging.info("Checking queue...")
@@ -119,7 +125,7 @@ def run():
         while not build_wrappers(folder):
             logging.error("Failed to build wrappers!")
             # Let's hope this is a temporary condition.
-            time.sleep(5)
+            time.sleep(60)
         upload_wrappers(folder)
         report_wrappers_uploaded(sqs, id_)
         ctrl_req_q.delete_message(msg)
