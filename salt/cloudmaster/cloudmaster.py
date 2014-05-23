@@ -126,8 +126,6 @@ def actually_check_q():
         if nproxies != 1:
             log.error("Expected one proxy shut down, got %s" % nproxies)
         ctrl_req_q.delete_message(msg)
-    elif 'upload-wrappers-to' in d:
-        upload_wrappers(msg)
     elif 'launch-wb' in d:
         log.info("Got launch request for wrapper builder")
         wbid = d['launch-wb']
@@ -167,15 +165,12 @@ def launch_proxy(email, serialno, refresh_token, msg, pillars):
     os.system("%s %s state.highstate %s" % (SALT_PATH, instance_name, REDIRECT))
 
 def launch_wrapper_builder(wbid):
-    # Only launch these on EC2
-    provider = "aws"
+    # Only launch these on DO
+    provider = "do"
     if shutdown_instance(wbid) and provider == "do":
         # The Digital Ocean salt-cloud implementation will still find the
         # old instance if we try and recreate it too soon after deleting
         # it.
-        #
-        # Although we are launching these in EC2 at the moment, I'll leave
-        # this around, should we switch back sometime.
         log.info("Waiting for the instance loss to sink in...")
         time.sleep(20)
     with wb_map() as d:
@@ -203,28 +198,6 @@ def shutdown_instance(prefix):
                     os.system("%s -y -d %s %s" % (SALT_CLOUD_PATH, entry_name, REDIRECT))
                     count += 1
     return count
-
-def upload_wrappers(sqs_msg):
-    log.info("Uploading wrappers.")
-    from salt.client import LocalClient
-    load, builder = min((float(v), k)
-                         for k, v in LocalClient().cmd(
-                                 'wb-*',
-                                 'cmd.run',
-                                 ("/home/lantern/percent_mem.py",))
-                            .iteritems())
-    log.info("upload_wrappers: chose %r" % builder)
-    log.info("memory usage: %s%%" % load)
-    encoded_msg = b64encode(dumps(sqs_msg))
-    # For debugging.
-    file("/home/lantern/last_wrapper_msg", 'w').write(encoded_msg)
-    jobid = LocalClient().cmd_async(builder,
-                                    'cmd.run',
-                                    ['/home/lantern/upload_wrappers.py ' + encoded_msg])
-    if jobid == 0:
-        log.error("upload_wrappers returned 0.")
-    else:
-        log.info("jobid: %r" % jobid)
 
 def set_pillar(instance_name, email, refresh_token, msg, extra_pillars):
     filename = '/home/lantern/%s.sls' % instance_name
