@@ -12,7 +12,7 @@ controller = 'lanternctrl1-2'
 cloudmaster_name = 'cloudmaster1-2'
 free_for_all_sg_name = 'free-for-all'
 installer_bucket = 'lantern'
-installer_filename = 'latest-64.deb'
+installer_filename = 'newest-64.deb'
 
 # To override values locally, put them in config_overrides.py (not version controlled)
 #controller = 'fakectrl'
