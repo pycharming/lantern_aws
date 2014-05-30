@@ -1,12 +1,45 @@
 #!/usr/bin/env python
 
 import os
+import subprocess
+import sys
 
 import config
 import here
 import region
 import util
 
+
+EXPECTED_PRODUCTION_GIT_STATUS_OUTPUT = """\
+On branch master
+Your branch is up-to-date with 'origin/master'.
+
+nothing to commit, working directory clean
+"""
+
+EXPECTED_PRODUCTION_GIT_PULL_OUTPUT = "Already up-to-date.\n"
+
+def check_master_if_in_production():
+    if config.controller == config.production_controller:
+        status_output = subprocess.check_output(['git', 'status'])
+        if status_output != EXPECTED_PRODUCTION_GIT_STATUS_OUTPUT:
+            not_up_to_date()
+        pull_output = subprocess.check_output(['git', 'pull'])
+        if pull_output != EXPECTED_PRODUCTION_GIT_PULL_OUTPUT:
+            not_up_to_date()
+
+def not_up_to_date():
+    print
+    print "*** UP-TO-DATE MASTER CHECKOUT REQUIRED ***"
+    print
+    print "Sorry, you can only deploy to the production cloudmaster"
+    print "from an up-to-date master checkout."
+    print
+    print "If you're pretty sure that is the case, you may want to"
+    print "either update git or fix `check_master_if_in_production`"
+    print "in bin/update.py"
+    print
+    sys.exit(1)
 
 def update():
     util.set_secret_permissions()
@@ -84,7 +117,7 @@ def upload_cloudmaster_minion_config():
                             do_key,
                             config.do_region,
                             config.controller,
-                            'lanternctrl1-2'))
+                            config.production_controller))
     util.ssh_cloudmaster('sudo mv /root/minion /etc/salt/minion'
                          ' && sudo chown root:root /etc/salt/minion'
                          ' && sudo chmod 600 /etc/salt/minion')
@@ -116,4 +149,5 @@ def upload_pillars():
                  config.installer_filename))
 
 if __name__ == '__main__':
+    check_master_if_in_production()
     update()

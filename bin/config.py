@@ -8,7 +8,7 @@ aws_credential_path = os.path.join(here.secrets_path,
                                    'aws_credential')
 salt_version = '2014.1.3'
 do_region = 'New York 2'
-controller = 'lanternctrl1-2'
+controller = production_controller = 'lanternctrl1-2'
 cloudmaster_name = 'cloudmaster1-2'
 free_for_all_sg_name = 'free-for-all'
 installer_bucket = 'lantern'
