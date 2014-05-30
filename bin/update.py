@@ -56,17 +56,17 @@ def rsync_salt():
 
 def rsync(src, dst):
     error = os.system(("rsync -e 'ssh -o StrictHostKeyChecking=no -i %s'"
-                       + " -azLk %s/ ubuntu@%s:%s")
+                       + " -azLk %s/ root@%s:%s")
                       % (config.key_path,
                          src,
-                         util.get_address(),
+                         util.get_cloudmaster_address(),
                          dst))
     if not error:
         print "Rsynced successfully."
     return error
 
 def upload_cloudmaster_minion_config():
-    address = util.get_address()
+    address = util.get_cloudmaster_address()
     do_id, do_key = util.read_do_credential()
     util.ssh_cloudmaster((r"""(echo "master: salt" """
                           + r""" && echo "grains:" """
@@ -77,7 +77,7 @@ def upload_cloudmaster_minion_config():
                           + r""" && echo "    do_region: %s " """
                           + r""" && echo "    controller: %s " """
                           + r""" && echo "    production_controller: %s " """
-                          + r""" ) > /home/ubuntu/minion""")
+                          + r""" ) > /root/minion""")
                          % (config.aws_region,
                             region.get_ami(),
                             do_id,
@@ -85,7 +85,7 @@ def upload_cloudmaster_minion_config():
                             config.do_region,
                             config.controller,
                             'lanternctrl1-2'))
-    util.ssh_cloudmaster('sudo mv /home/ubuntu/minion /etc/salt/minion'
+    util.ssh_cloudmaster('sudo mv /root/minion /etc/salt/minion'
                          ' && sudo chown root:root /etc/salt/minion'
                          ' && sudo chmod 600 /etc/salt/minion')
 

@@ -5,10 +5,12 @@ import sys
 import time
 from functools import wraps
 
+import digitalocean as do
 import yaml
 
 import config
 import here
+
 
 
 def memoized(f):
@@ -23,24 +25,25 @@ def memoized(f):
     return deco
 
 @memoized
-def get_address():
+def get_cloudmaster_address():
     """
-    Return the address of the 'cloudmaster' machine in the current region.
+    Return the address of the currently configured cloudmaster.
     """
-    import region
     name = config.cloudmaster_name
-    try:
-        reservation, = region.connect().get_all_instances(
-                filters={'tag:Name': name})
-        instance, = reservation.instances
-        if instance.ip_address is None:
-            raise RuntimeError("'%s' looks like a dead instance." % name)
-        return instance.ip_address
-    except ValueError:
-        # `s` is neither an IP nor an EC2 name.  It may still be
-        # something that can be resolved to an IP.  Let's try.
-        raise RuntimeError(("'%s' not found in current region."
-                            + "  Are you sure you launched it?") % name)
+    env_key = '%s_IP' % name.replace('-', '_')
+    ip_ = os.environ.get(env_key)
+    if ip_ is not None:
+        return ip_
+    do_id, do_api_key = read_do_credential()
+    mgr = do.Manager(client_id=do_id, api_key=do_api_key)
+    for instance in mgr.get_all_droplets():
+        if instance.name == name:
+            ret = instance.ip_address
+            print "WARNING: set the following in your .bashrc for faster"
+            print "execution next time:"
+            print
+            print "    export %s=%s" % (env_key, ret)
+            return ret
 
 @memoized
 def read_aws_credential():
@@ -56,6 +59,7 @@ def read_aws_credential():
     assert id_ and key
     return id_, key
 
+@memoized
 def read_do_credential():
     d = yaml.load(file(os.path.join(here.secrets_path,
                                     'lantern_aws',
@@ -75,9 +79,9 @@ def set_secret_permissions():
 
 def ssh_cloudmaster(cmd=None, out=None):
     import region
-    full_cmd = "ssh -o StrictHostKeyChecking=no -i %s ubuntu@%s" % (
+    full_cmd = "ssh -o StrictHostKeyChecking=no -i %s root@%s" % (
                     config.key_path,
-                    get_address())
+                    get_cloudmaster_address())
     if cmd:
         full_cmd += " '%s'" % cmd
     if out:

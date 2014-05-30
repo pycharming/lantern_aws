@@ -42,7 +42,7 @@ except ImportError:
 # Derived, but may still want to override?
 key_path = os.path.join(here.secrets_path,
                         'lantern_aws',
-                        aws_region + ".pem")
+                        'cloudmaster.id_rsa')
 
 print "Using controller: %s" % controller
 print "Using cloudmaster: %s" % cloudmaster_name

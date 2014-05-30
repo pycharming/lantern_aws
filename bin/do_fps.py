@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import os
+import sys
+import time
 
 # sudo pip install -U python-digitalocean
 import digitalocean
@@ -110,7 +112,9 @@ all_fallbacks = [
     "fp-from-old-controller-0-at-getlantern-dot-org-d136-1-2014-4-8",
     "fp-from-old-controller-92-at-getlantern-dot-org-b568-1-2014-4-8",
     "fp-from-old-controller-26-at-getlantern-dot-org-5553-1-2014-4-8",
-    "fp-from-old-controller-44-at-getlantern-dot-org-9363-1-2014-4-8"]
+    "fp-from-old-controller-44-at-getlantern-dot-org-9363-1-2014-4-8",
+    "fp-fte3-at-getlantern-dot-org-4853-3-2014-5-10",
+    "fp-ox-at-getlantern-dot-org-c336-1-2014-4-17"]
 
 _, do_id, _, do_api_key = file(os.path.join("..",
                                             "..",
@@ -124,24 +128,19 @@ mgr = digitalocean.Manager(client_id=do_id, api_key=do_api_key)
 droplets_by_name = {d.name: d
                     for d in mgr.get_all_droplets()}
 
-def fix_fallback(ip):
-    print "Uploading fix..."
-    os.system("scp -o StrictHostKeyChecking=no %s lantern@%s:"
-              % (FIX_FILENAME, ip))
-    print "Moving fix..."
-    run_command(ip, "sudo mv /home/lantern/%s /etc/salt/minion.d/"
-                    % FIX_FILENAME)
-    print "Rebooting..."
-    run_command(ip, "sudo reboot")
-
 def run_command(ip, cmd):
     os.system("ssh -o StrictHostKeyChecking=no lantern@%s '%s'" % (ip, cmd))
 
-for name in all_fallbacks:
+#for i in xrange(1, 5):
+for name in all_fallbacks[-2:]:
     ip = droplets_by_name[name].ip_address
-    print "\nChecking %s (%s)" % (name, ip)
-    run_command(ip, "ps aux | grep Xmx")
-
-
+    print "\nReparenting %s (%s)..." % (name, ip)
+    # You can find the new minion_master.pub in /etc/salt/pki/minion in the
+    # new cloudmaster.
+    for filename in ['minion_master.pub', 'reparent.py']:
+        os.system("scp -o StrictHostKeyChecking=no %s lantern@%s:"
+                  % (filename, ip))
+    run_command(ip, "sudo python reparent.py")
+    print
 
 

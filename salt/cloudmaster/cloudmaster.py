@@ -23,8 +23,7 @@ random = SystemRandom()
 here = os.path.dirname(sys.argv[0]) if __name__ == '__main__' else __file__
 
 
-PRIVATE_IP = "{{ grains['ec2_local-ipv4'] }}"
-PUBLIC_IP = "{{ grains['ec2_public-ipv4'] }}"
+PUBLIC_IP = "{{ grains['external_ip'] }}"
 #DRY warning: ../top.sls
 FALLBACK_PROXY_PREFIX = "fp-"
 MAP_FILE = '/home/lantern/map'
@@ -53,9 +52,6 @@ AUTH_TOKEN_LENGTH = 64
 
 def get_provider():
     return 'do'
-
-def get_master_ip(provider):
-    return {'aws': PRIVATE_IP, 'do': PUBLIC_IP}[provider]
 
 def log_exceptions(f):
     @wraps(f)
@@ -152,7 +148,7 @@ def launch_proxy(email, serialno, refresh_token, msg, pillars):
                               else random.randint(1024, 61024)
         d[provider].append(
             {instance_name:
-                {'minion': {'master': get_master_ip(provider)},
+                {'minion': {'master': PUBLIC_IP},
                  'grains': {'saltversion': SALT_VERSION,
                             'aws_region': AWS_REGION,
                             'controller': CONTROLLER,
@@ -176,7 +172,7 @@ def launch_wrapper_builder(wbid):
     with wb_map() as d:
         d[provider].append(
             {wbid:
-                {'minion': {'master': get_master_ip(provider)},
+                {'minion': {'master': PUBLIC_IP},
                  'grains': {'saltversion': SALT_VERSION,
                             'aws_region': AWS_REGION,
                             'controller': CONTROLLER,
