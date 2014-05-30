@@ -24,8 +24,11 @@ def launch_fallback(email,
 def launch_wrapper_builder(wbid):
     send_message({'launch-wb': wbid})
 
-def kill(email, serial):
+def kill_fp(email, serial):
     send_message({'shutdown-fp': name_prefix(email, serial)})
+
+def kill_wb(name):
+    send_message({'shutdown-wb': name})
 
 def send_message(d):
     aws_id, aws_key = util.read_aws_credential()
@@ -50,13 +53,15 @@ def name_prefix(email, serialno):
     return "fp-%s-%s-" % (sanitized_email, serialno)
 
 def print_usage():
-    print "Usage: %s launch-wb <id> | (launch-fp|kill) <email> <serial> [{pillar_key: pillar_value[, pillar_key: pillar_value]...}]" % sys.argv[0]
+    print "Usage: %s (launch-wb|kill-wb) <id> | (launch-fp|kill-fp) <email> <serial> [{pillar_key: pillar_value[, pillar_key: pillar_value]...}]" % sys.argv[0]
 
 if __name__ == '__main__':
     try:
         cmd = sys.argv[1]
         if cmd == 'launch-wb':
             launch_wrapper_builder(sys.argv[2])
+        elif cmd == 'kill-wb':
+            kill_wb(sys.argv[2])
         else:
             email, serial = sys.argv[2:4]
             serial = int(serial)
@@ -65,8 +70,8 @@ if __name__ == '__main__':
                 if len(sys.argv) > 4:
                     pillars = sys.argv[4]
                 launch_fallback(email, serial, pillars)
-            elif cmd == 'kill':
-                kill(email, serial)
+            elif cmd == 'kill-fp':
+                kill_fp(email, serial)
             else:
                 print_usage()
     except (ValueError, IndexError):

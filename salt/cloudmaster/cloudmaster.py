@@ -117,10 +117,17 @@ def actually_check_q():
                      pillars)
     elif 'shutdown-fp' in d:
         instance_id = d['shutdown-fp']
-        log.info("Got shutdown request for %s" % instance_id)
-        nproxies = shutdown_instance(instance_id)
+        log.info("Got fallback shutdown request for %s" % instance_id)
+        nproxies = shutdown_fp(instance_id)
         if nproxies != 1:
             log.error("Expected one proxy shut down, got %s" % nproxies)
+        ctrl_req_q.delete_message(msg)
+    elif 'shutdown-wb' in d:
+        instance_id = d['shutdown-wb']
+        log.info("Got wrapper builder shutdown request for %s" % instance_id)
+        nproxies = shutdown_wb(instance_id)
+        if nproxies != 1:
+            log.error("Expected one wrapper builder shut down, got %s" % nproxies)
         ctrl_req_q.delete_message(msg)
     elif 'launch-wb' in d:
         log.info("Got launch request for wrapper builder")
@@ -137,7 +144,7 @@ def launch_proxy(email, serialno, refresh_token, msg, pillars):
     log.info("Got spawn request for '%s'" % clip_email(email))
     instance_name = create_instance_name(email, serialno)
     provider = get_provider()
-    if shutdown_instance(name_prefix(email, serialno)):
+    if shutdown_fp(name_prefix(email, serialno)):
         # The Digital Ocean salt-cloud implementation will still find the
         # old instance if we try and recreate it too soon after deleting
         # it.
@@ -163,7 +170,7 @@ def launch_proxy(email, serialno, refresh_token, msg, pillars):
 def launch_wrapper_builder(wbid):
     # Only launch these on DO
     provider = "do"
-    if shutdown_instance(wbid) and provider == "do":
+    if shutdown_wb(wbid) and provider == "do":
         # The Digital Ocean salt-cloud implementation will still find the
         # old instance if we try and recreate it too soon after deleting
         # it.
@@ -182,9 +189,15 @@ def launch_wrapper_builder(wbid):
     os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, WB_MAP_FILE, REDIRECT))
     os.system("%s %s state.highstate %s" % (SALT_PATH, wbid, REDIRECT))
 
-def shutdown_instance(prefix):
+def shutdown_fp(prefix):
+    return shutdown(proxy_map, prefix)
+
+def shutdown_wb(prefix):
+    return shutdown(wb_map, prefix)
+
+def shutdown(map_fn, prefix):
     count = 0
-    with proxy_map() as d:
+    with map_fn() as d:
         for provider in PROVIDERS:
             for entry in d[provider][:]:
                 entry_name, = entry.keys()
