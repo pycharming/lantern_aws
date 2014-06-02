@@ -8,7 +8,7 @@ import time
 import digitalocean
 
 
-FIX_FILENAME = 'auth_flood_fix.conf'
+SIZE_1GB = 63
 
 all_fallbacks = [
     "fp-from-old-controller-96-at-getlantern-dot-org-8f94-1-2014-4-8",
@@ -116,6 +116,11 @@ all_fallbacks = [
     "fp-fte3-at-getlantern-dot-org-4853-3-2014-5-10",
     "fp-ox-at-getlantern-dot-org-c336-1-2014-4-17"]
 
+all_wrapper_builders = [
+    "wb-do-1",
+    "wb-do-2",
+    ]
+
 _, do_id, _, do_api_key = file(os.path.join("..",
                                             "..",
                                             "too-many-secrets",
@@ -131,16 +136,55 @@ droplets_by_name = {d.name: d
 def run_command(ip, cmd):
     os.system("ssh -o StrictHostKeyChecking=no lantern@%s '%s'" % (ip, cmd))
 
-#for i in xrange(1, 5):
-for name in all_fallbacks[-2:]:
-    ip = droplets_by_name[name].ip_address
-    print "\nReparenting %s (%s)..." % (name, ip)
-    # You can find the new minion_master.pub in /etc/salt/pki/minion in the
-    # new cloudmaster.
-    for filename in ['minion_master.pub', 'reparent.py']:
-        os.system("scp -o StrictHostKeyChecking=no %s lantern@%s:"
-                  % (filename, ip))
-    run_command(ip, "sudo python reparent.py")
-    print
+def reparent():
+    for name in all_fallbacks:
+        ip = droplets_by_name[name].ip_address
+        print "\nReparenting %s (%s)..." % (name, ip)
+        for filename in ['minion_master.pub', 'reparent.py']:
+            os.system("scp -o StrictHostKeyChecking=no %s lantern@%s:"
+                      % (filename, ip))
+        run_command(ip, "sudo python reparent.py")
+        print
 
+def wait_for_completion(droplet):
+    class Done:
+        pass
+    try:
+        while True:
+            events = droplet.get_events()
+            for event in events:
+                event.load()
+                if event.percentage is not None:
+                    print "%s%%..." % event.percentage
+                    if event.percentage == u"100":
+                        raise Done
+            time.sleep(2)
+    except Done:
+        pass
+
+def resize(names):
+    for name in names:
+        d = droplets_by_name[name]
+        if d.size_id != SIZE_1GB:
+            print "resizing", d.name
+            print "powering off..."
+            os.system('ssh -o StrictHostKeyChecking=no %s "sudo shutdown -hP now"'
+                      % d.ip_address)
+            while True:
+                time.sleep(2)
+                d.load()
+                if d.status == 'off':
+                    break
+                else:
+                    print "waiting for instance to power off..."
+            print "resizing..."
+            d.resize(SIZE_1GB)
+            wait_for_completion(d)
+            # I've seen resizing being reported as not completed if we boot
+            # again too shortly after.
+            time.sleep(2)
+            print "powering back on"
+            d.power_on()
+
+resize(all_fallbacks)
 
