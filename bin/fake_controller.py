@@ -13,7 +13,7 @@ import util
 import json
 
 
-def launch_fallback(email,
+def launch_fp(email,
            serial,
            pillars):
     send_message({'launch-fp-as': email,
@@ -21,8 +21,14 @@ def launch_fallback(email,
                   'launch-serial': serial,
                   'launch-pillars': json.loads(pillars)})
 
-def launch_wrapper_builder(wbid):
+def launch_wb(wbid):
     send_message({'launch-wb': wbid})
+
+def launch_fl(flid):
+    send_message({'launch-fl': flid})
+
+def kill_fl(flid):
+    send_message({'kill-fl': flid})
 
 def kill_fp(email, serial):
     send_message({'shutdown-fp': name_prefix(email, serial)})
@@ -59,9 +65,13 @@ if __name__ == '__main__':
     try:
         cmd = sys.argv[1]
         if cmd == 'launch-wb':
-            launch_wrapper_builder(sys.argv[2])
+            launch_wb(sys.argv[2])
         elif cmd == 'kill-wb':
             kill_wb(sys.argv[2])
+        elif cmd == 'launch-fl':
+            launch_fl(sys.argv[2])
+        elif cmd == 'kill-fl':
+            kill_fl(sys.argv[2])
         else:
             email, serial = sys.argv[2:4]
             serial = int(serial)
@@ -69,7 +79,7 @@ if __name__ == '__main__':
                 pillars = '{}'
                 if len(sys.argv) > 4:
                     pillars = sys.argv[4]
-                launch_fallback(email, serial, pillars)
+                launch_fp(email, serial, pillars)
             elif cmd == 'kill-fp':
                 kill_fp(email, serial)
             else:

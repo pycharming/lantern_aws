@@ -9,16 +9,21 @@ base:
         - unattended_upgrades
         - boto
         - locales
-        - lantern_build_prereqs
         - enable_swap
         - timezone
     'cloudmaster':
+        - lantern_build_prereqs
         - salt_master
         - salt_cloud
         - cloudmaster
-    #DRY warning: cloudmaster/cloudmaster.py
     'fp-*':
+        - lantern_build_prereqs
         - apt_upgrade
         - fallback_proxy
     'wb-*':
+        - lantern_build_prereqs
         - wrapper_builder
+    'fl-*':
+        - apt_upgrade
+        - go
+          #- flashlight

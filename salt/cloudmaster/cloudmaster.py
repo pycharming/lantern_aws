@@ -25,9 +25,7 @@ here = os.path.dirname(sys.argv[0]) if __name__ == '__main__' else __file__
 
 PUBLIC_IP = "{{ grains['external_ip'] }}"
 #DRY warning: ../top.sls
-FALLBACK_PROXY_PREFIX = "fp-"
 MAP_FILE = '/home/lantern/map'
-WB_MAP_FILE = '/home/lantern/wb_map'
 AWS_REGION = "{{ grains['aws_region'] }}"
 AWS_ID = "{{ pillar['aws_id'] }}"
 AWS_KEY = "{{ pillar['aws_key'] }}"
@@ -86,10 +84,8 @@ def actually_check_q():
         return
     d = msg.get_body()
     # DRY warning: FallbackProxyLauncher at lantern-controller.
-    # TRANSITION: support old controllers for a while to make deployment less
-    # time sensitive.
-    userid = d.get('launch-fp-as', d.get('launch-invsrv-as'))
-    if userid:
+    if 'launch-fp-as' in d:
+        userid = d['launch-fp-as']
         # Lantern won't start without *some* refresh token.  If we don't get one
         # from the controller let's just make up a bogus one.
         refresh_token = d.get('launch-refrtok', '').strip() or 'bogus'
@@ -110,24 +106,19 @@ def actually_check_q():
         pillars.setdefault('install-from', 'git')
         if 'auth_token' not in pillars:
             pillars['auth_token'] = random_auth_token()
-        launch_proxy(userid,
-                     serial,
-                     refresh_token,
-                     msg,
-                     pillars)
+        launch_fp(userid,
+                  serial,
+                  refresh_token,
+                  msg,
+                  pillars)
     elif 'shutdown-fp' in d:
-        instance_id = d['shutdown-fp']
-        log.info("Got fallback shutdown request for %s" % instance_id)
-        nproxies = shutdown_fp(instance_id)
-        if nproxies != 1:
-            log.error("Expected one proxy shut down, got %s" % nproxies)
+        shutdown_one(d['shutdown-fp'])
+        ctrl_req_q.delete_message(msg)
+    elif 'shutdown-fl' in d:
+        shutdown_one(d['shutdown-fl'])
         ctrl_req_q.delete_message(msg)
     elif 'shutdown-wb' in d:
-        instance_id = d['shutdown-wb']
-        log.info("Got wrapper builder shutdown request for %s" % instance_id)
-        nproxies = shutdown_wb(instance_id)
-        if nproxies != 1:
-            log.error("Expected one wrapper builder shut down, got %s" % nproxies)
+        shutdown_one(d['shutdown-wb'])
         ctrl_req_q.delete_message(msg)
     elif 'launch-wb' in d:
         log.info("Got launch request for wrapper builder")
@@ -135,24 +126,31 @@ def actually_check_q():
         if not wbid.startswith("wb-"):
             log.error("Expected id starting with 'wb-'")
         else:
-            launch_wrapper_builder(wbid)
+            launch_wb(wbid)
         ctrl_req_q.delete_message(msg)
+    elif 'launch-fl' in d:
+        log.info("Got launch request for flashlight server")
+        wbid = d['launch-fl']
+        if not wbid.startswith("fl-"):
+            log.error("Expected id starting with 'fl-'")
+        else:
+            launch_fl(wbid, msg)
     else:
         log.error("I don't understand this message: %s" % d)
 
-def launch_proxy(email, serialno, refresh_token, msg, pillars):
+def launch_fp(email, serialno, refresh_token, msg, pillars):
     log.info("Got spawn request for '%s'" % clip_email(email))
     instance_name = create_instance_name(email, serialno)
     provider = get_provider()
-    if shutdown_fp(name_prefix(email, serialno)):
+    if shutdown(name_prefix(email, serialno)) and provider == 'do':
         # The Digital Ocean salt-cloud implementation will still find the
         # old instance if we try and recreate it too soon after deleting
         # it.
         log.info("Waiting for the instance loss to sink in...")
         time.sleep(20)
-    with proxy_map() as d:
-        proxy_port = 62443 if pillars['proxy_protocol'] == 'tcp' \
-                              else random.randint(1024, 61024)
+    with instance_map() as d:
+        proxy_port = (62443 if pillars['proxy_protocol'] == 'tcp'
+                      else random.randint(1024, 61024))
         d[provider].append(
             {instance_name:
                 {'minion': {'master': PUBLIC_IP},
@@ -163,20 +161,43 @@ def launch_proxy(email, serialno, refresh_token, msg, pillars):
                             'proxy_port': proxy_port,
                             'provider': provider,
                             'shell': '/bin/bash'}}})
-    set_pillar(instance_name, email, refresh_token, msg, pillars)
+    set_fp_pillar(instance_name, email, refresh_token, msg, pillars)
     os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, MAP_FILE, REDIRECT))
     os.system("%s %s state.highstate %s" % (SALT_PATH, instance_name, REDIRECT))
 
-def launch_wrapper_builder(wbid):
-    # Only launch these on DO
-    provider = "do"
-    if shutdown_wb(wbid) and provider == "do":
+def launch_fl(flid,  msg):
+    log.info("Got spawn request for '%s'" % flid)
+    provider = get_provider()
+    if shutdown(flid) and provider == 'do':
         # The Digital Ocean salt-cloud implementation will still find the
         # old instance if we try and recreate it too soon after deleting
         # it.
         log.info("Waiting for the instance loss to sink in...")
         time.sleep(20)
-    with wb_map() as d:
+    with instance_map() as d:
+        d[provider].append(
+            {flid:
+                {'minion': {'master': PUBLIC_IP},
+                 'grains': {'saltversion': SALT_VERSION,
+                            'aws_region': AWS_REGION,
+                            'controller': CONTROLLER,
+                            'production_controller': PRODUCTION_CONTROLLER,
+                            'provider': provider,
+                            'shell': '/bin/bash'}}})
+    set_pillar(flid, {'sqs_msg': encode_sqs_msg(msg)})
+    os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, MAP_FILE, REDIRECT))
+    os.system("%s %s state.highstate %s" % (SALT_PATH, flid, REDIRECT))
+
+def launch_wb(wbid):
+    # Only launch these on DO
+    provider = "do"
+    if shutdown(wbid) and provider == 'do':
+        # The Digital Ocean salt-cloud implementation will still find the
+        # old instance if we try and recreate it too soon after deleting
+        # it.
+        log.info("Waiting for the instance loss to sink in...")
+        time.sleep(20)
+    with instance_map() as d:
         d[provider].append(
             {wbid:
                 {'minion': {'master': PUBLIC_IP},
@@ -186,18 +207,19 @@ def launch_wrapper_builder(wbid):
                             'production_controller': PRODUCTION_CONTROLLER,
                             'provider': provider,
                             'shell': '/bin/bash'}}})
-    os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, WB_MAP_FILE, REDIRECT))
+    set_pillar(wbid, {})
+    os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, MAP_FILE, REDIRECT))
     os.system("%s %s state.highstate %s" % (SALT_PATH, wbid, REDIRECT))
 
-def shutdown_fp(prefix):
-    return shutdown(proxy_map, prefix)
+def shutdown_one(instance_id):
+    log.info("Got shutdown request for %s" % instance_id)
+    n = shutdown(instance_id)
+    if n != 1:
+        log.error("Expected one instance shut down, got %s" % n)
 
-def shutdown_wb(prefix):
-    return shutdown(wb_map, prefix)
-
-def shutdown(map_fn, prefix):
+def shutdown(prefix):
     count = 0
-    with map_fn() as d:
+    with instance_map() as d:
         for provider in PROVIDERS:
             for entry in d[provider][:]:
                 entry_name, = entry.keys()
@@ -208,29 +230,29 @@ def shutdown(map_fn, prefix):
                     count += 1
     return count
 
-def set_pillar(instance_name, email, refresh_token, msg, extra_pillars):
-    filename = '/home/lantern/%s.sls' % instance_name
-    yaml.dump(dict(instance_id=instance_name,
-                   # DRY warning:
-                   # lantern_aws/salt/fallback_proxy/report_completion.py
-                   user=email,
-                   refresh_token=refresh_token,
-                   sqs_msg=b64encode(dumps(msg)),
+def set_fp_pillar(instance_name, email, refresh_token, msg, extra_pillars):
+    d = {'refresh_token': refresh_token,
+         'user': email,
+         'sqs_msg': encode_sqs_msg(msg)}
+    d.update(extra_pillars)
+    set_pillar(instance_name, d)
+
+def encode_sqs_msg(msg):
+    # DRY warning:
+    # lantern_aws/salt/fallback_proxy/report_completion.py
+    return b64encode(dumps(msg))
+
+def set_pillar(instance_id, extra_pillars):
+    filename = '/srv/pillar/%s.sls' % instance_id
+    yaml.dump(dict(instance_id=instance_id,  # XXX: redundant; see grain 'id'
                    **extra_pillars),
               file(filename, 'w'))
-    os.system("mv %s /srv/pillar/" % filename)
 
 @contextmanager
-def proxy_map():
+def instance_map():
     d = load_map(MAP_FILE)
     yield d
     save_map(MAP_FILE, d)
-
-@contextmanager
-def wb_map():
-    d = load_map(WB_MAP_FILE)
-    yield d
-    save_map(WB_MAP_FILE, d)
 
 def load_map(filename):
     if os.path.exists(filename):

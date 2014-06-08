@@ -127,26 +127,18 @@ def upload_pillars():
     util.ssh_cloudmaster((
             'echo "branch: check-all-fallbacks" > cloudmaster.sls '
             ' && echo "salt_version: %s" > salt.sls '
-            ' && echo "aws_id: %s"  > aws_credential.sls'
-            ' && echo "aws_key: %s" >> aws_credential.sls'
             # Hack so every instance will read specific pillars from a file named
             # with the <instance_name>.sls scheme.
-            r' && echo "include: [{{ grains[\"id\"] }}]" > fallback_proxy.sls '
-            r' && echo "installer_bucket: %s" >> fallback_proxy.sls '
-            r' && echo "installer_filename: %s" >> fallback_proxy.sls '
-            r' && echo "base: {\"*\": [salt, aws_credential], '
-                             r'\"cloudmaster\": [cloudmaster], '
-                             r'\"fp-*\": [fallback_proxy]}" '
-                ' > top.sls '
-            ' && sudo mv salt.sls top.sls cloudmaster.sls fallback_proxy.sls '
-                ' aws_credential.sls /srv/pillar/ '
+            r' && echo "include: [{{ grains[\"id\"] }}]" >> salt.sls '
+            ' && echo "aws_id: %s"  > aws_credential.sls'
+            ' && echo "aws_key: %s" >> aws_credential.sls'
+            r' && echo "base: {\"*\": [salt, aws_credential]}" > top.sls '
+            ' && sudo mv salt.sls top.sls cloudmaster.sls aws_credential.sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.salt_version,
                  aws_id,
-                 aws_key,
-                 config.installer_bucket,
-                 config.installer_filename))
+                 aws_key))
 
 if __name__ == '__main__':
     check_master_if_in_production()
