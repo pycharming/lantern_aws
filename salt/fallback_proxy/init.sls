@@ -31,7 +31,6 @@
 
 include:
     - boto
-    - install4j
     - lantern
 
 /home/lantern/secure:
@@ -66,9 +65,6 @@ fallback-proxy-dirs-and-files:
             {% for dir,dst_filename,src_filename,user,mode in template_files %}
             - file: {{ dir+dst_filename }}
             {% endfor %}
-
-nsis:
-    pkg.installed
 
 open-proxy-port:
     cmd.run:
