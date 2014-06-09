@@ -26,4 +26,4 @@ base:
     'fl-*':
         - apt_upgrade
         - go
-          #- flashlight
+        - flashlight

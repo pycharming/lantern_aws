@@ -135,6 +135,8 @@ def actually_check_q():
             log.error("Expected id starting with 'fl-'")
         else:
             launch_fl(wbid, msg)
+        #XXX: remove when we have added this to the fl salt config.
+        ctrl_req_q.delete_message(msg)
     else:
         log.error("I don't understand this message: %s" % d)
 

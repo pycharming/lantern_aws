@@ -11,12 +11,17 @@ go-env-vars:
         - name: /etc/profile
         - text:
             - "export GOPATH={{ GOPATH }}"
-            - "export PATH=/usr/local/go/bin:$PATH"
+            - "export PATH=/usr/local/go/bin:$GOPATH/bin:$PATH"
         - require:
             - file: {{ GOPATH }}
+    cmd.run:
+        - name: "source /etc/profile"
+        - require:
+            - file: go-env-vars
 
-install-go:
+go-installed:
     cmd.script:
+        - order: 0
         - source: salt://go/install-go.bash
         - unless: "which go"
         - user: root
@@ -24,3 +29,4 @@ install-go:
         - cwd: /home/lantern
         - require:
             - file: go-env-vars
+            - cmd: go-env-vars
