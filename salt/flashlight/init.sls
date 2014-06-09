@@ -1,26 +1,33 @@
 include:
     - go
 
-{% set FL_PID='/var/run/flashlight.pid' %}
 {% from 'go/init.sls' import GOPATH %}
 
-install-fl:
+fl-installed:
     cmd.run:
         - unless: 'which flashlight'
         - name: 'go get github.com/getlantern/flashlight'
         - user: lantern
 
-fl-init-script:
+fl-upstart-script:
     file.managed:
-        - name: /etc/init.d/flashlight
-        - source: salt://flashlight/flashlight.init
+        - name: /etc/init/flashlight.conf
+        - source: salt://flashlight/flashlight.conf
         - template: jinja
         - context:
             GOPATH: {{ GOPATH }}
-            FL_PID: {{ FL_PID }}
         - user: root
         - group: root
-        - mode: 700
+        - mode: 644
+        - require:
+            - cmd: fl-installed
+            - cmd: ufw-forwarding-ready
+
+fl-service-registered:
+    cmd.run:
+        - name: 'initctl reload-configuration'
+        - watch:
+            - file: fl-upstart-script
 
 /etc/default/ufw:
     file.replace:
@@ -59,5 +66,7 @@ flashlight:
     service.running:
         - enable: yes
         - require:
-            - cmd: install-fl
+            # All but the last requirement are redundant, only for robustness.
             - cmd: ufw-forwarding-ready
+            - cmd: fl-installed
+            - cmd: fl-service-registered
