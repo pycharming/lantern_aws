@@ -1,2 +1,0 @@
-tar: You must specify one of the '-Acdtrux', '--delete' or '--test-label' options
-Try 'tar --help' or 'tar --usage' for more information.

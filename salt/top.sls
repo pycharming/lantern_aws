@@ -25,5 +25,4 @@ base:
         - wrapper_builder
     'fl-*':
         - apt_upgrade
-        - go
         - flashlight

@@ -1,24 +1,18 @@
-include:
-    - go
-
-
-{% from 'go/init.sls' import GOPATH %}
 {% set domain_records_file='/home/lantern/cloudflare_records.yaml' %}
 
 
 fl-installed:
     cmd.run:
         - unless: 'which flashlight'
-        - name: 'go get github.com/getlantern/flashlight'
-        - user: lantern
+        - name: 'wget -qct 3 https://s3.amazonaws.com/lantern-aws/flashlight && chmod a+x flashlight'
+        - cwd: '/usr/bin'
+        - user: root
 
 fl-upstart-script:
     file.managed:
         - name: /etc/init/flashlight.conf
         - source: salt://flashlight/flashlight.conf
         - template: jinja
-        - context:
-            GOPATH: {{ GOPATH }}
         - user: root
         - group: root
         - mode: 644
