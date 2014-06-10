@@ -1,7 +1,10 @@
 include:
     - go
 
+
 {% from 'go/init.sls' import GOPATH %}
+{% set domain_records_file='/home/lantern/cloudflare_records.yaml' %}
+
 
 fl-installed:
     cmd.run:
@@ -70,3 +73,30 @@ flashlight:
             - cmd: ufw-forwarding-ready
             - cmd: fl-installed
             - cmd: fl-service-registered
+
+pyflare:
+    pip.installed:
+        - name: pyflare==1.0.2
+        - upgrade: yes
+
+/home/lantern/register_domains.py:
+    file.managed:
+        - source: salt://flashlight/register_domains.py
+        - template: jinja
+        - context:
+            domain_records_file: {{ domain_records_file }}
+        - user: lantern
+        - group: lantern
+        - mode: 700
+
+register-domains:
+    cmd.run:
+        - name: "/home/lantern/register_domains.py"
+        - unless: "[ -e {{ domain_records_file }} ]"
+        - user: lantern
+        - group: lantern
+        - cwd: /home/lantern
+        - require:
+            - pip: pyflare
+            - service: flashlight
+            - file: /home/lantern/register_domains.py

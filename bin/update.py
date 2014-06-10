@@ -124,6 +124,7 @@ def upload_cloudmaster_minion_config():
 
 def upload_pillars():
     aws_id, aws_key = util.read_aws_credential()
+    cf_id, cf_key = util.read_cf_credential()
     util.ssh_cloudmaster((
             'echo "branch: check-all-fallbacks" > cloudmaster.sls '
             ' && echo "salt_version: %s" > salt.sls '
@@ -132,13 +133,17 @@ def upload_pillars():
             r' && echo "include: [{{ grains[\"id\"] }}]" >> salt.sls '
             ' && echo "aws_id: %s"  > aws_credential.sls'
             ' && echo "aws_key: %s" >> aws_credential.sls'
-            r' && echo "base: {\"*\": [salt, aws_credential]}" > top.sls '
-            ' && sudo mv salt.sls top.sls cloudmaster.sls aws_credential.sls /srv/pillar/ '
+            ' && echo "cf_id: %s"  > cf_credential.sls'
+            ' && echo "cf_key: %s" >> cf_credential.sls'
+            r' && echo "base: {\"*\": [salt, aws_credential], \"fl-*\": [cf_credential]}" > top.sls '
+            ' && sudo mv salt.sls top.sls cloudmaster.sls aws_credential.sls cf_credential.sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.salt_version,
                  aws_id,
-                 aws_key))
+                 aws_key,
+                 cf_id,
+                 cf_key))
 
 if __name__ == '__main__':
     check_master_if_in_production()

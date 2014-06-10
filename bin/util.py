@@ -61,10 +61,17 @@ def read_aws_credential():
 
 @memoized
 def read_do_credential():
-    d = yaml.load(file(os.path.join(here.secrets_path,
-                                    'lantern_aws',
-                                    'do_credential')))
-    return d['client_id'], d['api_key']
+    return secrets_from_yaml(['lantern_aws', 'do_credential'],
+                             ['client_id', 'api_key'])
+
+@memoized
+def read_cf_credential():
+    return secrets_from_yaml(['cloudflare.txt'],
+                             ['user', 'api_key'])
+
+def secrets_from_yaml(path, keys):
+    d = yaml.load(file(os.path.join(here.secrets_path, *path)))
+    return map(d.get, keys)
 
 def set_secret_permissions():
     """Secret files should be only readable by user, but git won't remember
