@@ -17,6 +17,8 @@ fl-upstart-script:
         - name: /etc/init/flashlight.conf
         - source: salt://flashlight/flashlight.conf
         - template: jinja
+        - context:
+            zone: {{ zone }}
         - user: root
         - group: root
         - mode: 644
@@ -48,6 +50,7 @@ pyflare:
         - source: salt://flashlight/register_domains.py
         - template: jinja
         - context:
+            zone: {{ zone }}
             domain_records_file: {{ domain_records_file }}
         - user: lantern
         - group: lantern
