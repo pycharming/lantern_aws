@@ -1,11 +1,7 @@
 {% set jre_folder='/home/lantern/wrapper-repo/install/jres' %}
 {% set wrapper_builder_pid='/var/run/wrapper_builder.pid' %}
+{% from 'ip.sls' import external_ip %}
 #XXX: hotfix; do a proper grain to fetch public IP.
-{% if grains['ipv4'][0] == '127.0.0.1' %}
-    {% set public_ip=(grains.get('ec2-public_ipv4') or grains['ipv4'][1]) %}
-{% else %}
-    {% set public_ip=(grains.get('ec2-public_ipv4') or grains['ipv4'][0]) %}
-{% endif %}
 
 # Keep install/common as the last one; it's being checked to make sure all
 # folders have been initialized.
@@ -81,7 +77,7 @@ include:
         - mode: {{ mode }}
         - context:
             wrapper_builder_pid: {{ wrapper_builder_pid }}
-            public_ip: {{ public_ip }}
+            external_ip: {{ external_ip(grains) }}
         - require:
             - file: /home/lantern/wrapper-repo/install/common
 {% endfor %}

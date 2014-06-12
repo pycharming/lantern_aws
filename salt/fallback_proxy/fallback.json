@@ -1,4 +1,4 @@
-{"ip" : "{{ public_ip }}",
+{"ip" : "{{ external_ip }}",
  "port" : "{% if proxy_protocol == 'tcp' %}443{% else %}{{ grains['proxy_port'] }}{% endif %}",
  "auth_token" : "{{ auth_token }}",
  "protocol" : "{{ proxy_protocol }}"
