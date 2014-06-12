@@ -39,6 +39,7 @@ PROFILES = ['aws', 'do', 'do_sg_2GB']
 REDIRECT = " >> /home/lantern/cloudmaster.log 2>&1 "
 SALT_PATH = '/usr/local/bin/salt'
 SALT_CLOUD_PATH = '/usr/local/bin/salt-cloud'
+SALT_KEY_PATH = '/usr/local/bin/salt-key'
 DEFAULT_PROFILE = "{{ pillar['default_profile'] }}"
 
 # Most cloud providers will allow longer instance names, but we are using
@@ -201,6 +202,13 @@ def shutdown(prefix):
                     log.info("Found match in map.  Shutting it down...")
                     d[profile].remove(entry)
                     os.system("%s -y -d %s %s" % (SALT_CLOUD_PATH, entry_name, REDIRECT))
+                    # salt-cloud should have done this, but as of this writing
+                    # (2014-06-12) there is what seems like a temporary
+                    # condition in Digital Ocean that causes salt-cloud to
+                    # crash after it has successfully destroyed the droplet,
+                    # but before it went on to delete its key from the salt
+                    # master.
+                    os.system("%s -y -d %s %s" % (SALT_KEY_PATH, entry_name, REDIRECT))
                     count += 1
     return count
 
