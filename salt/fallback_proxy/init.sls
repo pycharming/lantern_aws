@@ -1,12 +1,7 @@
 {% set access_data_file='/home/lantern/fallback.json' %}
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
-#XXX: hotfix; do a proper grain to fetch public IP.
-{% if grains['ipv4'][0] == '127.0.0.1' %}
-    {% set public_ip=(grains.get('ec2-public_ipv4') or grains['ipv4'][1]) %}
-{% else %}
-    {% set public_ip=(grains.get('ec2-public_ipv4') or grains['ipv4'][0]) %}
-{% endif %}
+{% from 'ip.sls' import external_ip %}
 
 {% set lantern_args = "-Xmx350m org.lantern.simple.Give "
                     + "-instanceid " + pillar['instance_id']
@@ -49,7 +44,7 @@ include:
             lantern_pid: {{ lantern_pid }}
             proxy_protocol: {{ proxy_protocol }}
             auth_token: {{ auth_token }}
-            public_ip: {{ public_ip }}
+            external_ip: {{ external_ip(grains) }}
         - user: {{ user }}
         - group: {{ user }}
         - mode: {{ mode }}
@@ -82,7 +77,7 @@ report-completion:
         - source: salt://fallback_proxy/report_completion.py
         - template: jinja
         - context:
-            public_ip: {{ public_ip }}
+            external_ip: {{ external_ip(grains) }}
             access_data_file: {{ access_data_file }}
         - unless: "[ -e /home/lantern/reported_completion ]"
         - user: lantern

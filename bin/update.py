@@ -127,9 +127,11 @@ def upload_pillars():
     cf_id, cf_key = util.read_cf_credential()
     util.ssh_cloudmaster((
             'echo "branch: check-all-fallbacks" > cloudmaster.sls '
+            ' && echo "private_networking: %s" >> cloudmaster.sls '
+            ' && echo "default_profile: %s" >> cloudmaster.sls '
             ' && echo "salt_version: %s" > salt.sls '
-            # Hack so every instance will read specific pillars from a file named
-            # with the <instance_name>.sls scheme.
+            # Hack so every instance will read specific pillars from a file
+            # named with the <instance_name>.sls scheme.
             r' && echo "include: [{{ grains[\"id\"] }}]" >> salt.sls '
             ' && echo "aws_id: %s"  > aws_credential.sls'
             ' && echo "aws_key: %s" >> aws_credential.sls'
@@ -139,7 +141,9 @@ def upload_pillars():
             ' && sudo mv salt.sls top.sls cloudmaster.sls aws_credential.sls cf_credential.sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
-            ) % (config.salt_version,
+            ) % (config.private_networking,
+                 config.default_profile,
+                 config.salt_version,
                  aws_id,
                  aws_key,
                  cf_id,

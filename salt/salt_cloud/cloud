@@ -1,10 +1,12 @@
 sync_after_install: all
 
+{% from 'ip.sls' import external_ip %}
+
 providers:
   aws:
     # Set up the location of the salt master
     minion:
-      master: {{ grains['external_ip'] }}
+      master: {{ external_ip(grains) }}
 
     # Specify whether to use public or private IP for deploy script.
     #
@@ -49,6 +51,16 @@ providers:
     client_key: {{ grains['do_id'] }}
     api_key: {{ grains['do_key'] }}
     location: {{ grains['do_region'] }}
+    # Play it safe; not all regions support this.
+    private_networking: {{ pillar.get('private_networking', 'no') }}
     ssh_key_file: /etc/salt/cloudmaster.id_rsa
     ssh_key_name: cloudmaster
 
+  do_sg:
+    provider: digital_ocean
+    client_key: {{ grains['do_id'] }}
+    api_key: {{ grains['do_key'] }}
+    location: 'Singapore 1'
+    private_networking: yes
+    ssh_key_file: /etc/salt/cloudmaster.id_rsa
+    ssh_key_name: cloudmaster

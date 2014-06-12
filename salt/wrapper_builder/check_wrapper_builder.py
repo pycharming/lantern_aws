@@ -12,7 +12,7 @@ from boto.sqs.jsonmessage import JSONMessage
 
 
 PIDFILE = "{{ wrapper_builder_pid }}"
-IP = "{{ public_ip }}"
+IP = "{{ external_ip }}"
 AWS_REGION = "{{ grains['aws_region'] }}"
 CONTROLLER = "{{ grains['controller'] }}"
 AWS_ID = "{{ pillar['aws_id'] }}"

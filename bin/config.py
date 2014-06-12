@@ -6,8 +6,11 @@ aws_region = 'ap-southeast-1'
 aws_credential_path = os.path.join(here.secrets_path,
                                    'lantern_aws',
                                    'aws_credential')
-salt_version = '2014.1.3'
+default_profile = 'do'
+salt_version = '2014.1.4'
 do_region = 'New York 2'
+# Set this to False unless you know that the datacenter supports it.
+private_networking = True
 controller = production_controller = 'lanternctrl1-2'
 cloudmaster_name = 'cloudmaster1-2'
 free_for_all_sg_name = 'free-for-all'

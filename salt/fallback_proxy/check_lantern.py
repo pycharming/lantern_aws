@@ -10,7 +10,7 @@ from boto.sqs.jsonmessage import JSONMessage
 
 PIDFILE = "{{ lantern_pid }}"
 INSTANCEID = "{{ pillar['instance_id'] }}"
-IP = "{{ public_ip }}"
+IP = "{{ external_ip }}"
 PORT = "{{ grains['proxy_port'] }}"
 AWS_REGION = "{{ grains['aws_region'] }}"
 CONTROLLER = "{{ grains['controller'] }}"

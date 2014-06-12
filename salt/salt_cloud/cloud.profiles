@@ -7,3 +7,8 @@ do:
     provider: do
     image: "Ubuntu 12.04.4 x64"
     size: 512MB
+
+do_sg_2GB:
+    provider: do_sg
+    image: "Ubuntu 12.04.4 x64"
+    size: 2GB

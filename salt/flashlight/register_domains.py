@@ -7,11 +7,12 @@ import sys
 import pyflare
 import yaml
 
+{% from 'ip.sls' import external_ip %}
 
 CF_ID = "{{ pillar['cf_id'] }}"
 CF_KEY = "{{ pillar['cf_key'] }}"
 INSTANCE_ID = "{{ grains['id'] }}"
-IP = '{{ grains["ipv4"][0] if grains["ipv4"][0] != "127.0.0.1" else grains["ipv4"][1] }}'
+IP = '{{ external_ip(grains) }}'
 ZONE = '{{ zone }}'
 RECORDS_FILE = '{{ domain_records_file }}'
 
@@ -56,7 +57,7 @@ def unregister():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
-                        filename="register_domains.log",
+                        filename="/home/lantern/register_domains.log",
                         format='%(asctime)s %(levelname)-8s %(message)s')
     try:
         if (len(sys.argv) == 1

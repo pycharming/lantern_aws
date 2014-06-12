@@ -20,7 +20,7 @@ CONTROLLER = "{{ grains['controller'] }}"
 SQSMSG = "{{ pillar['sqs_msg'] }}"
 AWS_ID = "{{ pillar['aws_id'] }}"
 AWS_KEY = "{{ pillar['aws_key'] }}"
-IP = "{{ public_ip }}"
+IP = "{{ external_ip }}"
 PORT = "{{ grains['proxy_port'] }}"
 PT_TYPE = {{ pillar.get('pt_type')|python }}
 

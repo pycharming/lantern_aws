@@ -14,21 +14,23 @@ import json
 
 
 def launch_fp(email,
-           serial,
-           pillars):
+              serial,
+              pillars,
+              profile):
     send_message({'launch-fp-as': email,
                   'launch-refrtok': 'bogus',
                   'launch-serial': serial,
+                  'profile': profile,
                   'launch-pillars': json.loads(pillars)})
 
-def launch_wb(wbid):
-    send_message({'launch-wb': wbid})
+def launch_wb(wbid, profile=config.default_profile):
+    send_message({'launch-wb': wbid, 'profile': profile})
 
-def launch_fl(flid):
-    send_message({'launch-fl': flid})
+def launch_fl(flid, profile=config.default_profile):
+    send_message({'launch-fl': flid, 'profile': profile})
 
 def kill_fl(flid):
-    send_message({'kill-fl': flid})
+    send_message({'shutdown-fl': flid})
 
 def kill_fp(email, serial):
     send_message({'shutdown-fp': name_prefix(email, serial)})
@@ -52,34 +54,39 @@ def send_message(d):
 #DRY: Logic copied and pasted from ../salt/cloudmaster/cloudmaster.py
 def name_prefix(email, serialno):
     sanitized_email = email.replace('@', '-at-').replace('.', '-dot-')
-    # Since '-' is legal in e-mail usernames and domain names, and although
-    # I don't imagine we'd approve problematic e-mails, let's be somewhat
-    # paranoid and add some hash of the unsanitized e-mail to avoid clashes.
+    # Since '-' is legal in e-mail usernames and domain names, let's be
+    # somewhat paranoid and add some hash of the unsanitized e-mail to avoid
+    # clashes.
     sanitized_email += "-" + hex(hash(email))[-4:]
     return "fp-%s-%s-" % (sanitized_email, serialno)
 
 def print_usage():
-    print "Usage: %s (launch-wb|kill-wb) <id> | (launch-fp|kill-fp) <email> <serial> [{pillar_key: pillar_value[, pillar_key: pillar_value]...}]" % sys.argv[0]
+    print "Usage: %s (launch-wb|kill-wb) <id> [<profile>='%s'] | (launch-fp|kill-fp) <email> <serial> [{pillar_key: pillar_value[, pillar_key: pillar_value]...} [<profile>='%s']]" % (sys.argv[0], config.default_profile, config.default_profile)
 
 if __name__ == '__main__':
     try:
         cmd = sys.argv[1]
         if cmd == 'launch-wb':
-            launch_wb(sys.argv[2])
+            launch_wb(*sys.argv[2:])
         elif cmd == 'kill-wb':
             kill_wb(sys.argv[2])
         elif cmd == 'launch-fl':
-            launch_fl(sys.argv[2])
+            launch_fl(*sys.argv[2:])
         elif cmd == 'kill-fl':
             kill_fl(sys.argv[2])
         else:
             email, serial = sys.argv[2:4]
             serial = int(serial)
             if cmd == 'launch-fp':
-                pillars = '{}'
                 if len(sys.argv) > 4:
                     pillars = sys.argv[4]
-                launch_fp(email, serial, pillars)
+                else:
+                    pillars = '{}'
+                if len(sys.argv) > 5:
+                    profile = sys.argv[5]
+                else:
+                    profile = config.default_profile
+                launch_fp(email, serial, pillars, profile)
             elif cmd == 'kill-fp':
                 kill_fp(email, serial)
             else:
