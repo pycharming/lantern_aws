@@ -5,12 +5,18 @@ include:
 {% set domain_records_file='/home/lantern/cloudflare_records.yaml' %}
 
 
+curl:
+  pkg:
+    - installed
+
 fl-installed:
     cmd.run:
         - unless: 'which flashlight'
-        - name: 'wget -qct 3 https://s3.amazonaws.com/lantern-aws/flashlight && chmod a+x flashlight'
+        - name: 'curl -L -O https://github.com/getlantern/flashlight/releases/download/0.0.1/flashlight && chmod a+x flashlight'
         - cwd: '/usr/bin'
         - user: root
+        - require:
+          - pkg: curl
 
 fl-upstart-script:
     file.managed:
