@@ -7,7 +7,8 @@ aws_credential_path = os.path.join(here.secrets_path,
                                    'lantern_aws',
                                    'aws_credential')
 default_profile = 'do'
-salt_version = '2014.1.4'
+#salt_version = '2014.1.4'
+salt_version = '2014.1.7'
 do_region = 'New York 2'
 # Set this to False unless you know that the datacenter supports it.
 private_networking = True
