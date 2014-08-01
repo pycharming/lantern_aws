@@ -44,9 +44,9 @@ salt:
 # In theory this is only required for salt-cloud, but now that salt-cloud is
 # a part of the salt project this requirement seems to apply even if you don't
 # use any salt-cloud functionality.
-apache-libcloud:
-    pip.installed:
-        - upgrade: yes
+#apache-libcloud:
+#    pip.installed:
+#        - upgrade: yes
 
 salt-prereqs:
     pkg.installed:

@@ -69,7 +69,7 @@ check-fallbacks-proxying:
 # fix.
 #
 # https://github.com/saltstack/salt/pull/12987
-/usr/local/lib/python2.7/dist-packages/salt/cloud/clouds/libcloud_aws.py:
-    file.patch:
-        - source: salt://cloudmaster/libcloud_aws.py.patch
-        - hash: md5=06ed9aebaf6f059598d0ba217e52f710
+#/usr/local/lib/python2.7/dist-packages/salt/cloud/clouds/libcloud_aws.py:
+#    file.patch:
+#        - source: salt://cloudmaster/libcloud_aws.py.patch
+#        - hash: md5=06ed9aebaf6f059598d0ba217e52f710
