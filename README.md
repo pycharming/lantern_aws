@@ -81,7 +81,7 @@ or, as a shortcut,
 
 To sync all machines (including the cloud master itself):
 
-    bin/ssh_cloudmaster.py -b 5 'salt "*" state.highstate'
+    bin/ssh_cloudmaster.py 'salt -b 5 "*" state.highstate'
 
 where the `-b 5` part does some batching to avoid overloading the cloudmaster.
 
