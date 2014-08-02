@@ -87,7 +87,7 @@ where the `-b 5` part does some batching to avoid overloading the cloudmaster.
 
 All fallback proxies have salt IDs starting with 'fp-', so you can instruct the proxies, but not the cloud master, to apply the current configuration with
 
-    bin/ssh_cloudmaster.py -b 5 'salt "fp-*" state.highstate'
+    bin/ssh_cloudmaster.py 'salt -b 5 "fp-*" state.highstate'
 
 or, as a shortcut,
 
