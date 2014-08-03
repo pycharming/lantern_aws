@@ -47,7 +47,7 @@ def launch_cloudmaster():
     droplet = do.Droplet(client_id=do_id,
                          api_key=do_api_key,
                          name=config.cloudmaster_name,
-                         region_id=4,  # New York 2
+                         region_id=6,  # New York 2
                          image_id=3101045,  # Ubuntu 12.04.4 x64
                          size_id=63,  # 1GB
                          ssh_key_ids=[97623],  # cloudmaster key
