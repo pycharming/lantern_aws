@@ -18,7 +18,7 @@ fl-installed:
         - require:
           - pkg: curl
 
-/sbin/restart flashlight 2>&1 | logger -t flashlight_restarter:
+sudo /sbin/restart flashlight 2>&1 | logger -t flashlight_restarter:
     cron.present:
         - identifier: flashlight-cron-restart
         - user: lantern
