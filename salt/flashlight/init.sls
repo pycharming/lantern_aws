@@ -12,17 +12,11 @@ curl:
 fl-installed:
     cmd.run:
         - unless: 'which flashlight'
-        - name: 'curl -L -O https://github.com/getlantern/flashlight/releases/download/0.0.1/flashlight && chmod a+x flashlight'
+        - name: 'curl -L -O https://github.com/getlantern/flashlight/releases/download/0.0.2/flashlight && chmod a+x flashlight'
         - cwd: '/usr/bin'
         - user: root
         - require:
           - pkg: curl
-
-sudo /sbin/restart flashlight 2>&1 | logger -t flashlight_restarter:
-    cron.present:
-        - identifier: flashlight-cron-restart
-        - user: lantern
-        - minute: random
 
 fl-upstart-script:
     file.managed:
