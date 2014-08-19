@@ -9,14 +9,19 @@ curl:
   pkg:
     - installed
 
+/usr/bin/flashlight:
+    file.absent
+    
 fl-installed:
     cmd.run:
-        - unless: 'which flashlight'
         - name: 'curl -L -O https://github.com/getlantern/flashlight/releases/download/0.0.2/flashlight && chmod a+x flashlight'
         - cwd: '/usr/bin'
         - user: root
         - require:
           - pkg: curl
+
+sudo /sbin/restart flashlight 2>&1 | logger -t flashlight_restarter:
+    cron.absent
 
 fl-upstart-script:
     file.managed:
@@ -36,6 +41,7 @@ fl-service-registered:
         - name: 'initctl reload-configuration'
         - watch:
             - file: fl-upstart-script
+
 
 flashlight:
     service.running:
