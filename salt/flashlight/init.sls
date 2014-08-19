@@ -44,7 +44,6 @@ fl-service-registered:
         - watch:
             - file: fl-upstart-script
 
-
 flashlight:
     service.running:
         - enable: yes
@@ -53,6 +52,8 @@ flashlight:
             - cmd: ufw-rules-ready
             - cmd: fl-installed
             - cmd: fl-service-registered
+        - watch:
+            - file: /usr/bin/flashlight
 
 pyflare:
     pip.installed:
