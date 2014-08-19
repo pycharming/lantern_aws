@@ -21,7 +21,9 @@ fl-installed:
           - pkg: curl
 
 sudo /sbin/restart flashlight 2>&1 | logger -t flashlight_restarter:
-    cron.absent
+    cron.absent:
+        - identifier: flashlight-cron-restart
+        - user: lantern
 
 fl-upstart-script:
     file.managed:
