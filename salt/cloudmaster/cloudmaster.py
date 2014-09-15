@@ -129,6 +129,9 @@ def actually_check_q():
     elif 'launch-fl' in d:
         launch('fl', msg)
         ctrl_req_q.delete_message(msg)
+    elif 'launch-wd' in d:
+        launch('wd', msg)
+        ctrl_req_q.delete_message(msg)
     else:
         log.error("I don't understand this message: %s" % d)
 

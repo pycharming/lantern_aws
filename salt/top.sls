@@ -26,3 +26,6 @@ base:
     'fl-*':
         - apt_upgrade
         - flashlight
+    'wd-*':
+        - apt_upgrade
+        - waddell

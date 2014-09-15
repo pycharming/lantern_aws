@@ -29,6 +29,9 @@ def launch_wb(wbid, profile=config.default_profile):
 def launch_fl(flid, profile=config.default_profile):
     send_message({'launch-fl': flid, 'profile': profile})
 
+def launch_wd(flid, profile=config.default_profile):
+    send_message({'launch-wd': flid, 'profile': profile})
+
 def kill_fl(flid):
     send_message({'shutdown-fl': flid})
 
@@ -72,6 +75,8 @@ if __name__ == '__main__':
             kill_wb(sys.argv[2])
         elif cmd == 'launch-fl':
             launch_fl(*sys.argv[2:])
+        elif cmd == 'launch-wd':
+            launch_wd(*sys.argv[2:])
         elif cmd == 'kill-fl':
             kill_fl(sys.argv[2])
         else:

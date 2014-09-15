@@ -125,6 +125,11 @@ bin/fake_controller.py launch "ox@getlantern.org" 102 '{"pt_type": "FTE", "pt_pr
 bin/fake_controller.py launch-fl fl-singapore-001-15
 ```
 
+###### Launch a waddell server
+```
+bin/fake_controller.py launch-wd wd-001-1
+```
+
 ###### Reinstalling lantern
 
 To reinstall lantern in the proxies after a new client version has been released, just uninstall the old package through `apt-get` and then run `state.highstate` to re-apply the configuration scripts.  This takes care of restarting the lantern service too.  `bin/reinstall_lantern.bash` (which see) does this.
