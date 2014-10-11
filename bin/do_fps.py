@@ -129,8 +129,8 @@ all_fallbacks = [
     "fp-fte3-at-getlantern-dot-org-4853-3-2014-5-10",
     "fp-ox-at-getlantern-dot-org-c336-1-2014-4-17"]
 
-
-mgr = digitalocean.Manager(token=util.read_do_credential())
+_, _, do_token = util.read_do_credential()
+mgr = digitalocean.Manager(token=do_token)
 
 droplets_by_name = {d.name: d
                     for d in mgr.get_all_droplets()}

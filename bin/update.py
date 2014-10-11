@@ -100,19 +100,21 @@ def rsync(src, dst):
 
 def upload_cloudmaster_minion_config():
     address = util.get_cloudmaster_address()
-    do_token = util.read_do_credential()
+    do_id, do_key, _ = util.read_do_credential()
     util.ssh_cloudmaster((r"""(echo "master: salt" """
                           + r""" && echo "grains:" """
                           + r""" && echo "    aws_region: %s " """
                           + r""" && echo "    aws_ami: %s " """
-                          + r""" && echo "    do_token: %s " """
+                          + r""" && echo "    do_id: %s " """
+                          + r""" && echo "    do_key: %s " """
                           + r""" && echo "    do_region: %s " """
                           + r""" && echo "    controller: %s " """
                           + r""" && echo "    production_controller: %s " """
                           + r""" ) > /root/minion""")
                          % (config.aws_region,
                             region.get_ami(),
-                            do_token,
+                            do_id,
+                            do_key,
                             config.do_region,
                             config.controller,
                             config.production_controller))

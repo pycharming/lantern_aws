@@ -34,7 +34,8 @@ def get_cloudmaster_address():
     ip_ = os.environ.get(env_key)
     if ip_ is not None:
         return ip_
-    mgr = do.Manager(token=read_do_credential())
+    _, _, do_token = read_do_credential()
+    mgr = do.Manager(token=do_token)
     for instance in mgr.get_all_droplets():
         if instance.name == name:
             ret = instance.ip_address
@@ -61,7 +62,7 @@ def read_aws_credential():
 @memoized
 def read_do_credential():
     return secrets_from_yaml(['lantern_aws', 'do_credential'],
-                             ['rw_token'])[0]
+                             ['client_id', 'api_key', 'rw_token'])
 
 @memoized
 def read_cf_credential():

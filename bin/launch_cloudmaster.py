@@ -13,7 +13,7 @@ import util
 
 
 def launch_cloudmaster():
-    do_token = util.read_do_credential()
+    _, _, do_token = util.read_do_credential()
     mgr = do.Manager(token=do_token)
     delay = 2
     class Done:
@@ -32,11 +32,15 @@ def launch_cloudmaster():
             os.system('ssh-keygen -f "%s/.ssh/known_hosts" -R %s'
                       % (os.path.expanduser("~"),
                          ip_))
+            print "Digitan Ocean doesn't like us immediately creating"
+            print "instances with the same name as one we just killed."
+            print "Waiting for 20 seconds to be on the safe side..."
+            time.sleep(20)
     print "Ordering the creation of the droplet..."
     droplet = do.Droplet(token=do_token,
                          name=config.cloudmaster_name,
                          region='sgp1',
-                         image='ubuntu-14-04-x64',
+                         image='ubuntu-12-04-x64',
                          size='1gb',
                          ssh_keys=[97623],  # cloudmaster key
                          backups=False)

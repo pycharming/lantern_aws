@@ -11,7 +11,9 @@ aws:
     #     private_ips - The salt-master is also hosted with AWS
     #     public_ips - The salt-master is hosted outside of AWS
     #
-    ssh_interface: private_ips
+    # We're currently launching all our masters in Digital Ocean.  It will be
+    # best to change this to private_ips if we ever come back to EC2.
+    ssh_interface: public_ips
 
     # Set the AWS access credentials (see below)
     #
@@ -41,21 +43,30 @@ aws:
     ssh_username: ubuntu
 
     provider: aws
+
+    # The instance name will otherwise linger around for a bit, possibly
+    # causing confusion.
     rename_on_destroy: True
 
 do:
     provider: digital_ocean
-    personal_access_token: {{ grains['do_token'] }}
+    # XXX use token when changing to DO API v2.0.
+    client_key: {{ grains['do_id'] }}
+    api_key: {{ grains['do_key'] }}
     location: {{ grains['do_region'] }}
     # Play it safe; not all regions support this.
     private_networking: {{ pillar.get('private_networking', 'no') }}
     ssh_key_file: /etc/salt/cloudmaster.id_rsa
-    ssh_key_names: cloudmaster
+    # XXX: in v2.0, the name will be ssh_key_names, in plural.
+    ssh_key_name: cloudmaster
 
 do_sg:
     provider: digital_ocean
-    personal_access_token: {{ grains['do_token'] }}
+    # XXX use token when changing to DO API v2.0.
+    client_key: {{ grains['do_id'] }}
+    api_key: {{ grains['do_key'] }}
     location: 'Singapore 1'
     private_networking: yes
     ssh_key_file: /etc/salt/cloudmaster.id_rsa
-    ssh_key_names: cloudmaster
+    # XXX: in v2.0, the name will be ssh_key_names, in plural.
+    ssh_key_name: cloudmaster
