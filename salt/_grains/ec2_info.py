@@ -36,7 +36,11 @@ def _get_ec2_hostinfo(path="", data={}):
     All EC2 variables are prefixed with "ec2_" so they are nicely grouped as grains and also avoids collisions with
     other grain names.
     """
-    for line in _call_aws("/latest/meta-data/%s" % path).split("\n"):
+    metadata =  _call_aws("/latest/meta-data/%s" % path)
+    if not metadata:
+        LOG.info("No AWS metadata; am I not in EC2?")
+        return
+    for line in metadata.split("\n"):
         if line[-1] != "/":
             data["ec2_" + line] = _call_aws("/latest/meta-data/%s" % (path + line))
         else:

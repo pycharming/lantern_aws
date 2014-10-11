@@ -34,8 +34,8 @@ def get_cloudmaster_address():
     ip_ = os.environ.get(env_key)
     if ip_ is not None:
         return ip_
-    do_id, do_api_key = read_do_credential()
-    mgr = do.Manager(client_id=do_id, api_key=do_api_key)
+    _, _, do_token = read_do_credential()
+    mgr = do.Manager(token=do_token)
     for instance in mgr.get_all_droplets():
         if instance.name == name:
             ret = instance.ip_address
@@ -62,7 +62,7 @@ def read_aws_credential():
 @memoized
 def read_do_credential():
     return secrets_from_yaml(['lantern_aws', 'do_credential'],
-                             ['client_id', 'api_key'])
+                             ['client_id', 'api_key', 'rw_token'])
 
 @memoized
 def read_cf_credential():
@@ -94,3 +94,19 @@ def ssh_cloudmaster(cmd=None, out=None):
     if out:
         full_cmd += "| tee %s" % out
     return os.system(full_cmd)
+
+def wait_droplet(d):
+    """
+    Wait for the completion of a command on a Digital Ocean droplet.
+    """
+    delay = 2
+    while True:
+        actions = d.get_actions()
+        if actions:
+            last_action = actions[-1]
+            last_action.load()
+            if last_action.status == 'completed':
+                return
+            else:
+                print "status: %s ..." % last_action.status
+        time.sleep(delay)

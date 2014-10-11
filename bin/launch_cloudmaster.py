@@ -13,8 +13,8 @@ import util
 
 
 def launch_cloudmaster():
-    do_id, do_api_key = util.read_do_credential()
-    mgr = do.Manager(client_id=do_id, api_key=do_api_key)
+    _, _, do_token = util.read_do_credential()
+    mgr = do.Manager(token=do_token)
     delay = 2
     class Done:
         pass
@@ -26,46 +26,27 @@ def launch_cloudmaster():
                 sys.exit(0)
             print "Killing..."
             ip_ = d.ip_address
-            d.destroy(scrub_data=False)
-            try:
-                while True:
-                    events = d.get_events()
-                    for event in events:
-                        event.load()
-                        if event.percentage is not None:
-                            print "%s%%..." % event.percentage
-                            if event.percentage == u"100":
-                               raise Done
-                    time.sleep(delay)
-            except Done:
-                pass
+            d.destroy()
+            util.wait_droplet(d)
             print "Removing from known_hosts..."
             os.system('ssh-keygen -f "%s/.ssh/known_hosts" -R %s'
                       % (os.path.expanduser("~"),
                          ip_))
+            print "Digitan Ocean doesn't like us immediately creating"
+            print "instances with the same name as one we just killed."
+            print "Waiting for 20 seconds to be on the safe side..."
+            time.sleep(20)
     print "Ordering the creation of the droplet..."
-    droplet = do.Droplet(client_id=do_id,
-                         api_key=do_api_key,
+    droplet = do.Droplet(token=do_token,
                          name=config.cloudmaster_name,
-                         region_id=6,  # New York 2
-                         image_id=3101045,  # Ubuntu 12.04.4 x64
-                         size_id=63,  # 1GB
-                         ssh_key_ids=[97623],  # cloudmaster key
-                         backup_active=False)
+                         region='sgp1',
+                         image='ubuntu-12-04-x64',
+                         size='1gb',
+                         ssh_keys=[97623],  # cloudmaster key
+                         backups=False)
     droplet.create()
     print "Waiting for instance to run..."
-    try:
-        while True:
-            events = droplet.get_events()
-            for event in events:
-                event.load()
-                if event.percentage is not None:
-                    print "%s%%..." % event.percentage
-                    if event.percentage == u"100":
-                        raise Done
-            time.sleep(delay)
-    except Done:
-        pass
+    util.wait_droplet(droplet)
     print
     print "Trying to connect to server..."
     print "(You may see some connection refusals; this is normal.)"

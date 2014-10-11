@@ -1,5 +1,18 @@
 #!/usr/bin/env python
 
+# This file just collects random one-off jobs for future reference/reuse.
+
+# XXX: Some of these functions haven't been tested against the new (v2.0)
+# version of the Digital Ocean API.  I think I have ported everything right,
+# but I'll test particular functions if and when I ever actually need them
+# again.
+#
+# If you beat me to it, this might be handy:
+#
+# https://github.com/koalalorenzo/python-digitalocean/blob/master/digitalocean/Droplet.py
+#
+# - aranhoide@getlantern.org
+
 import os
 import sys
 import time
@@ -7,8 +20,8 @@ import time
 # sudo pip install -U python-digitalocean
 import digitalocean
 
+import util
 
-SIZE_1GB = 63
 
 all_fallbacks = [
     "fp-from-old-controller-96-at-getlantern-dot-org-8f94-1-2014-4-8",
@@ -116,19 +129,8 @@ all_fallbacks = [
     "fp-fte3-at-getlantern-dot-org-4853-3-2014-5-10",
     "fp-ox-at-getlantern-dot-org-c336-1-2014-4-17"]
 
-all_wrapper_builders = [
-    "wb-do-1",
-    "wb-do-2",
-    ]
-
-_, do_id, _, do_api_key = file(os.path.join("..",
-                                            "..",
-                                            "too-many-secrets",
-                                            "lantern_aws",
-                                            "do_credential")
-                              ).read().strip().split()
-
-mgr = digitalocean.Manager(client_id=do_id, api_key=do_api_key)
+_, _, do_token = util.read_do_credential()
+mgr = digitalocean.Manager(token=do_token)
 
 droplets_by_name = {d.name: d
                     for d in mgr.get_all_droplets()}
@@ -146,26 +148,10 @@ def reparent():
         run_command(ip, "sudo python reparent.py")
         print
 
-def wait_for_completion(droplet):
-    class Done:
-        pass
-    try:
-        while True:
-            events = droplet.get_events()
-            for event in events:
-                event.load()
-                if event.percentage is not None:
-                    print "%s%%..." % event.percentage
-                    if event.percentage == u"100":
-                        raise Done
-            time.sleep(2)
-    except Done:
-        pass
-
-def resize(names):
+def resize(new_size, *names):
     for name in names:
         d = droplets_by_name[name]
-        if d.size_id != SIZE_1GB:
+        if d.size != new_size:
             print "resizing", d.name
             print "powering off..."
             os.system('ssh -o StrictHostKeyChecking=no %s "sudo shutdown -hP now"'
@@ -178,13 +164,22 @@ def resize(names):
                 else:
                     print "waiting for instance to power off..."
             print "resizing..."
-            d.resize(SIZE_1GB)
-            wait_for_completion(d)
+            d.resize(new_size)
+            util.wait_droplet(d)
             # I've seen resizing being reported as not completed if we boot
             # again too shortly after.
             time.sleep(2)
             print "powering back on"
             d.power_on()
 
-resize(all_fallbacks)
+def print_regions():
+    for region in mgr.get_all_regions():
+        for name, val in region.__dict__.iteritems():
+            print "%s: %s" % (name, val)
+        print
 
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        globals()[sys.argv[1]](*sys.argv[2:])
+    else:
+        print "Usage: %s <command> [<arg> ...]" % sys.argv[0]

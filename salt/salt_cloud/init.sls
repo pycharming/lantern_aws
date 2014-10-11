@@ -22,6 +22,14 @@
         - group: root
         - mode: 600
 
+/etc/salt/cloud.providers:
+    file.managed:
+        - source: salt://salt_cloud/cloud.providers
+        - template: jinja
+        - user: root
+        - group: root
+        - mode: 600
+
 /etc/salt/cloud.profiles:
     file.managed:
         - source: salt://salt_cloud/cloud.profiles
