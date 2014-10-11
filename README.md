@@ -4,21 +4,23 @@ This project contains code and configuration scripts to launch and manage cloud-
 
 At this moment, three types of machines are launched and managed by this project:
 
-- **Fallback Proxies**: These run Lantern instances configured to offer access to the free internet to Lantern users that haven't authenticated yet so they can reach Google Accounts and Google Talk in order to do so.  They also double as regular kaleidoscope nodes on behalf of some inviter.  On setup, these machines also build and upload *installer wrappers*, small programs that users run to install Lantern and help it find the corresponding fallback proxy.
+- **Fallback Proxies**: These run Lantern instances to offer access to the
+  free internet to Lantern users that have no available peers for this end.
 
-- **Wrapper builders**: They build little programs that fetch and execute the Lantern installers, personalizing the user's environment.
+- **Flashlight Servers**: These serve a similar role as fallback proxies, but
+  they use [domain fronting](https://trac.torproject.org/projects/tor/wiki/doc/meek) for extra blocking resistance.
 
-- A single **Cloud Master**, which launches fallback proxies and wrapper builders on request from the [Lantern Controller](https://github.com/getlantern/lantern-controller).  Further operations on fallback proxies (especially 'batch' operations involving many such machines) are typically done through this cloud master.
+- A single **Cloud Master**, which launches fallback proxies on request from the [Lantern Controller](https://github.com/getlantern/lantern-controller).  Further operations on fallback proxies (especially 'batch' operations involving many such machines) are typically done through this cloud master.
 
-As of this writing, only EC2 and Digital Ocean machines are supported, but it should be easy to add support for any cloud provider that offers Ubuntu 12.04 and is supported by [Salt Cloud](https://docs.saltstack.com/en/latest/topics/cloud/).
+As of this writing, only EC2 and Digital Ocean machines are supported, but it should be easy to add support for any cloud provider that offers Ubuntu 12.04+ and is supported by [Salt Cloud](https://docs.saltstack.com/en/latest/topics/cloud/).
 
 ## How does it work
 
-Whenever we determine a new fallback or wrapper builder needs to be launched or destroyed, a new message is sent to an SQS queue encoding a request.  We can do this manually (see `bin/fake_controller.py` or, in the case of fallbacks, the controller may do it on its own.  Cloud masters listen for such messages and perform the requested operations.
+Whenever we determine a new server needs to be launched or destroyed, a new message is sent to an SQS queue encoding a request.  We can do this manually (see `bin/fake_controller.py` or, in the case of fallbacks, the controller may do it on its own.  Cloud masters listen for such messages and perform the requested operations.
 
 Fallback proxies download, build and run a Lantern client, with some command line arguments instructing it to proxy traffic to the uncensored internet.  When done with setup, they notify the Lantern Controller by sending a message to another SQS queue, and then they delete the original SQS message that triggered the whole operation.
 
-If the fallback proxy or wrapper builder fails to set itself up, eventually the SQS message that triggered its launch will become visible again for the cloud master.  When a cloud master finds that an instance already exists with the same ID as that in a launch request, it will assume that it has failed to complete setup correctly due to temporary conditions, so it will kill it and launch a new one.
+If the fallback proxy fails to set itself up, eventually the SQS message that triggered its launch will become visible again for the cloud master.  When a cloud master finds that an instance already exists with the same ID as that in a launch request, it will assume that it has failed to complete setup correctly due to temporary conditions, so it will kill it and launch a new one.
 
 [Salt](http://saltstack.com/) is used for configuration management.  The `salt` directory in this project contains the configuration for all the machines (you can see which modules apply to which machines in `salt/top.sls`).  [Salt Cloud](https://docs.saltstack.com/en/latest/topics/cloud/) is used to launch the machines, and the Cloud Master doubles as a Salt Master for launched peers, so they fetch their initial configuration from it.
 
@@ -36,8 +38,6 @@ After you check out this repository, and unless you passed the `--recursive` fla
 
 Note that this downloads a private repository that is only accessible to the Lantern core development team.
 
-Finally, you need an up-to-date checkout of the `getlantern/lantern` project placed as a sibling of this one.
-
 (XXX:) Instructions to replace these secrets with your own equivalents will be added here on request to aranhoide@gmail.com.
 
 ### Launching a cloud master
@@ -46,7 +46,7 @@ You launch a cloud master using the following command:
 
     bin/launch_cloudmaster.py
 
-By default, this will launch an instance with name 'cloudmaster1-2' (historical reasons) in the `nyc2` (New York 2) Digital Ocean datacenter.  This instance will communicate with the production Lantern Controller (app engine ID `lanternctrl1-2`).  You can modify all the values described in this paragraph by editing `bin/launch_cloudmaster.py` itself and/or creating `bin/config_overrides.py` to override values in `bin/config.py`.  Note that this file is not managed by git.
+By default, this will launch an instance with name 'cloudmaster1-2' (historical reasons) in the `sgp1` (Singapore 1) Digital Ocean datacenter.  This instance will communicate with the production Lantern Controller (app engine ID `lanternctrl1-2`).  You can modify all the values described in this paragraph by editing `bin/launch_cloudmaster.py` itself and/or creating `bin/config_overrides.py` to override values in `bin/config.py`.  Note that this file is not managed by git.
 
 The cloud master will use the Salt configuration in your local `salt/` directory (i.e., not a git commit of any sort).
 
@@ -133,27 +133,3 @@ bin/fake_controller.py launch-wd wd-001-1
 ###### Reinstalling lantern
 
 To reinstall lantern in the proxies after a new client version has been released, just uninstall the old package through `apt-get` and then run `state.highstate` to re-apply the configuration scripts.  This takes care of restarting the lantern service too.  `bin/reinstall_lantern.bash` (which see) does this.
-
-## Misc notes
-
-The following policy is set on the `lantern-config` bucket to allow everyone access to config files therein through HTTPS, while still disallowing listing the bucket contents.
-
-    {
-      "Id": "Policy1389413034380",
-      "Statement": [
-        {
-          "Sid": "Stmt1389413025721",
-          "Action": [
-            "s3:GetObject"
-          ],
-          "Effect": "Allow",
-          "Resource": "arn:aws:s3:::lantern-config/*",
-          "Principal": {
-            "AWS": [
-              "*"
-            ]
-          }
-          "Condition":{"Bool":{"aws:SecureTransport":"true"}}
-        }
-      ]
-    }
