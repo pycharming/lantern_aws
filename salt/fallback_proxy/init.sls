@@ -139,6 +139,7 @@ wamerican:
 generate-cert:
     cmd.script:
         - source: salt://fallback_proxy/gencert.py
+        - template: jinja
         # Don't clobber the keystore of old fallbacks.
         - unless: '[ -e /home/lantern/littleproxy_keystore.jks ]'
         - require:
