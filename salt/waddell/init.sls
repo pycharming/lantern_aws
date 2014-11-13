@@ -7,13 +7,15 @@ curl:
 
 /usr/bin/waddell:
     file.absent
-    
-keyandcert:
-  file.managed:
-    - source: salt://waddell/*.pem
-    - user: lantern
-    - group: lantern
-    - mode: 600 
+
+{% for name in 'waddell_pk.pem', 'waddell_cert.pem' %}
+    /home/lantern/{{ name }}:
+      file.managed:
+        - source: salt://waddell/{{ name }}
+        - user: lantern
+        - group: lantern
+        - mode: 600
+{% endfor %} 
     
 waddell-installed:
     cmd.run:
