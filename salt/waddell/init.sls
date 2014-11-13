@@ -8,6 +8,13 @@ curl:
 /usr/bin/waddell:
     file.absent
     
+keyandcert:
+  file.managed:
+    - source: salt://waddell/*.pem
+    - user: lantern
+    - group: lantern
+    - mode: 600 
+    
 waddell-installed:
     cmd.run:
         - name: 'curl -L -O https://github.com/getlantern/waddell/releases/download/0.0.1/waddell && chmod a+x waddell'
@@ -41,5 +48,6 @@ waddell:
             - cmd: ufw-rules-ready
             - cmd: waddell-installed
             - cmd: waddell-service-registered
+            - cmd: keyandcert
         - watch:
             - file: /usr/bin/waddell
