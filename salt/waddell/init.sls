@@ -9,8 +9,8 @@ curl:
     file.absent
 
 {% for name in 'waddell_pk.pem', 'waddell_cert.pem' %}
-    /home/lantern/{{ name }}:
-      file.managed:
+/home/lantern/{{ name }}:
+    file.managed:
         - source: salt://waddell/{{ name }}
         - user: lantern
         - group: lantern
@@ -19,7 +19,7 @@ curl:
     
 waddell-installed:
     cmd.run:
-        - name: 'curl -L -O https://github.com/getlantern/waddell/releases/download/0.0.1/waddell && chmod a+x waddell'
+        - name: 'curl -L https://github.com/getlantern/waddell/releases/download/0.0.2/waddell_linux_amd64 -o waddell && chmod a+x waddell'
         - cwd: '/usr/bin'
         - user: root
         - require:
@@ -50,6 +50,7 @@ waddell:
             - cmd: ufw-rules-ready
             - cmd: waddell-installed
             - cmd: waddell-service-registered
-            - cmd: keyandcert
+            - file: /home/lantern/waddell_pk.pem
+            - file: /home/lantern/waddell_cert.pem
         - watch:
             - file: /usr/bin/waddell
