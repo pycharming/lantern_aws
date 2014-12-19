@@ -38,4 +38,5 @@
         - group: root
         - mode: 600
 
-
+azure:
+    pip.installed

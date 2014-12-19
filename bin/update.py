@@ -43,6 +43,8 @@ def not_up_to_date():
 
 def update():
     util.set_secret_permissions()
+    print "Uploading secrets..."
+    upload_secrets()
     print "Uploading minion config..."
     upload_cloudmaster_minion_config()
     print "Uploading pillars..."
@@ -82,10 +84,24 @@ assert not error
             print line
 
 def upload_secrets():
-    return rsync(os.path.join(here.secrets_path, 'build-installers'),
-                 '/home/lantern/secure')
+    error = scp(os.path.join(here.secrets_path, 'lantern_aws', 'azure.pem'),
+                '/root/')
+    if error:
+        return error
+    return move_root_file('/root/azure.pem', '/etc/salt/azure.pem')
+
 def rsync_salt():
     return rsync(here.salt_states_path, '/srv/salt')
+
+def scp(src, dst):
+    error = os.system("scp -o StrictHostKeyChecking=no -i %s %s root@%s:%s"
+                      % (config.key_path,
+                         src,
+                         util.get_cloudmaster_address(),
+                         dst))
+    if not error:
+        print "scp'd successfully."
+    return error
 
 def rsync(src, dst):
     error = os.system(("rsync -e 'ssh -o StrictHostKeyChecking=no -i %s'"
@@ -118,9 +134,12 @@ def upload_cloudmaster_minion_config():
                             config.do_region,
                             config.controller,
                             config.production_controller))
-    util.ssh_cloudmaster('sudo mv /root/minion /etc/salt/minion'
-                         ' && sudo chown root:root /etc/salt/minion'
-                         ' && sudo chmod 600 /etc/salt/minion')
+    move_root_file('/root/minion', '/etc/salt/minion')
+
+def move_root_file(src, dst):
+    return util.ssh_cloudmaster(('sudo mv %s %s'
+                                 ' && sudo chown root:root %s'
+                                 ' && sudo chmod 600 %s') % (src, dst, dst, dst))
 
 def upload_pillars():
     aws_id, aws_key = util.read_aws_credential()

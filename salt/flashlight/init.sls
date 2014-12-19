@@ -1,7 +1,7 @@
 include:
     - proxy_ufw_rules
 
-{% set zone='getiantem.org' %}
+{% set zone='cloudapp.net' %}
 {% set domain_records_file='/home/lantern/cloudflare_records.yaml' %}
 
 
@@ -54,31 +54,3 @@ flashlight:
             - cmd: fl-service-registered
         - watch:
             - file: /usr/bin/flashlight
-
-pyflare:
-    pip.installed:
-        - name: pyflare==1.0.2
-        - upgrade: yes
-
-/home/lantern/register_domains.py:
-    file.managed:
-        - source: salt://flashlight/register_domains.py
-        - template: jinja
-        - context:
-            zone: {{ zone }}
-            domain_records_file: {{ domain_records_file }}
-        - user: lantern
-        - group: lantern
-        - mode: 700
-
-register-domains:
-    cmd.run:
-        - name: "/home/lantern/register_domains.py"
-        - unless: "[ -e {{ domain_records_file }} ]"
-        - user: lantern
-        - group: lantern
-        - cwd: /home/lantern
-        - require:
-            - pip: pyflare
-            - service: flashlight
-            - file: /home/lantern/register_domains.py
