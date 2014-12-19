@@ -173,10 +173,20 @@ def resize(new_size, *names):
             d.power_on()
 
 def print_regions():
-    for region in mgr.get_all_regions():
-        for name, val in region.__dict__.iteritems():
+    print_dicts(mgr.get_all_regions())
+
+def print_sizes():
+    print_dicts(mgr.get_all_sizes())
+
+def print_images():
+    print_dicts(mgr.get_all_images())
+
+def print_dicts(ds):
+    for each in ds:
+        for name, val in each.__dict__.iteritems():
             print "%s: %s" % (name, val)
         print
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
