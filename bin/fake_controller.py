@@ -23,9 +23,6 @@ def launch_fp(email,
                   'profile': profile,
                   'launch-pillars': json.loads(pillars)})
 
-def launch_wb(wbid, profile=config.default_profile):
-    send_message({'launch-wb': wbid, 'profile': profile})
-
 def launch_fl(flid, profile=config.default_profile):
     send_message({'launch-fl': flid, 'profile': profile})
 
@@ -37,9 +34,6 @@ def kill_fl(flid):
 
 def kill_fp(email, serial):
     send_message({'shutdown-fp': name_prefix(email, serial)})
-
-def kill_wb(name):
-    send_message({'shutdown-wb': name})
 
 def send_message(d):
     aws_id, aws_key = util.read_aws_credential()
@@ -69,11 +63,7 @@ def print_usage():
 if __name__ == '__main__':
     try:
         cmd = sys.argv[1]
-        if cmd == 'launch-wb':
-            launch_wb(*sys.argv[2:])
-        elif cmd == 'kill-wb':
-            kill_wb(sys.argv[2])
-        elif cmd == 'launch-fl':
+        if cmd == 'launch-fl':
             launch_fl(*sys.argv[2:])
         elif cmd == 'launch-wd':
             launch_wd(*sys.argv[2:])
