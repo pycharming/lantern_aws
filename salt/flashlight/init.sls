@@ -102,7 +102,7 @@ monitor-script:
 monitor:
     cron.present:
         - name: /home/lantern/monitor.bash
-        - minute: '*/1'
+        - minute: '*/15'
         - user: lantern
         - require:
             - file: /home/lantern/monitor.bash
