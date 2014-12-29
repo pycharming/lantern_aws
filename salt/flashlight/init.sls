@@ -9,6 +9,10 @@ curl:
   pkg:
     - installed
 
+mailutils:
+  pkg:
+    - installed
+
 /usr/bin/flashlight:
     file.absent
     
@@ -82,3 +86,24 @@ register-domains:
             - pip: pyflare
             - service: flashlight
             - file: /home/lantern/register_domains.py
+
+monitor-script:
+    file.managed:
+        - name: /home/lantern/monitor.bash
+        - source: salt://flashlight/monitor.bash
+        - template: jinja
+        - user: lantern
+        - group: lantern
+        - mode: 744
+        - require:
+            - pkg: mailutils
+            - pkg: curl
+
+monitor:
+    cron.present:
+        - name: /home/lantern/monitor.bash
+        - minute: '*/1'
+        - user: lantern
+        - require:
+            - file: /home/lantern/monitor.bash
+            - service: flashlight
