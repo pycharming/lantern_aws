@@ -92,8 +92,6 @@ monitor-script:
         - name: /home/lantern/monitor.bash
         - source: salt://flashlight/monitor.bash
         - template: jinja
-        - context:
-            zone: {{ zone }}
         - user: lantern
         - group: lantern
         - mode: 744
