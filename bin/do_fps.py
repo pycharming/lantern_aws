@@ -138,6 +138,23 @@ droplets_by_name = {d.name: d
 def run_command(ip, cmd):
     os.system("ssh -o StrictHostKeyChecking=no lantern@%s '%s'" % (ip, cmd))
 
+def do2all(cmd_name, cmd):
+    for name in all_fallbacks:
+        print "About to", cmd_name, name, "..."
+        ip = droplets_by_name[name].ip_address
+        run_command(ip, cmd)
+        print "done!"
+    print "all done, bye."
+
+def upgrade_salt():
+    do2all("upgrade", "sudo pip install --upgrade setuptools && sudo pip install --upgrade salt")
+
+def reboot():
+    do2all("reboot", "sudo reboot")
+
+def histate():
+    do2all("histate", "sudo salt-call state.highstate")
+
 def reparent():
     for name in all_fallbacks:
         ip = droplets_by_name[name].ip_address
