@@ -1,32 +1,25 @@
-/etc/init.d/salt-minion:
-    file.managed:
-        - user: root
-        - group: root
-        - source: salt://salt_minion/salt-minion.init
-        - mode: 700
-
 salt-minion:
     # Remove apt package so we don't upgrade automatically.
     pkg.removed: []
     service.running:
         - enable: yes
         - watch:
-            - file: /etc/init.d/salt-minion
             - pip: salt
+            - pip: salt-minion-executable
 
 remove-old-salt-install-dir:
     cmd.run:
         - name: 'rm -rf /tmp/pip-build-root/salt'
 
-# This preliminary step is required so we don't upgrade recursively unless
-# necessary. pip: salt will take care of really necessary dependent installs
-# or upgrades.  See
-# http://www.pip-installer.org/en/latest/cookbook.html#non-recursive-upgrades
-salt-nodeps:
+# pip will be satisfied with a preexisting salt even if it doesn't include
+# a proper salt-minion.  This may be introduced by bootstrap scripts.  Here we
+# check for and correct this.
+salt-minion-executable:
     pip.installed:
         - name: salt=={{ pillar['salt_version'] }}
         - upgrade: yes
-        - no_deps: yes
+        - force_reinstall: yes
+        - unless: 'which salt-minion'
         - require:
             - cmd: remove-old-salt-install-dir
 
@@ -38,7 +31,6 @@ salt:
         # upgrade.
         - name: salt=={{ pillar['salt_version'] }}
         - require:
-            - pip: salt-nodeps
             - pkg: salt-prereqs
 
 # In theory this is only required for salt-cloud, but now that salt-cloud is
