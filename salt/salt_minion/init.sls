@@ -1,17 +1,9 @@
-/etc/init.d/salt-minion:
-    file.managed:
-        - user: root
-        - group: root
-        - source: salt://salt_minion/salt-minion.init
-        - mode: 700
-
 salt-minion:
     # Remove apt package so we don't upgrade automatically.
     pkg.removed: []
     service.running:
         - enable: yes
         - watch:
-            - file: /etc/init.d/salt-minion
             - pip: salt
 
 remove-old-salt-install-dir:
