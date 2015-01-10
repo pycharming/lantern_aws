@@ -20,6 +20,7 @@ hn=`hostname`
 statshub="https://pure-journey-3547.herokuapp.com/stats/$hn"
 country="sp" # TODO - make this templatized
 maxload="70" # Note - this is given as percentage, not decimal
+restartload="90"
 load=`uptime | sed 's/.*load average: //' | awk -F\, '{print $3}'`
 loadscaled=$(echo "$load * 100" | bc -l)
 loadint=$(printf "%.0f" $loadscaled)
@@ -27,6 +28,12 @@ loadint=$(printf "%.0f" $loadscaled)
 if [ "$loadint" -gt "$maxload" ]; then
     echo "System load $loadint% is higher than $maxload%, alerting $mail"
     echo "15 minute load average is $loadint%" | mail -s "$hn - High Flashlight Server Load" -- $mail || die "Unable to email alert"
+    if [ "$loadint" -gt "$restartload" ]; then
+        echo "System load is higher than $restartload%, restarting flashlight"
+        # Stop/start instead of restart to make sure profiling info is saved.
+        sudo service flashlight stop
+        sudo service flashlight start
+    fi
 fi
 
 # Report data to statshub
