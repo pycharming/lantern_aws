@@ -15,7 +15,6 @@ pip-prereqs:
 setuptools:
     cmd.run:
         - name: "pip install --upgrade setuptools"
-        - unless: "[ $(which pip) == /usr/local/bin/pip ]"
 
 pip:
     cmd.run:

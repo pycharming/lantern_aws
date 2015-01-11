@@ -7,7 +7,7 @@ aws_credential_path = os.path.join(here.secrets_path,
                                    'lantern_aws',
                                    'aws_credential')
 default_profile = 'do'
-salt_version = '2014.1.10'
+salt_version = '2014.7.0'
 do_region = 'Singapore 1'
 # Set this to False unless you know that the datacenter supports it.
 private_networking = True
@@ -22,16 +22,13 @@ installer_filename = 'newest-64.deb'
 #cloudmaster_name = 'fakecloudmaster'
 
 #controller = 'lantern-controller-afisk'
-#cloudmaster_name = 'cloudmaster-afisk'
+#cloudmaster_name = 'fisk-cloudmaster'
 
 #controller = 'lanternctrltest'
 #cloudmaster_name = 'aranhoide-cloudmaster'
 
 #controller = 'oxlanternctrl'
 #cloudmaster_name = 'oxcloudmaster'
-
-#controller = 'pantscontroller'
-#cloudmaster_name = '_pantscloudmaster'
 
 #installer_bucket = 'lantern-installers'
 #installer_filename = 'lantern-fallback.deb'

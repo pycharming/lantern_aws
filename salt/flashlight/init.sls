@@ -9,12 +9,16 @@ curl:
   pkg:
     - installed
 
+mailutils:
+  pkg:
+    - installed
+
 /usr/bin/flashlight:
     file.absent
     
 fl-installed:
     cmd.run:
-        - name: 'curl -L -O https://github.com/getlantern/flashlight/releases/download/0.0.2/flashlight && chmod a+x flashlight'
+        - name: 'curl -L https://github.com/getlantern/flashlight-build/releases/download/0.0.6/flashlight_linux_amd64 -o flashlight && chmod a+x flashlight'
         - cwd: '/usr/bin'
         - user: root
         - require:
@@ -54,3 +58,55 @@ flashlight:
             - cmd: fl-service-registered
         - watch:
             - file: /usr/bin/flashlight
+
+#XXX: inhibit this for Azure?
+
+pyflare:
+    pip.installed:
+        - name: pyflare==1.0.2
+        - upgrade: yes
+
+/home/lantern/register_domains.py:
+    file.managed:
+        - source: salt://flashlight/register_domains.py
+        - template: jinja
+        - context:
+            zone: {{ zone }}
+            domain_records_file: {{ domain_records_file }}
+        - user: lantern
+        - group: lantern
+        - mode: 700
+
+register-domains:
+    cmd.run:
+        - name: "/home/lantern/register_domains.py"
+        - unless: "[ -e {{ domain_records_file }} ]"
+        - user: lantern
+        - group: lantern
+        - cwd: /home/lantern
+        - require:
+            - pip: pyflare
+            - service: flashlight
+            - file: /home/lantern/register_domains.py
+
+monitor-script:
+    file.managed:
+        - name: /home/lantern/monitor.bash
+        - source: salt://flashlight/monitor.bash
+        - template: jinja
+        - user: lantern
+        - group: lantern
+        - mode: 744
+        - require:
+            - pkg: mailutils
+            - pkg: curl
+
+monitor:
+    cron.present:
+        - name: /home/lantern/monitor.bash
+        - minute: '*/15'
+        - user: lantern
+        - require:
+            - file: /home/lantern/monitor.bash
+            - service: flashlight
+>>>>>>> master

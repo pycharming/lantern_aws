@@ -9,19 +9,21 @@ import here
 import region
 import util
 
+def normalize_status_output(s):
+    return filter(None, map(str.strip, s.split("\n")))
 
-EXPECTED_PRODUCTION_GIT_STATUS_OUTPUT = """\
+EXPECTED_PRODUCTION_GIT_STATUS_OUTPUT = normalize_status_output("""\
 On branch master
 Your branch is up-to-date with 'origin/master'.
-
 nothing to commit, working directory clean
-"""
+""")
 
 EXPECTED_PRODUCTION_GIT_PULL_OUTPUT = "Already up-to-date.\n"
 
 def check_master_if_in_production():
     if config.controller == config.production_controller:
-        status_output = subprocess.check_output(['git', 'status'])
+        status_output = normalize_status_output(
+                subprocess.check_output(['git', 'status']))
         if status_output != EXPECTED_PRODUCTION_GIT_STATUS_OUTPUT:
             not_up_to_date()
         pull_output = subprocess.check_output(['git', 'pull'])
