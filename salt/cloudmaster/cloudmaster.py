@@ -187,7 +187,10 @@ def launch(instance_type, msg):
                             'shell': '/bin/bash'}}})
     set_pillar(id, {})
     os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, MAP_FILE, REDIRECT))
-    os.system("%s %s state.highstate %s" % (SALT_PATH, id, REDIRECT))
+    # The first highstate may mess with the salt-minion service, so we want to
+    # run it out of the salt-minion itself.
+    os.system("%s %s cmd.run 'nohup bash -c \"salt-call state.highstate && reboot \" &' %s"
+              % (SALT_PATH, id, REDIRECT))
 
 def shutdown_one(instance_id):
     log.info("Got shutdown request for %s" % instance_id)

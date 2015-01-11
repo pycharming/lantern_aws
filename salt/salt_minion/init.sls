@@ -22,6 +22,8 @@ salt-minion-executable:
         - unless: 'which salt-minion'
         - require:
             - cmd: remove-old-salt-install-dir
+            # Prevent the salt-minion removal from happening after this.
+            - pkg: salt-minion
 
 salt:
     # Use pip package so we maintain control over installed versions.
