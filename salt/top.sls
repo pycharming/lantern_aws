@@ -20,9 +20,6 @@ base:
         - lantern_build_prereqs
         - apt_upgrade
         - fallback_proxy
-    'wb-*':
-        - lantern_build_prereqs
-        - wrapper_builder
     'fl-*':
         - apt_upgrade
         - flashlight

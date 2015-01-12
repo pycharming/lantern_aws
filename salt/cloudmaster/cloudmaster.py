@@ -120,12 +120,6 @@ def actually_check_q():
     elif 'shutdown-fl' in d:
         shutdown_one(d['shutdown-fl'])
         ctrl_req_q.delete_message(msg)
-    elif 'shutdown-wb' in d:
-        shutdown_one(d['shutdown-wb'])
-        ctrl_req_q.delete_message(msg)
-    elif 'launch-wb' in d:
-        launch('wb', msg)
-        ctrl_req_q.delete_message(msg)
     elif 'launch-fl' in d:
         launch('fl', msg)
         ctrl_req_q.delete_message(msg)
