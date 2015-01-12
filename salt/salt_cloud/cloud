@@ -1,1 +1,2 @@
 sync_after_install: all
+delete_sshkeys: True
