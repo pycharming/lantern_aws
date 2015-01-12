@@ -77,6 +77,6 @@ azure:
   certificate_path: /etc/salt/azure.pem
   minion:
     master: {{ external_ip(grains) }}
-
-  # Optional
-  #management_host: management.core.windows.net
+  grains:
+    provider: azure
+    test-grain: test-value

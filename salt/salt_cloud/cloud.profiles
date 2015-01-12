@@ -13,7 +13,7 @@ do_sg_2GB:
     image: "14.04 x64"
     size: 2GB
 
-azure:
+azure_sea_xs:
     provider: azure
     image: '0b11de9248dd4d87b18621318e037d37__RightImage-Ubuntu-14.04-x64-v14.1.3'
     size: ExtraSmall

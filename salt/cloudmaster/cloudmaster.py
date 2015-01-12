@@ -35,7 +35,7 @@ PRODUCTION_CONTROLLER = "{{ grains['production_controller'] }}"
 SALT_VERSION = "{{ pillar['salt_version'] }}"
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
-PROFILES = ['aws', 'do', 'do_sg_2GB']
+PROFILES = ['aws', 'do', 'do_sg_2GB', 'azure_sea_xs']
 REDIRECT = " >> /home/lantern/cloudmaster.log 2>&1 "
 SALT_PATH = '/usr/local/bin/salt'
 SALT_CLOUD_PATH = '/usr/local/bin/salt-cloud'

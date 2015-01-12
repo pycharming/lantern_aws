@@ -1,7 +1,12 @@
 include:
     - proxy_ufw_rules
 
-{% set zone='cloudapp.net' %}
+{% set zone='getiantem.org' %}
+{% if grains.get('provider', 'unknown') == 'azure' %}
+{% set server=pillar.get('cdn', 'UNKNOWN_CDN') %}
+{% else %}
+{% set server = grains['id'] + "." + zone %}
+{% endif %}
 {% set domain_records_file='/home/lantern/cloudflare_records.yaml' %}
 
 
@@ -35,7 +40,7 @@ fl-upstart-script:
         - source: salt://flashlight/flashlight.conf
         - template: jinja
         - context:
-            zone: {{ zone }}
+            server: {{ server }}
         - user: root
         - group: root
         - mode: 644
@@ -59,7 +64,28 @@ flashlight:
         - watch:
             - file: /usr/bin/flashlight
 
-#XXX: inhibit this for Azure?
+monitor-script:
+    file.managed:
+        - name: /home/lantern/monitor.bash
+        - source: salt://flashlight/monitor.bash
+        - template: jinja
+        - user: lantern
+        - group: lantern
+        - mode: 744
+        - require:
+            - pkg: mailutils
+            - pkg: curl
+
+monitor:
+    cron.present:
+        - name: /home/lantern/monitor.bash
+        - minute: '*/15'
+        - user: lantern
+        - require:
+            - file: /home/lantern/monitor.bash
+            - service: flashlight
+
+{% if grains.get('provider', 'unknown') != 'azure' %}
 
 pyflare:
     pip.installed:
@@ -88,25 +114,4 @@ register-domains:
             - pip: pyflare
             - service: flashlight
             - file: /home/lantern/register_domains.py
-
-monitor-script:
-    file.managed:
-        - name: /home/lantern/monitor.bash
-        - source: salt://flashlight/monitor.bash
-        - template: jinja
-        - user: lantern
-        - group: lantern
-        - mode: 744
-        - require:
-            - pkg: mailutils
-            - pkg: curl
-
-monitor:
-    cron.present:
-        - name: /home/lantern/monitor.bash
-        - minute: '*/15'
-        - user: lantern
-        - require:
-            - file: /home/lantern/monitor.bash
-            - service: flashlight
->>>>>>> master
+{% endif %}
