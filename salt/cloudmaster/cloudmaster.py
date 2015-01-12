@@ -158,7 +158,7 @@ def launch_fp(email, serialno, refresh_token, msg, pillars):
 def apply_map():
     os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, MAP_FILE, REDIRECT))
 
-def actually_launch(id):
+def highstate(id):
     # The first highstate may mess with the salt-minion service, so we want to
     # run it out of the salt-minion itself.
     os.system("%s %s cmd.run 'nohup bash -c \"salt-call state.highstate && reboot \" &' %s"
