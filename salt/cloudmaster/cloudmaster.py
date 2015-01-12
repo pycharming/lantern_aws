@@ -158,8 +158,17 @@ def launch_fp(email, serialno, refresh_token, msg, pillars):
                             'proxy_port': proxy_port,
                             'shell': '/bin/bash'}}})
     set_fp_pillar(instance_name, email, refresh_token, msg, pillars)
+    apply_map()
+    highstate(id)
+
+def apply_map():
     os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, MAP_FILE, REDIRECT))
-    os.system("%s %s state.highstate %s" % (SALT_PATH, instance_name, REDIRECT))
+
+def actually_launch(id):
+    # The first highstate may mess with the salt-minion service, so we want to
+    # run it out of the salt-minion itself.
+    os.system("%s %s cmd.run 'nohup bash -c \"salt-call state.highstate && reboot \" &' %s"
+              % (SALT_PATH, id, REDIRECT))
 
 def launch(instance_type, msg):
     it = instance_type
@@ -186,11 +195,8 @@ def launch(instance_type, msg):
                             'production_controller': PRODUCTION_CONTROLLER,
                             'shell': '/bin/bash'}}})
     set_pillar(id, {})
-    os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, MAP_FILE, REDIRECT))
-    # The first highstate may mess with the salt-minion service, so we want to
-    # run it out of the salt-minion itself.
-    os.system("%s %s cmd.run 'nohup bash -c \"salt-call state.highstate && reboot \" &' %s"
-              % (SALT_PATH, id, REDIRECT))
+    apply_map()
+    highstate(id)
 
 def shutdown_one(instance_id):
     log.info("Got shutdown request for %s" % instance_id)
