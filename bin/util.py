@@ -69,6 +69,10 @@ def read_cf_credential():
     return secrets_from_yaml(['cloudflare.txt'],
                              ['user', 'api_key'])
 
+def read_azure_ssh_pass():
+    return secrets_from_yaml(['lantern_aws', 'azure.yaml'],
+                             ['ssh_pass'])[0]
+
 def secrets_from_yaml(path, keys):
     d = yaml.load(file(os.path.join(here.secrets_path, *path)))
     return map(d.get, keys)

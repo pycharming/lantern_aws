@@ -146,10 +146,12 @@ def move_root_file(src, dst):
 def upload_pillars():
     aws_id, aws_key = util.read_aws_credential()
     cf_id, cf_key = util.read_cf_credential()
+    azure_ssh_pass = util.read_azure_ssh_pass()
     util.ssh_cloudmaster((
             'echo "branch: check-all-fallbacks" > cloudmaster.sls '
             ' && echo "private_networking: %s" >> cloudmaster.sls '
             ' && echo "default_profile: %s" >> cloudmaster.sls '
+            ' && echo "azure_ssh_pass: %s" >> cloudmaster.sls '
             ' && echo "salt_version: %s" > salt.sls '
             # Hack so every instance will read specific pillars from a file
             # named with the <instance_name>.sls scheme.
@@ -164,6 +166,7 @@ def upload_pillars():
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.private_networking,
                  config.default_profile,
+                 azure_ssh_pass,
                  config.salt_version,
                  aws_id,
                  aws_key,

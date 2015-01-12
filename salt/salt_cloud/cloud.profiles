@@ -19,8 +19,7 @@ azure:
     size: ExtraSmall
     location: 'Southeast Asia'
     ssh_username: lantern
-    #XXX: Move to too-many-secrets.
     #XXX: disable SSH passwords in the bash login.
-    ssh_password: 'r34LLyt.$,ib0L'
+    ssh_password: {{ pillar['azure_ssh_pass'] }}
     slot: production
     media_link: 'https://portalvhds13fhcsy3rnthb.blob.core.windows.net/vhds'
