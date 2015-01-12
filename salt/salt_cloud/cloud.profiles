@@ -15,11 +15,11 @@ do_sg_2GB:
 
 azure_sea_xs:
     provider: azure
-    image: '0b11de9248dd4d87b18621318e037d37__RightImage-Ubuntu-14.04-x64-v14.1.3'
+    image: '0b11de9248dd4d87b18621318e037d37__RightImage-Ubuntu-14.04-x64-v14.1.5.1'
     size: ExtraSmall
     location: 'Southeast Asia'
     ssh_username: lantern
     #XXX: disable SSH passwords in the bash login.
     ssh_password: {{ pillar['azure_ssh_pass'] }}
     slot: production
-    media_link: 'https://portalvhds13fhcsy3rnthb.blob.core.windows.net/vhds'
+    media_link: 'https://portalvhdsmn3x1p28ykpj.blob.core.windows.net/vhds'

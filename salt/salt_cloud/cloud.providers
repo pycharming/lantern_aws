@@ -73,7 +73,7 @@ do_sg:
 
 azure:
   provider: azure
-  subscription_id: f1eff57c-3a30-4811-a631-1eb26611ee8d
+  subscription_id: ab509936-7013-47e1-9a35-6e634fbaee9f
   certificate_path: /etc/salt/azure.pem
   minion:
     master: {{ external_ip(grains) }}
