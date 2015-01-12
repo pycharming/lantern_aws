@@ -1,6 +1,5 @@
 base:
     '*':
-        - salt_minion
         - base_prereqs
         - ulimits
         - pip
