@@ -9,15 +9,17 @@ function fatal() {
 # sure.
 [ $(swapon -s | wc -l) -eq 1 ] || fatal "Swap already set up?"
 
+SFPATH=/mnt/swapfile
+
 set -e
 
-fallocate -l 4096M /swapfile
-chown root:root /swapfile
-chmod 0600 /swapfile
+fallocate -l 4096M $SFPATH
+chown root:root $SFPATH
+chmod 0600 $SFPATH
 
-mkswap /swapfile
-swapon /swapfile
+mkswap $SFPATH
+swapon $SFPATH
 
-echo "/swapfile       none    swap    sw      0       0" >> /etc/fstab
+echo "$SFPATH       none    swap    sw      0       0" >> /etc/fstab
 
 echo "Swap file initialized."
