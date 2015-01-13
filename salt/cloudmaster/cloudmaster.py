@@ -128,6 +128,7 @@ def actually_check_q():
     else:
         log.error("I don't understand this message: %s" % d)
 
+# XXX DRY: remove duplication with launch()
 def launch_fp(email, serialno, refresh_token, msg, pillars):
     log.info("Got spawn request for '%s'" % clip_email(email))
     instance_name = create_instance_name(email, serialno)
@@ -143,7 +144,8 @@ def launch_fp(email, serialno, refresh_token, msg, pillars):
                       else random.randint(1024, 61024))
         d.setdefault(profile, []).append(
             {instance_name:
-                {'minion': {'master': PUBLIC_IP},
+                {'minion': {'master': PUBLIC_IP,
+                            'startup_states': 'highstate'},
                  'grains': {'saltversion': SALT_VERSION,
                             'aws_region': AWS_REGION,
                             'controller': CONTROLLER,
@@ -152,17 +154,11 @@ def launch_fp(email, serialno, refresh_token, msg, pillars):
                             'shell': '/bin/bash'}}})
     set_fp_pillar(instance_name, email, refresh_token, msg, pillars)
     apply_map()
-    highstate(id)
 
 def apply_map():
     os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, MAP_FILE, REDIRECT))
 
-def highstate(id):
-    # The first highstate may mess with the salt-minion service, so we want to
-    # run it out of the salt-minion itself.
-    os.system("%s %s cmd.run 'nohup bash -c \"salt-call state.highstate > /root/hslog 2>&1 && reboot \" &' %s"
-              % (SALT_PATH, id, REDIRECT))
-
+# XXX DRY: remove duplication with launch_fp()
 def launch(instance_type, msg):
     it = instance_type
     log.info("Got launch request for '%s' instance" % it)
@@ -181,7 +177,8 @@ def launch(instance_type, msg):
     with instance_map() as d:
         d.setdefault(profile, []).append(
             {id:
-                {'minion': {'master': PUBLIC_IP},
+                {'minion': {'master': PUBLIC_IP,
+                            'startup_states': 'highstate'},
                  'grains': {'saltversion': SALT_VERSION,
                             'aws_region': AWS_REGION,
                             'controller': CONTROLLER,
@@ -189,7 +186,6 @@ def launch(instance_type, msg):
                             'shell': '/bin/bash'}}})
     set_pillar(id, {})
     apply_map()
-    highstate(id)
 
 def shutdown_one(instance_id):
     log.info("Got shutdown request for %s" % instance_id)
