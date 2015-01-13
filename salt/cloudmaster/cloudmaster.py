@@ -114,17 +114,17 @@ def actually_check_q():
                   msg,
                   pillars)
     elif 'shutdown-fp' in d:
+        ctrl_req_q.delete_message(msg)
         shutdown_one(d['shutdown-fp'])
-        ctrl_req_q.delete_message(msg)
     elif 'shutdown-fl' in d:
+        ctrl_req_q.delete_message(msg)
         shutdown_one(d['shutdown-fl'])
-        ctrl_req_q.delete_message(msg)
     elif 'launch-fl' in d:
+        ctrl_req_q.delete_message(msg)
         launch('fl', msg)
-        ctrl_req_q.delete_message(msg)
     elif 'launch-wd' in d:
-        launch('wd', msg)
         ctrl_req_q.delete_message(msg)
+        launch('wd', msg)
     else:
         log.error("I don't understand this message: %s" % d)
 
