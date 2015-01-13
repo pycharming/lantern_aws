@@ -35,7 +35,6 @@ PRODUCTION_CONTROLLER = "{{ grains['production_controller'] }}"
 SALT_VERSION = "{{ pillar['salt_version'] }}"
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
-PROFILES = ['aws', 'do', 'do_sg_2GB', 'azure_sea_xs']
 REDIRECT = " >> /home/lantern/cloudmaster.log 2>&1 "
 SALT_PATH = '/usr/local/bin/salt'
 SALT_CLOUD_PATH = '/usr/local/bin/salt-cloud'
@@ -142,7 +141,7 @@ def launch_fp(email, serialno, refresh_token, msg, pillars):
     with instance_map() as d:
         proxy_port = (62443 if pillars['proxy_protocol'] == 'tcp'
                       else random.randint(1024, 61024))
-        d[profile].append(
+        d.setdefault(profile, []).append(
             {instance_name:
                 {'minion': {'master': PUBLIC_IP},
                  'grains': {'saltversion': SALT_VERSION,
@@ -180,7 +179,7 @@ def launch(instance_type, msg):
         log.info("Waiting for the instance loss to sink in...")
         time.sleep(20)
     with instance_map() as d:
-        d[profile].append(
+        d.setdefault(profile, []).append(
             {id:
                 {'minion': {'master': PUBLIC_IP},
                  'grains': {'saltversion': SALT_VERSION,
@@ -247,9 +246,6 @@ def load_map(filename):
         ret = yaml.load(file(filename))
     else:
         ret = {}
-    for p in PROFILES:
-        if p not in ret:
-            ret[p] = []
     return ret
 
 def save_map(filename, d):
