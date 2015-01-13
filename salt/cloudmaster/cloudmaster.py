@@ -160,7 +160,7 @@ def apply_map():
 def highstate(id):
     # The first highstate may mess with the salt-minion service, so we want to
     # run it out of the salt-minion itself.
-    os.system("%s %s cmd.run 'nohup bash -c \"salt-call state.highstate && reboot \" &' %s"
+    os.system("%s %s cmd.run 'nohup bash -c \"salt-call state.highstate > /root/hslog 2>&1 && reboot \" &' %s"
               % (SALT_PATH, id, REDIRECT))
 
 def launch(instance_type, msg):
