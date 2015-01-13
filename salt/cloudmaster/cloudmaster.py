@@ -36,9 +36,9 @@ SALT_VERSION = "{{ pillar['salt_version'] }}"
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
 REDIRECT = " >> /home/lantern/cloudmaster.log 2>&1 "
-SALT_PATH = '/usr/local/bin/salt'
-SALT_CLOUD_PATH = '/usr/local/bin/salt-cloud'
-SALT_KEY_PATH = '/usr/local/bin/salt-key'
+SALT_PATH = '/usr/bin/salt'
+SALT_CLOUD_PATH = '/usr/bin/salt-cloud'
+SALT_KEY_PATH = '/usr/bin/salt-key'
 DEFAULT_PROFILE = "{{ pillar['default_profile'] }}"
 
 # Most cloud providers will allow longer instance names, but we are using
