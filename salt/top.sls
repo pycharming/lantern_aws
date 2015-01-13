@@ -10,9 +10,8 @@ base:
         - locales
         - enable_swap
         - timezone
-    'cloudmaster':
+    '*cloudmaster*':
         - lantern_build_prereqs
-        - salt_master
         - salt_cloud
         - cloudmaster
     'fp-*':

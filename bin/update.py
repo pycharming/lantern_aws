@@ -49,6 +49,8 @@ def update():
     upload_secrets()
     print "Uploading minion config..."
     upload_cloudmaster_minion_config()
+    print "Uploading master config..."
+    upload_master_config()
     print "Uploading pillars..."
     upload_pillars()
     print "Uploading states..."
@@ -119,7 +121,7 @@ def rsync(src, dst):
 def upload_cloudmaster_minion_config():
     address = util.get_cloudmaster_address()
     do_id, do_key, _ = util.read_do_credential()
-    util.ssh_cloudmaster((r"""(echo "master: salt" """
+    util.ssh_cloudmaster((r"""(echo "master: 127.0.0.1" """
                           + r""" && echo "grains:" """
                           + r""" && echo "    aws_region: %s " """
                           + r""" && echo "    aws_ami: %s " """
@@ -138,6 +140,13 @@ def upload_cloudmaster_minion_config():
                             config.production_controller))
     move_root_file('/root/minion', '/etc/salt/minion')
 
+def upload_master_config():
+    address = util.get_cloudmaster_address()
+    util.ssh_cloudmaster(r"""(echo "timeout: 60" """
+                         + r""" && echo "keep_jobs: 2" """
+                         + r""" ) > /root/master""")
+    move_root_file('/root/master', '/etc/salt/master')
+
 def move_root_file(src, dst):
     return util.ssh_cloudmaster(('sudo mv %s %s'
                                  ' && sudo chown root:root %s'
@@ -148,10 +157,10 @@ def upload_pillars():
     cf_id, cf_key = util.read_cf_credential()
     azure_ssh_pass = util.read_azure_ssh_pass()
     util.ssh_cloudmaster((
-            'echo "branch: check-all-fallbacks" > cloudmaster.sls '
-            ' && echo "private_networking: %s" >> cloudmaster.sls '
-            ' && echo "default_profile: %s" >> cloudmaster.sls '
-            ' && echo "azure_ssh_pass: %s" >> cloudmaster.sls '
+            'echo "branch: check-all-fallbacks" > $(hostname).sls '
+            ' && echo "private_networking: %s" >> $(hostname).sls '
+            ' && echo "default_profile: %s" >> $(hostname).sls '
+            ' && echo "azure_ssh_pass: %s" >> $(hostname).sls '
             ' && echo "salt_version: %s" > salt.sls '
             # Hack so every instance will read specific pillars from a file
             # named with the <instance_name>.sls scheme.
@@ -161,7 +170,7 @@ def upload_pillars():
             ' && echo "cf_id: %s"  > cf_credential.sls'
             ' && echo "cf_key: %s" >> cf_credential.sls'
             r' && echo "base: {\"*\": [salt, aws_credential], \"fl-*\": [cf_credential]}" > top.sls '
-            ' && sudo mv salt.sls top.sls cloudmaster.sls aws_credential.sls cf_credential.sls /srv/pillar/ '
+            ' && sudo mv salt.sls top.sls $(hostname).sls aws_credential.sls cf_credential.sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.private_networking,
