@@ -3,8 +3,10 @@ include:
 
 {% set zone='getiantem.org' %}
 {% if grains.get('provider', 'unknown') == 'azure' %}
+{% set listen_with_openssl="-listen/openssl" %}
 {% set server=pillar.get('cdn', 'UNKNOWN_CDN') %}
 {% else %}
+{% set listen_with_openssl="" %}
 {% set server = grains['id'] + "." + zone %}
 {% endif %}
 {% set domain_records_file='/home/lantern/cloudflare_records.yaml' %}
@@ -40,6 +42,7 @@ fl-upstart-script:
         - source: salt://flashlight/flashlight.conf
         - template: jinja
         - context:
+            listen_with_openssl: {{ listen_with_openssl }}
             server: {{ server }}
         - user: root
         - group: root
