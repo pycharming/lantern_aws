@@ -229,7 +229,8 @@ def set_pillar(instance_id, extra_pillars):
     filename = '/srv/pillar/%s.sls' % instance_id
     yaml.dump(dict(instance_id=instance_id,  # XXX: redundant; see grain 'id'
                    **extra_pillars),
-              file(filename, 'w'))
+              file(filename, 'w'),
+              default_flow_style=False)
 
 @contextmanager
 def instance_map():
