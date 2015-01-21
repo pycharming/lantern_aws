@@ -18,7 +18,7 @@ mailutils:
     
 fl-installed:
     cmd.run:
-        - name: 'curl -L https://github.com/getlantern/flashlight-build/releases/download/0.0.7/flashlight_linux_amd64 -o flashlight && chmod a+x flashlight'
+        - name: 'curl -L https://github.com/getlantern/flashlight-build/releases/download/0.0.9/flashlight_linux_amd64 -o flashlight && chmod a+x flashlight'
         - cwd: '/usr/bin'
         - user: root
         - require:
@@ -59,34 +59,6 @@ flashlight:
         - watch:
             - file: /usr/bin/flashlight
 
-pyflare:
-    pip.installed:
-        - name: pyflare==1.0.2
-        - upgrade: yes
-
-/home/lantern/register_domains.py:
-    file.managed:
-        - source: salt://flashlight/register_domains.py
-        - template: jinja
-        - context:
-            zone: {{ zone }}
-            domain_records_file: {{ domain_records_file }}
-        - user: lantern
-        - group: lantern
-        - mode: 700
-
-register-domains:
-    cmd.run:
-        - name: "/home/lantern/register_domains.py"
-        - unless: "[ -e {{ domain_records_file }} ]"
-        - user: lantern
-        - group: lantern
-        - cwd: /home/lantern
-        - require:
-            - pip: pyflare
-            - service: flashlight
-            - file: /home/lantern/register_domains.py
-
 monitor-script:
     file.managed:
         - name: /home/lantern/monitor.bash
@@ -101,7 +73,7 @@ monitor-script:
 
 monitor:
     cron.present:
-        - name: /home/lantern/monitor.bash
+        - name: /home/lantern/monitor.bash flashlight
         - minute: '*/15'
         - user: lantern
         - require:
