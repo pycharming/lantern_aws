@@ -1,8 +1,3 @@
-include:
-    - proxy_ufw_rules
-
-{% set zone='getiantem.org' %}
-
 curl:
   pkg:
     - installed
@@ -10,6 +5,8 @@ curl:
 mailutils:
   pkg:
     - installed
+
+    - file: /usr/bin/peerscanner
 
 /usr/bin/peerscanner:
     file.absent
@@ -21,14 +18,12 @@ ps-installed:
         - user: root
         - require:
           - pkg: curl
+          - file: /usr/bin/peerscanner
 
 ps-upstart-script:
     file.managed:
         - name: /etc/init/peerscanner.conf
         - source: salt://peerscanner/peerscanner.conf
-        - template: jinja
-        - context:
-            zone: {{ zone }}
         - user: root
         - group: root
         - mode: 644
@@ -46,7 +41,6 @@ peerscanner:
         - enable: yes
         - require:
             # All but the last requirement are redundant, only for robustness.
-            - cmd: ufw-rules-ready
             - cmd: ps-installed
             - cmd: ps-service-registered
         - watch:
@@ -56,7 +50,6 @@ monitor-script:
     file.managed:
         - name: /home/lantern/monitor.bash
         - source: salt://flashlight/monitor.bash
-        - template: jinja
         - user: lantern
         - group: lantern
         - mode: 744
