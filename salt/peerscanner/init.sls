@@ -2,7 +2,6 @@ include:
     - proxy_ufw_rules
 
 {% set zone='getiantem.org' %}
-{% set domain_records_file='/home/lantern/cloudflare_records.yaml' %}
 
 curl:
   pkg:
