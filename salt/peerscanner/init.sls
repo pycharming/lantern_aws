@@ -6,8 +6,6 @@ mailutils:
   pkg:
     - installed
 
-    - file: /usr/bin/peerscanner
-
 /usr/bin/peerscanner:
     file.absent
     
