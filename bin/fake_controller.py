@@ -61,7 +61,7 @@ def name_prefix(email, serialno):
     return "fp-%s-%s-" % (sanitized_email, serialno)
 
 def print_usage():
-    print "Usage: %s (launch-fl|kill-fl|launch-wd) <id> [<profile>='%s'] | (launch-fp|kill-fp) <email> <serial> [{pillar_key: pillar_value[, pillar_key: pillar_value]...} [<profile>='%s']]" % (sys.argv[0], config.default_profile, config.default_profile)
+    print "Usage: %s (launch-fl|kill-fl|launch-wd|launch-ps) <id> [<profile>='%s'] | (launch-fp|kill-fp) <email> <serial> [{pillar_key: pillar_value[, pillar_key: pillar_value]...} [<profile>='%s']]" % (sys.argv[0], config.default_profile, config.default_profile)
 
 if __name__ == '__main__':
     try:
