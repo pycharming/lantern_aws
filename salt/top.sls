@@ -24,3 +24,6 @@ base:
     'wd-*':
         - apt_upgrade
         - waddell
+    'ps-*':
+        - apt_upgrade
+        - peerscanner
