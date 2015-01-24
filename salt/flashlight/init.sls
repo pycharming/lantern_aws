@@ -9,8 +9,11 @@ include:
 {% set listen_with_openssl="" %}
 {% set server = grains['id'] + "." + zone %}
 {% endif %}
-{% set domain_records_file='/home/lantern/cloudflare_records.yaml' %}
-
+{% if grains['controller'] == grains['production_controller'] %}
+{% set registerat="-registerat https://peerscanner." + zone %}
+{% else %}
+{% set registerat="" %}
+{% endif %}
 
 curl:
   pkg:
@@ -42,8 +45,9 @@ fl-upstart-script:
         - source: salt://flashlight/flashlight.conf
         - template: jinja
         - context:
-            listen_with_openssl: {{ listen_with_openssl }}
+            listen_with_openssl: {{ listen_with_openssl | yaml }}
             server: {{ server }}
+            registerat: {{ registerat | yaml }}
         - user: root
         - group: root
         - mode: 644
