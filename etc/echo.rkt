@@ -1,3 +1,25 @@
+;;; Quick & dirty tool to check whether a HTTP(S) server is reachable in
+;;; a flashlight server or old-style lantern fallback.
+;;;
+;;; To use, download and install racket from racket-lang.org and run
+;;;
+;;;     racket echo.rkt
+;;;
+;;; This will listen for plain HTTP connections in port 62000 (so it will be
+;;; hit on port 80 in a standard flashlight/fallback setup).  It will log
+;;; the full text of the incoming request to a `./plain.log` file and it will
+;;; respond to the requester with a 200 OK with the same text as the body.
+;;;
+;;; If you run
+;;;
+;;;    racket echo.rkt ssl
+;;;
+;;; This will listen for HTTPS connections in port 62443 (mapped to 443 in
+;;; a flashlight/fallback server), log the requests to `./ssl.log`, and
+;;; otherwise work the same as above.
+;;;
+;;; A TLS public key / cert pair in PEM format is expected to be in the
+;;; current directory with the names 'pk.pem' and 'cert.pem', respectively.
 #lang racket
 
 (require openssl)
