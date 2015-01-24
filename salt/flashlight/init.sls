@@ -33,6 +33,7 @@ fl-installed:
         - user: root
         - require:
           - pkg: curl
+          - file: /usr/bin/flashlight
 
 sudo /sbin/restart flashlight 2>&1 | logger -t flashlight_restarter:
     cron.absent:
