@@ -51,8 +51,8 @@ aws:
 do:
     provider: digital_ocean
     # XXX use token when changing to DO API v2.0.
-    client_key: {{ grains['do_id'] }}
-    api_key: {{ grains['do_key'] }}
+    client_key: {{ pillar['do_id'] }}
+    api_key: {{ pillar['do_key'] }}
     location: {{ grains['do_region'] }}
     # Play it safe; not all regions support this.
     private_networking: {{ pillar.get('private_networking', 'no') }}
@@ -63,8 +63,8 @@ do:
 do_sg:
     provider: digital_ocean
     # XXX use token when changing to DO API v2.0.
-    client_key: {{ grains['do_id'] }}
-    api_key: {{ grains['do_key'] }}
+    client_key: {{ pillar['do_id'] }}
+    api_key: {{ pillar['do_key'] }}
     location: 'Singapore 1'
     private_networking: yes
     ssh_key_file: /etc/salt/cloudmaster.id_rsa

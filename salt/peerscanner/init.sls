@@ -22,6 +22,7 @@ ps-upstart-script:
     file.managed:
         - name: /etc/init/peerscanner.conf
         - source: salt://peerscanner/peerscanner.conf
+        - template: jinja
         - user: root
         - group: root
         - mode: 644
