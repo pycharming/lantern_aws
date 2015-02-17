@@ -130,8 +130,6 @@ def upload_cloudmaster_minion_config():
                           + r""" ) > /root/minion""")
                          % (config.aws_region,
                             region.get_ami(),
-                            do_id,
-                            do_key,
                             config.do_region,
                             config.controller,
                             config.production_controller))
@@ -182,6 +180,8 @@ def upload_pillars():
                  config.default_profile,
                  azure_ssh_pass,
                  config.salt_version,
+                 do_id,
+                 do_key,
                  aws_id,
                  aws_key,
                  cfl_id,
