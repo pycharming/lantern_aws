@@ -46,7 +46,9 @@ def get_cloudmaster_address():
             return ret
 
 @memoized
-def read_aws_credential(path):
+def read_aws_credential(path=os.path.join(here.secrets_path,
+                                          'lantern_aws',
+                                          'aws_credential')):
     id_, key = None, None
     for line in file(path):
         line = line.strip()

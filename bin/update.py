@@ -151,10 +151,7 @@ def move_root_file(src, dst):
 
 def upload_pillars():
     do_id, do_key, _ = util.read_do_credential()
-    aws_id, aws_key = util.read_aws_credential(
-            os.path.join(here.secrets_path,
-                         'lantern_aws',
-                         'aws_credential'))
+    aws_id, aws_key = util.read_aws_credential()
     cfr_id, cfr_key = util.read_aws_credential(
             os.path.join(here.secrets_path,
                          'cloudfront.aws_credential'))
