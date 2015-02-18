@@ -12,10 +12,8 @@ do_region = 'Singapore 1'
 # Set this to False unless you know that the datacenter supports it.
 private_networking = True
 controller = production_controller = 'lanternctrl1-2'
-cloudmaster_name = 'cloudmaster1-2'
+cloudmaster_name = 'production-cloudmaster'
 free_for_all_sg_name = 'free-for-all'
-installer_bucket = 'lantern'
-installer_filename = 'newest-64.deb'
 
 # To override values locally, put them in config_overrides.py (not version controlled)
 #controller = 'fakectrl'
