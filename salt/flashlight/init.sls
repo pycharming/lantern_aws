@@ -44,7 +44,7 @@ fl-upstart-script:
         - context:
             listen_with_openssl: {{ listen_with_openssl | yaml }}
             server: {{ server }}
-            registerat: {{ registerat | yaml }}
+            registerat: {{ registerat | python }}
         - user: root
         - group: root
         - mode: 644
