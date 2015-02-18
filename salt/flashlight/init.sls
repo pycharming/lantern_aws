@@ -9,11 +9,7 @@ include:
 {% set listen_with_openssl="" %}
 {% set server = grains['id'] + "." + zone %}
 {% endif %}
-{% if grains['controller'] == grains['production_controller'] %}
 {% set registerat="-registerat https://peerscanner." + zone %}
-{% else %}
-{% set registerat="" %}
-{% endif %}
 
 curl:
   pkg:
