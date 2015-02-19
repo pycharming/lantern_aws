@@ -16,6 +16,7 @@
 import os
 import sys
 import time
+import traceback
 
 # sudo pip install -U python-digitalocean
 import digitalocean
@@ -137,6 +138,15 @@ mgr = digitalocean.Manager(token=do_token)
 
 droplets_by_name = {d.name: d
                     for d in mgr.get_all_droplets()}
+
+def destroy():
+    for i, name in enumerate(all_fallbacks):
+        print "killing %s of %s..." % (i+1, len(all_fallbacks))
+        try:
+            droplets_by_name[name].destroy()
+            time.sleep(30)
+        except:
+            traceback.print_exc()
 
 def run_command(ip, cmd):
     os.system("ssh -o StrictHostKeyChecking=no lantern@%s '%s'" % (ip, cmd))
