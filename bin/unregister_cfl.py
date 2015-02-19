@@ -3,12 +3,6 @@
 """Little utility to remove obsolete cloudflare records (e.g. from old
 flashlight instances."""
 
-# Note: as of this writing, this requires our own fork of pyflare:
-#
-# git clone git://github.com/getlantern/pyflare
-# cd pyflare
-# sudo python setup.py install
-
 import sys
 
 import pyflare
