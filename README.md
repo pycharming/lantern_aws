@@ -10,13 +10,19 @@ At this moment, three types of machines are launched and managed by this project
 - **Flashlight Servers**: These serve a similar role as fallback proxies, but
   they use [domain fronting](https://trac.torproject.org/projects/tor/wiki/doc/meek) for extra blocking resistance.
 
-- A single **Cloud Master**, which launches fallback proxies on request from the [Lantern Controller](https://github.com/getlantern/lantern-controller).  Further operations on fallback proxies (especially 'batch' operations involving many such machines) are typically done through this cloud master.
+- A single **peerscanner**, which checks that flashlight servers are up and
+  maintains their DNS entries.
 
-As of this writing, only EC2 and Digital Ocean machines are supported, but it should be easy to add support for any cloud provider that offers Ubuntu 12.04+ and is supported by [Salt Cloud](https://docs.saltstack.com/en/latest/topics/cloud/).
+- [soon] **waddell servers**: which offer lightweight messaging between
+  lantern-related clients and services.
+
+- A single **Cloud Master**, which launches fallback proxies on request from the [Lantern Controller](https://github.com/getlantern/lantern-controller), or any of the other previously mentioned server types, on request from administrators (see `bin/fake_controller.py`).  Further operations on fallback proxies (especially 'batch' operations involving many such machines) are typically done through this cloud master.
+
+As of this writing, only Digital Ocean machines are supported, but it should be easy to add support for any cloud provider that offers Ubuntu 12.04+ (although 14.04 is preferred) and is supported by [Salt Cloud](https://docs.saltstack.com/en/latest/topics/cloud/).
 
 ## How does it work
 
-Whenever we determine a new server needs to be launched or destroyed, a new message is sent to an SQS queue encoding a request.  We can do this manually (see `bin/fake_controller.py` or, in the case of fallbacks, the controller may do it on its own.  Cloud masters listen for such messages and perform the requested operations.
+Whenever we determine a new server needs to be launched or destroyed, a new message is sent to an SQS queue encoding a request.  We can do this manually (see `bin/fake_controller.py`) or, in the case of fallbacks, the controller may do it on its own.  Cloud masters listen for such messages and perform the requested operations.
 
 Fallback proxies download, build and run a Lantern client, with some command line arguments instructing it to proxy traffic to the uncensored internet.  When done with setup, they notify the Lantern Controller by sending a message to another SQS queue, and then they delete the original SQS message that triggered the whole operation.
 
@@ -46,9 +52,9 @@ You launch a cloud master using the following command:
 
     bin/launch_cloudmaster.py
 
-By default, this will launch an instance with name 'cloudmaster1-2' (historical reasons) in the `sgp1` (Singapore 1) Digital Ocean datacenter.  This instance will communicate with the production Lantern Controller (app engine ID `lanternctrl1-2`).  You can modify all the values described in this paragraph by editing `bin/launch_cloudmaster.py` itself and/or creating `bin/config_overrides.py` to override values in `bin/config.py`.  Note that this file is not managed by git.
+By default, this will launch an instance with name 'production-cloudmaster' in the `sgp1` (Singapore 1) Digital Ocean datacenter.  This instance will communicate with the production Lantern Controller (app engine ID `lanternctrl1-2`).  You can modify all the values described in this paragraph by creating `bin/config_overrides.py` to override values in `bin/config.py`.  Note that this file is not managed by git.
 
-The cloud master will use the Salt configuration in your local `salt/` directory (i.e., not a git commit of any sort).
+The cloud master will use the Salt configuration in your local `salt/` directory (i.e., not a git commit of any sort).  But you can only deploy to the production cloudmaster from a clean master checkout.
 
 #### Example `config_overrides.py`
 
@@ -79,6 +85,9 @@ or, as a shortcut,
 
     bin/hscloudmaster.bash
 
+If you are not sure whether a configuration change requires applying the
+changes in the cloudmaster itself, it can't hurt to just do it to be in the safe side.
+
 To sync all machines (including the cloud master itself):
 
     bin/ssh_cloudmaster.py 'salt -b 5 "*" state.highstate'
@@ -101,7 +110,7 @@ To run an arbitrary command (as root) in all fallback proxies:
 
 Tasks will be added here in a per need basis.  You may want to check out the `bin` folder for example scripts.
 
-###### Listing nonresponding fallbacks
+###### Listing nonresponding minions
 
 These may need further looking into.  It might be a good idea to run this before important updates.  That said, the cloudmaster checks these regularly and sends alarm emails to the Lantern team when they fail to respond.
 
@@ -122,8 +131,38 @@ bin/fake_controller.py launch "ox@getlantern.org" 102 '{"pt_type": "FTE", "pt_pr
 
 ###### Launch a flashlight server
 ```
-bin/fake_controller.py launch-fl fl-singapore-001-15
+bin/fake_controller.py launch-fl fl-sg-20150226-001
 ```
+
+The naming convention is `fl-<datacenter>-<date of launch>-<serial number>`,
+where
+
+- datacenter is some string uniquely identifying the datacenter where the server is launched (see below for instructions on how to launch minions to different data centers);
+- date of launch is in YYYYMMDD format; and
+- serial numbers are zero-filled to three positions (that is, `-001` rather than just `-1`), and reset to start at 001 for each launch day.
+
+####### Launching to a particular datacenter
+
+The list of currently available datacenter and size combinations is in `salt/salt_cloud/cloud.profiles`.  If the datacenter+size combination you want is already there, you can launch one minion there by adding the profile name as a third argument to `bin/fake_controller.py`, e.g.:
+
+    bin/fake_controller.py launch-fl fl-nl-20150226-001 do_nl
+
+If the location you want is not there, it shouldn't be hard to add a different
+one to `salt/salt_cloud/cloud.profiles`.  To get a list of available Digital
+Ocean datacenters, try `bin/do_fps.py print_regions`.  If several datacenters
+are available in one location, the one with the highest number (e.g.
+"Amsterdam 3" as opposed to "Amsterdam 1") will be more likely to have private
+network capabilities and perhaps more modern hardware (but it can't hurt to
+try and compare).
+
+Once the location you want is in `cloud.providers`, if the size you want is
+not in `cloud.profiles` you can add it; see the entries already there for
+reference.  If there is no entry with the size you want, try `bin/do_fps.py
+print_sizes` (or just take a guess if you feel lucky; they're named rather consistently).
+
+If you have changed either configuration file, you will need to push and apply
+your new configuration to the cloudmaster.  If you're deploying to the
+production cloudmaster, you will need to first commit, pull, and push your changes to the master branch.  This will make sure nobody will accidentally roll back someone else's changes.  Once you are done, do `bin/update.py && bin/hscloudmaster.bash`.  If no errors are reported, you're ready to deploy your new servers as explained above.
 
 ###### Launch a waddell server
 ```
