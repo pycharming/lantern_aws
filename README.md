@@ -141,7 +141,7 @@ where
 - date of launch is in YYYYMMDD format; and
 - serial numbers are zero-filled to three positions (that is, `-001` rather than just `-1`), and reset to start at 001 for each launch day.
 
-####### Launching to a particular datacenter
+**Launching to a particular datacenter**
 
 The list of currently available datacenter and size combinations is in `salt/salt_cloud/cloud.profiles`.  If the datacenter+size combination you want is already there, you can launch one minion there by adding the profile name as a third argument to `bin/fake_controller.py`, e.g.:
 
