@@ -173,3 +173,31 @@ bin/fake_controller.py launch-wd wd-001-1
 ###### Reinstalling lantern
 
 To reinstall lantern in the proxies after a new client version has been released, just uninstall the old package through `apt-get` and then run `state.highstate` to re-apply the configuration scripts.  This takes care of restarting the lantern service too.  `bin/reinstall_lantern.bash` (which see) does this.
+
+## Troubleshooting
+
+These pain points can and will be removed soon (TM).
+
+### The cloudmaster doesn't seem to be picking up my launch requests
+
+If this is a test cloudmaster and the associated controller doesn't exist,
+it's possible that the SQS queue doesn't exist.  Try creating one in the AWS
+console with the name `<your-controller-name>_request`, with the same
+parameters as the ones already there.
+
+If the queue is there and there is a buildup of messages, a likely cause is
+that a cloudmaster process died while holding the `/home/lantern/map.lock`.
+This could happen if the cloudmaster shuts down as required by unattended
+security updates.  To work around this:
+
+- Warn bns-ops about what you're about to do, so nobody steps on each other's
+  toes.
+- Log into the cloudmaster (`bin/ssh_cloudmaster.py`).
+- `cd /home/lantern`
+- Temporarily disable the `cloudmaster.py` cron job.  A brutish but effective
+  way to do this is `mv cloudmaster.py cloudmaster.bak`.
+- Kill all running cloudmaster.py or salt_cloud processes (find them with e.g. `ps aux | grep cloud`).
+- `rm map.lock production-cloudmaster-*.*` (replacing
+  'production-cloudmaster' with your cloudmaster's host name if necessary).
+- Reenable the cloudmaster cron job: `mv cloudmaster.bak cloudmaster.py`
+- Let bns-ops know that you're done.
