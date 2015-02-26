@@ -148,7 +148,7 @@ The list of currently available datacenter and size combinations is in `salt/sal
     bin/fake_controller.py launch-fl fl-nl-20150226-001 do_nl
 
 If the location you want is not there, it shouldn't be hard to add a different
-one to `salt/salt_cloud/cloud.profiles`.  To get a list of available Digital
+one to `salt/salt_cloud/cloud.providers`.  To get a list of available Digital
 Ocean datacenters, try `bin/do_fps.py print_regions`.  If several datacenters
 are available in one location, the one with the highest number (e.g.
 "Amsterdam 3" as opposed to "Amsterdam 1") will be more likely to have private
@@ -156,9 +156,10 @@ network capabilities and perhaps more modern hardware (but it can't hurt to
 try and compare).
 
 Once the location you want is in `cloud.providers`, if the size you want is
-not in `cloud.profiles` you can add it; see the entries already there for
-reference.  If there is no entry with the size you want, try `bin/do_fps.py
-print_sizes` (or just take a guess if you feel lucky; they're named rather consistently).
+not in `salt/salt_cloud/cloud.profiles` you need to add it; see the entries
+already there for reference.  If there is no entry with the size you want, try
+`bin/do_fps.py print_sizes` (or just take a guess if you feel lucky; they're
+named rather consistently).
 
 If you have changed either configuration file, you will need to push and apply
 your new configuration to the cloudmaster.  If you're deploying to the
