@@ -163,7 +163,7 @@ named rather consistently).
 
 If you have changed either configuration file, you will need to push and apply
 your new configuration to the cloudmaster.  If you're deploying to the
-production cloudmaster, you will need to first commit, pull, and push your changes to the master branch.  This will make sure nobody will accidentally roll back someone else's changes.  Once you are done, do `bin/update.py && bin/hscloudmaster.bash`.  If no errors are reported, you're ready to deploy your new servers as explained above.
+production cloudmaster, you will need to first commit, pull, and push your changes to the master branch, lest you accidentally roll back someone else's changes or vice versa.  Once you are done, do `bin/update.py && bin/hscloudmaster.bash`.  If no errors are reported, you're ready to deploy your new servers as explained above.
 
 ###### Launch a waddell server
 ```
