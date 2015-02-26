@@ -10,6 +10,21 @@ do:
     size: 512MB
     script_args: '-- git {{ pillar['salt_version'] }}'
 
+
+do_nl:
+    provider: do_nl
+    image: "14.04 x64"
+    location: 'Amsterdam 3'
+    size: 512MB
+    script_args: '-- git {{ pillar['salt_version'] }}'
+
+do_nl_2GB:
+    provider: do_nl
+    image: "14.04 x64"
+    location: 'Amsterdam 3'
+    size: 2GB
+    script_args: '-- git {{ pillar['salt_version'] }}'
+
 do_sg_2GB:
     provider: do_sg
     image: "14.04 x64"
