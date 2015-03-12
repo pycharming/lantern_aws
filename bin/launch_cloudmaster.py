@@ -40,7 +40,7 @@ def launch_cloudmaster():
     droplet = do.Droplet(token=do_token,
                          name=config.cloudmaster_name,
                          region='sgp1',
-                         image='ubuntu-12-04-x64',
+                         image='ubuntu-14-04-x64',
                          size='1gb',
                          ssh_keys=[97623],  # cloudmaster key
                          backups=False)

@@ -71,6 +71,16 @@ do_sg:
     # XXX: in v2.0, the name will be ssh_key_names, in plural.
     ssh_key_name: cloudmaster
 
+do_nl:
+    provider: digital_ocean
+    client_key: {{ grains['do_id'] }}
+    api_key: {{ grains['do_key'] }}
+    location: 'Amsterdam 3'
+    private_networking: yes
+    ssh_key_file: /etc/salt/cloudmaster.id_rsa
+    # XXX: in v2.0, the name will be ssh_key_names, in plural.
+    ssh_key_name: cloudmaster
+  
 azure:
   provider: azure
   subscription_id: ab509936-7013-47e1-9a35-6e634fbaee9f

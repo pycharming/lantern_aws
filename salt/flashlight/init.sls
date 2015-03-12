@@ -41,7 +41,7 @@ fl-upstart-script:
         - template: jinja
         - context:
             frontfqdns: {{ frontfqdns }}
-            registerat: {{ registerat | yaml }}
+            registerat: {{ registerat | python }}
         - user: root
         - group: root
         - mode: 644

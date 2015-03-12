@@ -51,7 +51,10 @@ AUTH_TOKEN_LENGTH = 64
 
 
 def get_profile(sqs_msg):
-    return sqs_msg.get_body().get('profile', DEFAULT_PROFILE)
+    # For some reason, this came as a unicode string and that would
+    # render as (e.g.) "!!python/unicode 'do'" which, besides being
+    # ugly, would confuse the YAML reader.
+    return str(sqs_msg.get_body().get('profile', DEFAULT_PROFILE))
 
 def log_exceptions(f):
     @wraps(f)
@@ -166,7 +169,10 @@ def launch(instance_type, msg):
     it = instance_type
     log.info("Got launch request for '%s' instance" % it)
     profile = get_profile(msg)
-    id = msg.get_body()['launch-%s' % it]
+    # For some reason, this came as a unicode string and that would
+    # render as "!!python/unicode 'fl-...'" which, besides being
+    # ugly, would confuse the YAML reader.
+    id = str(msg.get_body()['launch-%s' % it])
     if not id.startswith("%s-" % it):
         log.error("Expected id starting with '%s-'" % it)
         return
