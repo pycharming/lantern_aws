@@ -148,7 +148,7 @@ def move_root_file(src, dst):
                                  ' && sudo chmod 600 %s') % (src, dst, dst, dst))
 
 def upload_pillars():
-    do_id, do_key, _ = util.read_do_credential()
+    do_id, do_key, do_token = util.read_do_credential()
     aws_id, aws_key = util.read_aws_credential()
     cfr_id, cfr_key = util.read_aws_credential(
             os.path.join(here.secrets_path,
@@ -166,6 +166,7 @@ def upload_pillars():
             r' && echo "include: [{{ grains[\"id\"] }}]" >> salt.sls '
             ' && echo "do_id: %s"  > do_credential.sls'
             ' && echo "do_key: %s" >> do_credential.sls'
+            ' && echo "do_token: %s" >> do_credential.sls'
             ' && echo "aws_id: %s"  > aws_credential.sls'
             ' && echo "aws_key: %s" >> aws_credential.sls'
             ' && echo "cfl_id: %s"  > cfl_credential.sls'
@@ -182,6 +183,7 @@ def upload_pillars():
                  config.salt_version,
                  do_id,
                  do_key,
+                 do_token,
                  aws_id,
                  aws_key,
                  cfl_id,
