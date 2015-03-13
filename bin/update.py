@@ -155,7 +155,7 @@ def upload_pillars():
                          'cloudfront.aws_credential'))
     cfl_id, cfl_key = util.read_cfl_credential()
     azure_ssh_pass = util.read_azure_ssh_pass()
-    dnsimple_email, dnsimple_key = util.read_dnsimple_credential()
+    dsp_id, dsp_key = util.read_dnsimple_credential()
     util.ssh_cloudmaster((
             'echo "branch: check-all-fallbacks" > $(hostname).sls '
             ' && echo "private_networking: %s" >> $(hostname).sls '
@@ -173,9 +173,9 @@ def upload_pillars():
             ' && echo "cfl_key: %s" >> cfl_credential.sls'
             ' && echo "cfr_id: %s"  > cfr_credential.sls'
             ' && echo "cfr_key: %s" >> cfr_credential.sls'
-            ' && echo "dnsimple_email: %s"  > dnsimple_credential.sls'
-            ' && echo "dnsimple_key: %s" >> dnsimple_credential.sls'
-            r' && echo "base: {\"*\": [salt], \"fp-*\": [aws_credential], \"*cloudmaster*\": [aws_credential, do_credential], \"ps-*\": [cfl_credential, cfr_credential, dnsimple_credential]}" > top.sls '
+            ' && echo "dsp_id: %s"  > dsp_credential.sls'
+            ' && echo "dsp_key: %s" >> dsp_credential.sls'
+            r' && echo "base: {\"*\": [salt], \"fp-*\": [aws_credential], \"*cloudmaster*\": [aws_credential, do_credential], \"ps-*\": [cfl_credential, cfr_credential, dsp_credential]}" > top.sls '
             ' && sudo mv salt.sls top.sls $(hostname).sls aws_credential.sls cfl_credential.sls cfr_credential.sls do_credential.sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
@@ -191,8 +191,8 @@ def upload_pillars():
                  cfl_key,
                  cfr_id,
                  cfr_key,
-                 dnsimple_email,
-                 dnsimple_key))
+                 dsp_id,
+                 dsp_key))
 
 if __name__ == '__main__':
     check_master_if_in_production()
