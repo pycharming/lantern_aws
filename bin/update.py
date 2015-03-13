@@ -148,13 +148,14 @@ def move_root_file(src, dst):
                                  ' && sudo chmod 600 %s') % (src, dst, dst, dst))
 
 def upload_pillars():
-    do_id, do_key, do_token = util.read_do_credential()
+    do_id, do_key, _ = util.read_do_credential()
     aws_id, aws_key = util.read_aws_credential()
     cfr_id, cfr_key = util.read_aws_credential(
             os.path.join(here.secrets_path,
                          'cloudfront.aws_credential'))
     cfl_id, cfl_key = util.read_cfl_credential()
     azure_ssh_pass = util.read_azure_ssh_pass()
+    dnsimple_email, dnsimple_key = util.read_dnsimple_credential()
     util.ssh_cloudmaster((
             'echo "branch: check-all-fallbacks" > $(hostname).sls '
             ' && echo "private_networking: %s" >> $(hostname).sls '
@@ -166,14 +167,15 @@ def upload_pillars():
             r' && echo "include: [{{ grains[\"id\"] }}]" >> salt.sls '
             ' && echo "do_id: %s"  > do_credential.sls'
             ' && echo "do_key: %s" >> do_credential.sls'
-            ' && echo "do_token: %s" >> do_credential.sls'
             ' && echo "aws_id: %s"  > aws_credential.sls'
             ' && echo "aws_key: %s" >> aws_credential.sls'
             ' && echo "cfl_id: %s"  > cfl_credential.sls'
             ' && echo "cfl_key: %s" >> cfl_credential.sls'
             ' && echo "cfr_id: %s"  > cfr_credential.sls'
             ' && echo "cfr_key: %s" >> cfr_credential.sls'
-            r' && echo "base: {\"*\": [salt], \"fp-*\": [aws_credential], \"*cloudmaster*\": [aws_credential, do_credential], \"ps-*\": [cfl_credential, cfr_credential]}" > top.sls '
+            ' && echo "dnsimple_email: %s"  > dnsimple_credential.sls'
+            ' && echo "dnsimple_key: %s" >> dnsimple_credential.sls'
+            r' && echo "base: {\"*\": [salt], \"fp-*\": [aws_credential], \"*cloudmaster*\": [aws_credential, do_credential], \"ps-*\": [cfl_credential, cfr_credential, dnsimple_credential]}" > top.sls '
             ' && sudo mv salt.sls top.sls $(hostname).sls aws_credential.sls cfl_credential.sls cfr_credential.sls do_credential.sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
@@ -183,13 +185,14 @@ def upload_pillars():
                  config.salt_version,
                  do_id,
                  do_key,
-                 do_token,
                  aws_id,
                  aws_key,
                  cfl_id,
                  cfl_key,
                  cfr_id,
-                 cfr_key))
+                 cfr_key,
+                 dnsimple_email,
+                 dnsimple_key))
 
 if __name__ == '__main__':
     check_master_if_in_production()

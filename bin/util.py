@@ -67,6 +67,11 @@ def read_do_credential():
                              ['client_id', 'api_key', 'rw_token'])
 
 @memoized
+def read_dnsimple_credential():
+    return secrets_from_yaml(['dnsimple.txt'],
+                             ['email', 'api_token'])
+
+@memoized
 def read_cfl_credential():
     return secrets_from_yaml(['cloudflare.txt'],
                              ['user', 'api_key'])
