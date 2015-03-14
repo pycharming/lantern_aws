@@ -17,6 +17,10 @@ mailutils:
   pkg:
     - installed
 
+libappindicator3-1:
+  pkg:
+    - installed
+
 /usr/bin/flashlight:
     file.absent
     
@@ -58,10 +62,10 @@ flashlight:
     service.running:
         - enable: yes
         - require:
-            # All but the last requirement are redundant, only for robustness.
             - cmd: ufw-rules-ready
             - cmd: fl-installed
             - cmd: fl-service-registered
+            - pkg: libappindicator3-1
         - watch:
             - file: /usr/bin/flashlight
 
