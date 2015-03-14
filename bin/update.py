@@ -176,7 +176,7 @@ def upload_pillars():
             ' && echo "dsp_id: %s"  > dsp_credential.sls'
             ' && echo "dsp_key: %s" >> dsp_credential.sls'
             r' && echo "base: {\"*\": [salt], \"fp-*\": [aws_credential], \"*cloudmaster*\": [aws_credential, do_credential], \"ps-*\": [cfl_credential, cfr_credential, dsp_credential]}" > top.sls '
-            ' && sudo mv salt.sls top.sls $(hostname).sls aws_credential.sls cfl_credential.sls cfr_credential.sls do_credential.sls /srv/pillar/ '
+            ' && sudo mv salt.sls top.sls $(hostname).sls aws_credential.sls cfl_credential.sls cfr_credential.sls do_credential.sls dsp_credential.sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.private_networking,
