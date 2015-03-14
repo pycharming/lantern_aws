@@ -73,8 +73,8 @@ do_sg:
 
 do_nl:
     provider: digital_ocean
-    client_key: {{ grains['do_id'] }}
-    api_key: {{ grains['do_key'] }}
+    client_key: {{ pillar['do_id'] }}
+    api_key: {{ pillar['do_key'] }}
     location: 'Amsterdam 3'
     private_networking: yes
     ssh_key_file: /etc/salt/cloudmaster.id_rsa
