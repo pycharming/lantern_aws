@@ -1,3 +1,6 @@
+include:
+    - proxy_ufw_rules
+
 curl:
   pkg:
     - installed
@@ -39,7 +42,7 @@ peerscanner:
     service.running:
         - enable: yes
         - require:
-            # All but the last requirement are redundant, only for robustness.
+            - cmd: ufw-rules-ready
             - cmd: ps-installed
             - cmd: ps-service-registered
         - watch:
