@@ -159,6 +159,9 @@ def do2all(cmd_name, cmd):
         print "done!"
     print "all done, bye."
 
+def restart_salt():
+    do2all("restart salt", "sudo service salt-minion restart")
+
 def upgrade_salt():
     do2all("upgrade", "sudo pip install --upgrade setuptools && sudo pip install --upgrade salt")
 
@@ -167,6 +170,12 @@ def reboot():
 
 def histate():
     do2all("histate", "sudo salt-call state.highstate")
+
+def kill_fls():
+    import fake_controller
+    for name in all_fallbacks:
+        print "DIE, %s!!!" % name
+        fake_controller.kill_fl(name)
 
 def reparent():
     for name in all_fallbacks:
