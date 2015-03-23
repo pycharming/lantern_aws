@@ -11,7 +11,7 @@ mailutils:
     
 ps-installed:
     cmd.run:
-        - name: 'curl -L https://github.com/getlantern/flashlight-build/releases/download/0.0.10/peerscanner_linux_amd64 -o peerscanner && chmod a+x peerscanner'
+        - name: 'curl -L https://github.com/getlantern/flashlight-build/releases/download/0.0.11/peerscanner_linux_amd64 -o peerscanner && chmod a+x peerscanner'
         - cwd: '/usr/bin'
         - user: root
         - require:
