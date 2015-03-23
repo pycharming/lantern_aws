@@ -18,6 +18,13 @@ do_nl:
     size: 512MB
     script_args: '-- git {{ pillar['salt_version'] }}'
 
+do_sfo:
+    provider: do_sfo
+    image: "14.04 x64"
+    location: 'San Francisco 1'
+    size: 512MB
+    script_args: '-- git {{ pillar['salt_version'] }}'
+
 do_nl_2GB:
     provider: do_nl
     image: "14.04 x64"
