@@ -131,6 +131,9 @@ def actually_check_q():
     elif 'launch-ps' in d:
         ctrl_req_q.delete_message(msg)
         launch('ps', msg)
+    elif 'launch-au' in d:
+        ctrl_req_q.delete_message(msg)
+        launch('au', msg)
     else:
         log.error("I don't understand this message: %s" % d)
 
