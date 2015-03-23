@@ -8,6 +8,14 @@ include:
         - require:
             - cmd: ufw-rules-ready
 
+curl:
+  pkg:
+    - installed
+
+mailutils:
+  pkg:
+    - installed
+
 monitor-script:
     file.managed:
         - name: /home/lantern/monitor.bash
