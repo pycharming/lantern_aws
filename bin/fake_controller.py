@@ -34,8 +34,8 @@ def launch_au(flid, profile=config.default_profile):
 def kill_fl(flid):
     send_message({'shutdown-fl': flid})
 
-def kill_fp(email, serial):
-    send_message({'shutdown-fp': name_prefix(email, serial)})
+def kill_fp(fpid):
+    send_message({'shutdown-fp': fpid})
 
 def send_message(d):
     aws_id, aws_key = util.read_aws_credential()
@@ -49,15 +49,6 @@ def send_message(d):
     print "Sending request..."
     req_q.write(msg)
     print "Sent."
-
-#DRY: Logic copied and pasted from ../salt/cloudmaster/cloudmaster.py
-def name_prefix(email, serialno):
-    sanitized_email = email.replace('@', '-at-').replace('.', '-dot-')
-    # Since '-' is legal in e-mail usernames and domain names, let's be
-    # somewhat paranoid and add some hash of the unsanitized e-mail to avoid
-    # clashes.
-    sanitized_email += "-" + hex(hash(email))[-4:]
-    return "fp-%s-%s-" % (sanitized_email, serialno)
 
 def print_usage():
     print "Usage: %s (launch-fl|kill-fl|launch-wd|launch-ps) <id> [<profile>='%s'] | (launch-fp|kill-fp) <id> [{pillar_key: pillar_value[, pillar_key: pillar_value]...} [<profile>='%s']]" % (sys.argv[0], config.default_profile, config.default_profile)
@@ -88,7 +79,6 @@ if __name__ == '__main__':
                     profile = config.default_profile
                 launch_fp(id_, pillars, profile)
             elif cmd == 'kill-fp':
-                # XXX
                 kill_fp(id_)
             else:
                 print_usage()
