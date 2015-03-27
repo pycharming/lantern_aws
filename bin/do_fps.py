@@ -236,7 +236,7 @@ def launch_nl_fps(how_many, start_at="1"):
     for x in xrange(start_at, start_at+how_many):
         name = prefix + str(x).zfill(3)
         print "launching %s ..." % name
-        fake_controller.launch_fp(name, '{}', 'do_nl')
+        fake_controller.launch_fp(name, '{}', 'do_nl_1GB')
 
 
 if __name__ == '__main__':

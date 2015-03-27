@@ -50,9 +50,6 @@ AUTH_TOKEN_ALPHABET = string.letters + string.digits
 AUTH_TOKEN_LENGTH = 64
 
 
-def get_profile(sqs_msg):
-    return sqs_msg.get_body().get('profile', DEFAULT_PROFILE)
-
 def log_exceptions(f):
     @wraps(f)
     def deco(*args, **kw):
@@ -84,7 +81,7 @@ def actually_check_q():
     if msg is None:
         log.info("Nothing in request queue.")
         return
-    d = msg.get_body()
+    d = deunicodify(msg.get_body())
     ctrl_req_q.delete_message(msg)
     # DRY warning: FallbackProxyLauncher at lantern-controller.
     if 'launch-fp' in d:
@@ -102,26 +99,26 @@ def actually_check_q():
         pillars.setdefault('install-from', 'git')
         if 'auth_token' not in pillars:
             pillars['auth_token'] = random_auth_token()
-        launch_fp(name, msg, pillars)
+        launch_fp(name, d, pillars)
     elif 'shutdown-fp' in d:
         shutdown_one(d['shutdown-fp'])
     elif 'shutdown-fl' in d:
         shutdown_one(d['shutdown-fl'])
     elif 'launch-fl' in d:
-        launch('fl', msg)
+        launch('fl', d)
     elif 'launch-wd' in d:
-        launch('wd', msg)
+        launch('wd', d)
     elif 'launch-ps' in d:
-        launch('ps', msg)
+        launch('ps', d)
     elif 'launch-au' in d:
-        launch('au', msg)
+        launch('au', d)
     else:
         log.error("I don't understand this message: %s" % d)
 
 # XXX DRY: remove duplication with launch()
-def launch_fp(instance_name, msg, pillars):
+def launch_fp(instance_name, msgbody, pillars):
     log.info("Got spawn request for '%s'" % instance_name)
-    profile = get_profile(msg)
+    profile = msgbody.get('profile', DEFAULT_PROFILE)
     if shutdown(instance_name):
         # The Digital Ocean salt-cloud implementation will still find the
         # old instance if we try and recreate it too soon after deleting
@@ -131,7 +128,7 @@ def launch_fp(instance_name, msg, pillars):
     with instance_map() as d:
         proxy_port = (62443 if pillars['proxy_protocol'] == 'tcp'
                       else random.randint(1024, 61024))
-        d.setdefault(profile, []).append(deunicodify(
+        d.setdefault(profile, []).append(
             {instance_name:
                 {'minion': {'master': PUBLIC_IP,
                             'startup_states': 'highstate'},
@@ -140,7 +137,7 @@ def launch_fp(instance_name, msg, pillars):
                             'controller': CONTROLLER,
                             'production_controller': PRODUCTION_CONTROLLER,
                             'proxy_port': proxy_port,
-                            'shell': '/bin/bash'}}}))
+                            'shell': '/bin/bash'}}})
     set_pillar(instance_name, pillars)
     apply_map()
 
@@ -148,14 +145,14 @@ def apply_map():
     os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, MAP_FILE, REDIRECT))
 
 # XXX DRY: remove duplication with launch_fp()
-def launch(instance_type, msg):
+def launch(instance_type, msgbody):
     it = instance_type
     log.info("Got launch request for '%s' instance" % it)
-    profile = get_profile(msg)
+    profile = msgbody.get('profile', DEFAULT_PROFILE)
     # For some reason, this came as a unicode string and that would
     # render as "!!python/unicode 'fl-...'" which, besides being
     # ugly, would confuse the YAML reader.
-    id = str(msg.get_body()['launch-%s' % it])
+    id = msgbody['launch-%s' % it]
     if not id.startswith("%s-" % it):
         log.error("Expected id starting with '%s-'" % it)
         return
@@ -167,7 +164,7 @@ def launch(instance_type, msg):
         log.info("Waiting for the instance loss to sink in...")
         time.sleep(20)
     with instance_map() as d:
-        d.setdefault(profile, []).append(deunicodify(
+        d.setdefault(profile, []).append(
             {id:
                 {'minion': {'master': PUBLIC_IP,
                             'startup_states': 'highstate'},
@@ -175,7 +172,7 @@ def launch(instance_type, msg):
                             'aws_region': AWS_REGION,
                             'controller': CONTROLLER,
                             'production_controller': PRODUCTION_CONTROLLER,
-                            'shell': '/bin/bash'}}}))
+                            'shell': '/bin/bash'}}})
     set_pillar(id, {})
     apply_map()
 
@@ -207,8 +204,8 @@ def shutdown(prefix):
 
 def set_pillar(instance_id, extra_pillars):
     filename = '/srv/pillar/%s.sls' % instance_id
-    yaml.dump(deunicodify(dict(instance_id=instance_id,  # XXX: redundant; see grain 'id'
-                               **extra_pillars)),
+    yaml.dump(dict(instance_id=instance_id,  # XXX: redundant; see grain 'id'
+                   **extra_pillars),
               file(filename, 'w'),
               default_flow_style=False)
 
