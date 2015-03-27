@@ -90,9 +90,9 @@ changes in the cloudmaster itself, it can't hurt to just do it to be in the safe
 
 To sync all machines (including the cloud master itself):
 
-    bin/ssh_cloudmaster.py 'salt -b 5 "*" state.highstate'
+    bin/ssh_cloudmaster.py 'salt -b 20 "*" state.highstate'
 
-where the `-b 5` part does some batching to avoid overloading the cloudmaster.
+where the `-b 20` part does some batching to avoid overloading the cloudmaster.
 
 All fallback proxies have salt IDs starting with 'fp-', so you can instruct the proxies, but not the cloud master, to apply the current configuration with
 
@@ -109,6 +109,40 @@ To run an arbitrary command (as root) in all fallback proxies:
 ##### Common tasks
 
 Tasks will be added here in a per need basis.  You may want to check out the `bin` folder for example scripts.
+
+###### Perform basic checks on newly launched minions
+
+Once you have launched a minion by any of the methods described below, the
+machine will start applying the Salt configuration on its own.  A common
+problem when first testing configuration changes is that Salt rejects your .sls 
+files altogether (for example, if you have some YAML or Jinja syntax error).
+One way to quickly detect that is to run
+
+    bin/ssh_cloudmaster.py 'salt <your-machine-id> state.highstate'
+
+If your .sls files have errors, the output of this command will make that
+clear.  If, on the contrary, you get something like this:
+
+    fp-test-001:
+        Data failed to compile:
+    ----------
+        The function "state.highstate" is running as PID 4120 and was started at  with jid req
+
+then at least the syntax seems OK.  If you have nothing better to do you can make sure progress is being made by periodically running:
+
+    bin/ssh_cloudmaster.py 'salt <your-machine-id> cmd.run 'tail -n 40 /var/log/salt/minion'
+
+and making sure that new stuff keeps getting printed.
+
+If all you want to know is whether the machine(s) are done setting themselves
+up (e.g., you haven't made any config changes), you can run something like
+(e.g., for flashlight servers)
+
+    bin/ssh_cloudmaster.py 'salt "fl-20150327-*" cmd.run "service flashlight status"'
+
+If you expect to run a lot of these it will be faster log into the
+cloudmaster (just 'bin/ssh_cloudmaster.py` without arguments) and run the
+commands from there.
 
 ###### Listing nonresponding minions
 
