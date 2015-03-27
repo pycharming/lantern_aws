@@ -64,3 +64,10 @@ check-fallbacks-proxying:
         - require:
             - pip: lockfile
 {% endfor %}
+
+/usr/bin/access-data:
+    file.managed:
+        - source: salt://cloudmaster/access_data.py
+        - user: root
+        - group: root
+        - mode: 700
