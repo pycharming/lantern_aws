@@ -13,14 +13,10 @@ import util
 import json
 
 
-def launch_fp(email,
-              serial,
-              pillars,
-              profile):
-    send_message({'launch-fp-as': email,
-                  'launch-refrtok': 'bogus',
-                  'launch-serial': serial,
+def launch_fp(fpid, pillars='{}', profile=config.default_profile):
+    send_message({'launch-fp': fpid,
                   'profile': profile,
+                  #XXX: pillars
                   'launch-pillars': json.loads(pillars)})
 
 def launch_fl(flid, profile=config.default_profile):
@@ -64,7 +60,7 @@ def name_prefix(email, serialno):
     return "fp-%s-%s-" % (sanitized_email, serialno)
 
 def print_usage():
-    print "Usage: %s (launch-fl|kill-fl|launch-wd|launch-ps) <id> [<profile>='%s'] | (launch-fp|kill-fp) <email> <serial> [{pillar_key: pillar_value[, pillar_key: pillar_value]...} [<profile>='%s']]" % (sys.argv[0], config.default_profile, config.default_profile)
+    print "Usage: %s (launch-fl|kill-fl|launch-wd|launch-ps) <id> [<profile>='%s'] | (launch-fp|kill-fp) <id> [{pillar_key: pillar_value[, pillar_key: pillar_value]...} [<profile>='%s']]" % (sys.argv[0], config.default_profile, config.default_profile)
 
 if __name__ == '__main__':
     try:
@@ -80,20 +76,20 @@ if __name__ == '__main__':
         elif cmd == 'kill-fl':
             kill_fl(sys.argv[2])
         else:
-            email, serial = sys.argv[2:4]
-            serial = int(serial)
+            id_ = sys.argv[2]
             if cmd == 'launch-fp':
-                if len(sys.argv) > 4:
-                    pillars = sys.argv[4]
+                if len(sys.argv) > 3:
+                    pillars = sys.argv[3]
                 else:
                     pillars = '{}'
-                if len(sys.argv) > 5:
-                    profile = sys.argv[5]
+                if len(sys.argv) > 4:
+                    profile = sys.argv[4]
                 else:
                     profile = config.default_profile
-                launch_fp(email, serial, pillars, profile)
+                launch_fp(id_, pillars, profile)
             elif cmd == 'kill-fp':
-                kill_fp(email, serial)
+                # XXX
+                kill_fp(id_)
             else:
                 print_usage()
     except (ValueError, IndexError):
