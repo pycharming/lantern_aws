@@ -5,7 +5,7 @@ import salt.client
 import salt.key
 
 
-prefix = 'fp-'
+prefix = 'fp-nl-'
 
 
 def collect():
@@ -19,8 +19,8 @@ def collect():
     # Give laggards a second chance
     for name in fps:
         if name not in d:
-           d.update(get_data(c, name)) 
-    return ("[\n" 
+           d.update(get_data(c, name))
+    return ("[\n"
             + ",\n".join(x for x in d.itervalues()
                          if "No such file or directory" not in x)
             + "\n]")
