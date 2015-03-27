@@ -1,53 +1,5 @@
 {% from 'ip.sls' import external_ip %}
 
-aws:
-    # Set up the location of the salt master
-    minion:
-      master: {{ external_ip(grains) }}
-
-    # Specify whether to use public or private IP for deploy script.
-    #
-    # Valid options are:
-    #     private_ips - The salt-master is also hosted with AWS
-    #     public_ips - The salt-master is hosted outside of AWS
-    #
-    # We're currently launching all our masters in Digital Ocean.  It will be
-    # best to change this to private_ips if we ever come back to EC2.
-    ssh_interface: public_ips
-
-    # Set the AWS access credentials (see below)
-    #
-    id: {{ pillar['aws_id'] }}
-    key: "{{ pillar['aws_key'] }}"
-
-    # Make sure this key is owned by root with permissions 0400.
-    #
-    private_key: /etc/salt/lantern.pem
-    keyname: lantern
-    securitygroup: free-for-all
-
-    # Default region
-    #
-    location: {{ grains['aws_region'] }}
-
-    # Configure which user to use to run the deploy script. This setting is
-    # dependent upon the AMI that is used to deploy. It is usually safer to
-    # configure this individually in a profile, than globally. Typical users
-    # are:
-    #
-    # Amazon Linux -> ec2-user
-    # RHEL         -> ec2-user
-    # CentOS       -> ec2-user
-    # Ubuntu       -> ubuntu
-    #
-    ssh_username: ubuntu
-
-    provider: aws
-
-    # The instance name will otherwise linger around for a bit, possibly
-    # causing confusion.
-    rename_on_destroy: True
-
 do:
     provider: digital_ocean
     # XXX use token when changing to DO API v2.0.

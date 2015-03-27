@@ -1,9 +1,3 @@
-aws:
-    provider: aws
-    image: {{ grains['aws_ami'] }}
-    size: Micro Instance
-    script_args: '-- git {{ pillar['salt_version'] }}'
-
 do:
     provider: do
     image: "14.04 x64"
