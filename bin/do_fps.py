@@ -13,6 +13,7 @@
 #
 # - aranhoide@getlantern.org
 
+import datetime
 import os
 import sys
 import time
@@ -225,6 +226,17 @@ def print_dicts(ds):
         for name, val in each.__dict__.iteritems():
             print "%s: %s" % (name, val)
         print
+
+def launch_nl_fps(how_many, start_at="1"):
+    import fake_controller
+    how_many = int(how_many)
+    start_at = int(start_at)
+    datestr = datetime.datetime.now().date().isoformat().replace('-', '')
+    prefix = 'fp-nl-%s-' % datestr
+    for x in xrange(start_at, start_at+how_many):
+        name = prefix + str(x).zfill(3)
+        print "launching %s ..." % name
+        fake_controller.launch_fp(name, '{}', 'do_nl')
 
 
 if __name__ == '__main__':
