@@ -128,7 +128,7 @@ clear.  If, on the contrary, you get something like this:
     ----------
         The function "state.highstate" is running as PID 4120 and was started at  with jid req
 
-then at least the syntax seems OK.  If you have nothing better to do you can make sure progress is being made by periodically running:
+then at least the syntax seems OK.  If you have nothing better to do, you can make sure progress is being made by periodically running:
 
     bin/ssh_cloudmaster.py 'salt <your-machine-id> cmd.run 'tail -n 40 /var/log/salt/minion'
 
@@ -207,6 +207,18 @@ bin/fake_controller.py launch-wd wd-001-1
 ###### Reinstalling lantern
 
 To reinstall lantern in the proxies after a new client version has been released, just uninstall the old package through `apt-get` and then run `state.highstate` to re-apply the configuration scripts.  This takes care of restarting the lantern service too.  `bin/reinstall_lantern.bash` (which see) does this.
+
+###### Regenerating flashlight/genconfig/fallback.json
+
+Whenever you launch or kill fallback proxies, you should update the list of
+chained servers in the configuration that gets pushed to Lantern clients.  This
+list lives in flashlight/genconfig/fallbacks.json.  To update it run
+
+    bin/ssh_cloudmaster.py regenerate-fallbacks-list > <flashlight-root>/genconfig/fallback.json
+
+Where `<flashlight-root>` is where your checkout of the flashlight project
+lives (at the time of this writing, you may want to actually update the
+flashlight checkout within the `flashlight-build` project instead.
 
 ## Troubleshooting
 

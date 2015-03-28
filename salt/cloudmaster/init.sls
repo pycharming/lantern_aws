@@ -65,9 +65,9 @@ check-fallbacks-proxying:
             - pip: lockfile
 {% endfor %}
 
-/usr/bin/access-data:
+/usr/bin/regenerate-fallbacks-list:
     file.managed:
-        - source: salt://cloudmaster/access_data.py
+        - source: salt://cloudmaster/regenerate_fallbacks_list.py
         - user: root
         - group: root
         - mode: 700
