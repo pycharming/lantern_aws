@@ -178,6 +178,12 @@ def kill_fls():
         print "DIE, %s!!!" % name
         fake_controller.kill_fl(name)
 
+def kill_fps():
+    import fake_controller
+    for name in all_fallbacks:
+        print "DIE, %s!!!" % name
+        fake_controller.kill_fp(name)
+
 def reparent():
     for name in all_fallbacks:
         ip = droplets_by_name[name].ip_address
