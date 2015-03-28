@@ -31,6 +31,8 @@ def collect():
              + ",\n".join(x for x in d.itervalues()
                           if "No such file or directory" not in x)
              + "\n]"),
+            [k for k, v in d.iteritems()
+             if "No such file or directory" in v],
             get_nonresponding())
 
 def get_data(client, from_whom):
@@ -47,9 +49,13 @@ def get_data(client, from_whom):
                       expr_form=expr_form)
 
 if __name__ == '__main__':
-    json, nonresponding = collect()
+    json, uninitialized, nonresponding = collect()
     print json
+    if uninitialized:
+        print >> sys.stderr, "Uninitialized minions:"
+	for name in uninitialized:
+            print >> sys.stderr, "   ", name
     if nonresponding:
         print >> sys.stderr, "Non-responding minions:"
         for each in sorted(nonresponding):
-            print >> sys.stderr, "   " + each
+            print >> sys.stderr, "   ", each
