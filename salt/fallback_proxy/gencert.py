@@ -24,7 +24,7 @@ def gen_cert_call():
     "Typical-ish parameters with some very unscientific randomization."
 
     args = {}
-    args['keyalg'] = weighted_choice(('RSA', 4), ('DSA', 2), ('EC', 1))
+    args['keyalg'] = weighted_choice(('RSA', 4), ('EC', 1))
 
     # `man keytool`
     default_keysize = {'RSA': 2048, 'DSA': 1024, 'EC': 256}[args['keyalg']]
