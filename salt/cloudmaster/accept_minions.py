@@ -36,8 +36,6 @@ def accept_minions(prefix, start, number):
         file("/srv/pillar/%s.sls" % id_, 'w').write(
             pillar_tmpl % (random_auth_token(), id_))
         os.system("salt-key -ya %s" % id_)
-        time.sleep(10)
-        os.system("salt %s state.highstate | tee hslog" % id_)
 
 
 if __name__ == '__main__':
