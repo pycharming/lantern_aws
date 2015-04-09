@@ -1,3 +1,6 @@
+include:
+    - proxy_ufw_rules
+
 curl:
   pkg:
     - installed
@@ -22,6 +25,7 @@ ps-upstart-script:
     file.managed:
         - name: /etc/init/peerscanner.conf
         - source: salt://peerscanner/peerscanner.conf
+        - template: jinja
         - user: root
         - group: root
         - mode: 644
@@ -38,7 +42,7 @@ peerscanner:
     service.running:
         - enable: yes
         - require:
-            # All but the last requirement are redundant, only for robustness.
+            - cmd: ufw-rules-ready
             - cmd: ps-installed
             - cmd: ps-service-registered
         - watch:

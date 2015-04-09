@@ -46,9 +46,11 @@ def get_cloudmaster_address():
             return ret
 
 @memoized
-def read_aws_credential():
+def read_aws_credential(path=os.path.join(here.secrets_path,
+                                          'lantern_aws',
+                                          'aws_credential')):
     id_, key = None, None
-    for line in file(config.aws_credential_path):
+    for line in file(path):
         line = line.strip()
         m = re.match(r"AWSAccessKeyId=(.*)", line)
         if m:
@@ -65,7 +67,12 @@ def read_do_credential():
                              ['client_id', 'api_key', 'rw_token'])
 
 @memoized
-def read_cf_credential():
+def read_dnsimple_credential():
+    return secrets_from_yaml(['dnsimple.txt'],
+                             ['email', 'api_token'])
+
+@memoized
+def read_cfl_credential():
     return secrets_from_yaml(['cloudflare.txt'],
                              ['user', 'api_key'])
 

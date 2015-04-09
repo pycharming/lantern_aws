@@ -2,20 +2,22 @@ include:
     - proxy_ufw_rules
 
 {% set zone='getiantem.org' %}
-{% if grains.get('provider', 'unknown') == 'azure' %}
-{% set listen_with_openssl="-listen/openssl" %}
-{% set server=pillar.get('cdn', 'UNKNOWN_CDN') %}
-{% else %}
-{% set listen_with_openssl="" %}
-{% set server = grains['id'] + "." + zone %}
-{% endif %}
+{% set frontfqdns = "{cloudflare: " + grains['id'] + "." + zone + "}" %}
+{% if grains['controller'] == grains['production_controller'] %}
 {% set registerat="-registerat https://peerscanner." + zone %}
+{% else %}
+{% set registerat="" %}
+{% endif %}
 
 curl:
   pkg:
     - installed
 
 mailutils:
+  pkg:
+    - installed
+
+libappindicator3-1:
   pkg:
     - installed
 
@@ -42,8 +44,7 @@ fl-upstart-script:
         - source: salt://flashlight/flashlight.conf
         - template: jinja
         - context:
-            listen_with_openssl: {{ listen_with_openssl | yaml }}
-            server: {{ server }}
+            frontfqdns: {{ frontfqdns }}
             registerat: {{ registerat | python }}
         - user: root
         - group: root
@@ -61,10 +62,10 @@ flashlight:
     service.running:
         - enable: yes
         - require:
-            # All but the last requirement are redundant, only for robustness.
             - cmd: ufw-rules-ready
             - cmd: fl-installed
             - cmd: fl-service-registered
+            - pkg: libappindicator3-1
         - watch:
             - file: /usr/bin/flashlight
 

@@ -120,21 +120,16 @@ def rsync(src, dst):
 
 def upload_cloudmaster_minion_config():
     address = util.get_cloudmaster_address()
-    do_id, do_key, _ = util.read_do_credential()
     util.ssh_cloudmaster((r"""(echo "master: 127.0.0.1" """
                           + r""" && echo "grains:" """
                           + r""" && echo "    aws_region: %s " """
                           + r""" && echo "    aws_ami: %s " """
-                          + r""" && echo "    do_id: %s " """
-                          + r""" && echo "    do_key: %s " """
                           + r""" && echo "    do_region: %s " """
                           + r""" && echo "    controller: %s " """
                           + r""" && echo "    production_controller: %s " """
                           + r""" ) > /root/minion""")
                          % (config.aws_region,
                             region.get_ami(),
-                            do_id,
-                            do_key,
                             config.do_region,
                             config.controller,
                             config.production_controller))
@@ -153,9 +148,14 @@ def move_root_file(src, dst):
                                  ' && sudo chmod 600 %s') % (src, dst, dst, dst))
 
 def upload_pillars():
+    do_id, do_key, _ = util.read_do_credential()
     aws_id, aws_key = util.read_aws_credential()
-    cf_id, cf_key = util.read_cf_credential()
+    cfr_id, cfr_key = util.read_aws_credential(
+            os.path.join(here.secrets_path,
+                         'cloudfront.aws_credential'))
+    cfl_id, cfl_key = util.read_cfl_credential()
     azure_ssh_pass = util.read_azure_ssh_pass()
+    dsp_id, dsp_key = util.read_dnsimple_credential()
     util.ssh_cloudmaster((
             'echo "branch: check-all-fallbacks" > $(hostname).sls '
             ' && echo "private_networking: %s" >> $(hostname).sls '
@@ -165,22 +165,34 @@ def upload_pillars():
             # Hack so every instance will read specific pillars from a file
             # named with the <instance_name>.sls scheme.
             r' && echo "include: [{{ grains[\"id\"] }}]" >> salt.sls '
+            ' && echo "do_id: %s"  > do_credential.sls'
+            ' && echo "do_key: %s" >> do_credential.sls'
             ' && echo "aws_id: %s"  > aws_credential.sls'
             ' && echo "aws_key: %s" >> aws_credential.sls'
-            ' && echo "cf_id: %s"  > cf_credential.sls'
-            ' && echo "cf_key: %s" >> cf_credential.sls'
-            r' && echo "base: {\"*\": [salt, aws_credential], \"fl-*\": [cf_credential]}" > top.sls '
-            ' && sudo mv salt.sls top.sls $(hostname).sls aws_credential.sls cf_credential.sls /srv/pillar/ '
+            ' && echo "cfl_id: %s"  > cfl_credential.sls'
+            ' && echo "cfl_key: %s" >> cfl_credential.sls'
+            ' && echo "cfr_id: %s"  > cfr_credential.sls'
+            ' && echo "cfr_key: %s" >> cfr_credential.sls'
+            ' && echo "dsp_id: %s"  > dsp_credential.sls'
+            ' && echo "dsp_key: %s" >> dsp_credential.sls'
+            r' && echo "base: {\"*\": [salt], \"fp-*\": [aws_credential], \"*cloudmaster*\": [aws_credential, do_credential], \"ps-*\": [cfl_credential, cfr_credential, dsp_credential]}" > top.sls '
+            ' && sudo mv salt.sls top.sls $(hostname).sls aws_credential.sls cfl_credential.sls cfr_credential.sls do_credential.sls dsp_credential.sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.private_networking,
                  config.default_profile,
                  azure_ssh_pass,
                  config.salt_version,
+                 do_id,
+                 do_key,
                  aws_id,
                  aws_key,
-                 cf_id,
-                 cf_key))
+                 cfl_id,
+                 cfl_key,
+                 cfr_id,
+                 cfr_key,
+                 dsp_id,
+                 dsp_key))
 
 if __name__ == '__main__':
     check_master_if_in_production()
