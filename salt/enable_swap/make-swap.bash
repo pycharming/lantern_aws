@@ -7,13 +7,13 @@ function fatal() {
 
 # We are already checking this in the .sls file, but it can't hurt to make
 # sure.
-[ $(swapon -s | wc -l) -eq 1 ] || fatal "Swap already set up?"
+[ $(swapon -s | wc -l) -le 1 ] || fatal "Swap already set up?"
 
 SFPATH=/mnt/swapfile
 
 set -e
 
-fallocate -l 4096M $SFPATH
+dd if=/dev/zero of=$SFPATH bs=1024 count=4194304
 chown root:root $SFPATH
 chmod 0600 $SFPATH
 
