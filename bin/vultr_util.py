@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from datetime import datetime
 import os
 
 from vultr.vultr import Vultr
@@ -18,7 +19,10 @@ vltr = Vultr(api_key)
 
 
 def minion_id(prefix, n):
-    return '%s-jp-20150409-%s' % (prefix, str(n).zfill(3))
+    return '%s-jp-%s-%s' % (
+        prefix,
+        datetime.now().date().isoformat().replace('-', ''),
+        str(n).zfill(3))
 
 def create(prefix, start, number):
     for i in xrange(start, start+number):

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from datetime import datetime
 import os
 import random
 import string
@@ -24,7 +25,10 @@ def random_auth_token():
                    for _ in xrange(AUTH_TOKEN_LENGTH))
 
 def minion_id(prefix, n):
-    return '%s-jp-20150408-%s' % (prefix, str(n).zfill(3))
+    return '%s-jp-%s-%s' % (
+        prefix,
+        datetime.now().date().isoformat().replace('-', ''),
+        str(n).zfill(3))
 
 def accept_minions(prefix, start, number):
     for i in xrange(start, start+number):
