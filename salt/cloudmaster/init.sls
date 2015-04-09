@@ -71,3 +71,10 @@ check-fallbacks-proxying:
         - user: root
         - group: root
         - mode: 700
+
+/usr/bin/accept-minions:
+    file.managed:
+        - source: salt://cloudmaster/accept_minions.py
+        - user: root
+        - group: root
+        - mode: 700
