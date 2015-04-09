@@ -1,13 +1,14 @@
 {% set fallback_json_file='/home/lantern/fallback.json' %}
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
+{% set proxy_port=grains.get('proxy_port', 443) %}
 {% from 'ip.sls' import external_ip %}
 
 {% set lantern_args = "-Xmx350m org.lantern.simple.Give "
                     + "-instanceid " + pillar['instance_id']
                     + " -host 127.0.0.1 "
-                    + " -http " + (grains['proxy_port'] - 443)|string
-                    + " -https " + (grains['proxy_port'])|string
+                    + " -http " + (proxy_port - 443)|string
+                    + " -https " + proxy_port|string
                     + " -keystore /home/lantern/littleproxy_keystore.jks "
                     + " -authtoken " + auth_token %}
 
@@ -115,7 +116,7 @@ report-stats:
             - pip: psutil
             - service: lantern
 
-{% if grains['controller'] == grains.get('production_controller', 'lanternctrl1-2') %}
+{% if grains.get('controller', pillar.get('controller', 'not-the-production-controller')) == grains.get('production_controller', 'lanternctrl1-2') %}
 check-lantern:
     cron.present:
         - name: /home/lantern/check_lantern.py
