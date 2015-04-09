@@ -35,8 +35,8 @@ do_nl:
 
 do_sfo:
     provider: digital_ocean
-    client_key: {{ grains['do_id'] }}
-    api_key: {{ grains['do_key'] }}
+    client_key: {{ pillar['do_id'] }}
+    api_key: {{ pillar['do_key'] }}
     location: 'San Francisco 1'
     private_networking: no
     ssh_key_file: /etc/salt/cloudmaster.id_rsa
