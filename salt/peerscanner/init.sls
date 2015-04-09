@@ -38,6 +38,8 @@ ps-service-registered:
         - watch:
             - file: ps-upstart-script
 
+{# Don't automatically start the server in test setups. #}
+{% if grains.get('controller', pillar.get('controller', 'not-production')) == grains.get('production_controller', 'lanternctrl1-2') %}
 peerscanner:
     service.running:
         - enable: yes
@@ -67,3 +69,4 @@ monitor:
         - require:
             - file: /home/lantern/monitor.bash
             - service: peerscanner
+{% endif %}

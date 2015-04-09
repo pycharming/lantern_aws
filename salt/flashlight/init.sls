@@ -3,7 +3,7 @@ include:
 
 {% set zone='getiantem.org' %}
 {% set frontfqdns = "{cloudflare: " + grains['id'] + "." + zone + "}" %}
-{% if grains['controller'] == grains['production_controller'] %}
+{% if grains.get('controller', pillar.get('controller', 'not-production')) == grains.get('production_controller', 'lanternctrl1-2') %}
 {% set registerat="-registerat https://peerscanner." + zone %}
 {% else %}
 {% set registerat="" %}

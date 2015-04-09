@@ -1,7 +1,7 @@
 {% set fallback_json_file='/home/lantern/fallback.json' %}
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
-{% set proxy_port=grains.get('proxy_port', 443) %}
+{% set proxy_port=grains.get('proxy_port', 62443) %}
 {% from 'ip.sls' import external_ip %}
 
 {% set lantern_args = "-Xmx350m org.lantern.simple.Give "
