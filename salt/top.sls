@@ -27,3 +27,6 @@ base:
     'ps-*':
         - apt_upgrade
         - peerscanner
+    'au-*':
+        - apt_upgrade
+        - auto_update

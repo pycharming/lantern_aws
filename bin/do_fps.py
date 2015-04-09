@@ -13,6 +13,7 @@
 #
 # - aranhoide@getlantern.org
 
+import datetime
 import os
 import sys
 import time
@@ -159,6 +160,9 @@ def do2all(cmd_name, cmd):
         print "done!"
     print "all done, bye."
 
+def restart_salt():
+    do2all("restart salt", "sudo service salt-minion restart")
+
 def upgrade_salt():
     do2all("upgrade", "sudo pip install --upgrade setuptools && sudo pip install --upgrade salt")
 
@@ -167,6 +171,18 @@ def reboot():
 
 def histate():
     do2all("histate", "sudo salt-call state.highstate")
+
+def kill_fls():
+    import fake_controller
+    for name in all_fallbacks:
+        print "DIE, %s!!!" % name
+        fake_controller.kill_fl(name)
+
+def kill_fps():
+    import fake_controller
+    for name in all_fallbacks:
+        print "DIE, %s!!!" % name
+        fake_controller.kill_fp(name)
 
 def reparent():
     for name in all_fallbacks:
@@ -216,6 +232,17 @@ def print_dicts(ds):
         for name, val in each.__dict__.iteritems():
             print "%s: %s" % (name, val)
         print
+
+def launch_nl_fps(how_many, start_at="1"):
+    import fake_controller
+    how_many = int(how_many)
+    start_at = int(start_at)
+    datestr = datetime.datetime.now().date().isoformat().replace('-', '')
+    prefix = 'fp-nl-%s-' % datestr
+    for x in xrange(start_at, start_at+how_many):
+        name = prefix + str(x).zfill(3)
+        print "launching %s ..." % name
+        fake_controller.launch_fp(name, '{}', 'do_nl_1GB')
 
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-{% for name in 'myles','pants','aranhoide','ox.to.a.cart','lantern' %}
+{% for name in 'myles','aranhoide','ox.to.a.cart','menteslibres','lantern' %}
 
 {{ name }}:
     user.present:
@@ -33,7 +33,7 @@
 
 {% endfor %}
 
-{% for admin in 'myles','pants','aranhoide','ox.to.a.cart' %}
+{% for admin in 'myles','aranhoide','ox.to.a.cart','menteslibres' %}
 {% for role in admin,'lantern' %}
 {{ admin }}_{{ role }}_ssh:
     ssh_auth.present:

@@ -1,4 +1,4 @@
-{% set access_data_file='/home/lantern/fallback.json' %}
+{% set fallback_json_file='/home/lantern/fallback.json' %}
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
 {% from 'ip.sls' import external_ip %}
@@ -68,18 +68,15 @@ lantern-service:
             - cmd: ufw-rules-ready
             - cmd: fallback-proxy-dirs-and-files
         - watch:
-            # Restart when we get a new user to run as, or a new refresh token.
             - cmd: install-lantern
             - file: /etc/init.d/lantern
 
-report-completion:
+save-access-data:
     cmd.script:
-        - source: salt://fallback_proxy/report_completion.py
+        - source: salt://fallback_proxy/save_access_data.py
         - template: jinja
         - context:
-            external_ip: {{ external_ip(grains) }}
-            access_data_file: {{ access_data_file }}
-        - unless: "[ -e /home/lantern/reported_completion ]"
+            fallback_json_file: {{ fallback_json_file }}
         - user: lantern
         - group: lantern
         - cwd: /home/lantern
@@ -89,7 +86,7 @@ report-completion:
             # and thus I can unpickle and delete the SQS message that
             # triggered the launching of this instance.
             - pip: boto==2.9.5
-            - file: {{ access_data_file }}
+            - file: {{ fallback_json_file }}
             - cmd: generate-cert
 
 zip:

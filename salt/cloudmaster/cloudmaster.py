@@ -50,12 +50,6 @@ AUTH_TOKEN_ALPHABET = string.letters + string.digits
 AUTH_TOKEN_LENGTH = 64
 
 
-def get_profile(sqs_msg):
-    # For some reason, this came as a unicode string and that would
-    # render as (e.g.) "!!python/unicode 'do'" which, besides being
-    # ugly, would confuse the YAML reader.
-    return str(sqs_msg.get_body().get('profile', DEFAULT_PROFILE))
-
 def log_exceptions(f):
     @wraps(f)
     def deco(*args, **kw):
@@ -87,19 +81,13 @@ def actually_check_q():
     if msg is None:
         log.info("Nothing in request queue.")
         return
-    d = msg.get_body()
+    d = deunicodify(msg.get_body())
+    ctrl_req_q.delete_message(msg)
     # DRY warning: FallbackProxyLauncher at lantern-controller.
-    if 'launch-fp-as' in d:
-        userid = d['launch-fp-as']
-        # Lantern won't start without *some* refresh token.  If we don't get one
-        # from the controller let's just make up a bogus one.
-        refresh_token = d.get('launch-refrtok', '').strip() or 'bogus'
-        # Backwards compatibility: we'll be getting serial numbers starting
-        # from 1 in the new fallback balancing scheme.  Just in case we get
-        # a new proxy launch request from an old controller, let's mark it as
-        # 0.
-        serial = d.get('launch-serial', 0)
-        # Salt scripts consuming these should use backwards-compatible defaults.
+    if 'launch-fp' in d:
+        name = d['launch-fp']
+        # Salt scripts consuming these should use backwards-compatible
+        # defaults.
         pillars = d.get('launch-pillars', {})
         # Default proxy_protocol to tcp
         pillars.setdefault('proxy_protocol', 'tcp')
@@ -111,35 +99,27 @@ def actually_check_q():
         pillars.setdefault('install-from', 'git')
         if 'auth_token' not in pillars:
             pillars['auth_token'] = random_auth_token()
-        launch_fp(userid,
-                  serial,
-                  refresh_token,
-                  msg,
-                  pillars)
+        launch_fp(name, d, pillars)
     elif 'shutdown-fp' in d:
-        ctrl_req_q.delete_message(msg)
         shutdown_one(d['shutdown-fp'])
     elif 'shutdown-fl' in d:
-        ctrl_req_q.delete_message(msg)
         shutdown_one(d['shutdown-fl'])
     elif 'launch-fl' in d:
-        ctrl_req_q.delete_message(msg)
-        launch('fl', msg)
+        launch('fl', d)
     elif 'launch-wd' in d:
-        ctrl_req_q.delete_message(msg)
-        launch('wd', msg)
+        launch('wd', d)
     elif 'launch-ps' in d:
-        ctrl_req_q.delete_message(msg)
-        launch('ps', msg)
+        launch('ps', d)
+    elif 'launch-au' in d:
+        launch('au', d)
     else:
         log.error("I don't understand this message: %s" % d)
 
 # XXX DRY: remove duplication with launch()
-def launch_fp(email, serialno, refresh_token, msg, pillars):
-    log.info("Got spawn request for '%s'" % clip_email(email))
-    instance_name = create_instance_name(email, serialno)
-    profile = get_profile(msg)
-    if shutdown(name_prefix(email, serialno)):
+def launch_fp(instance_name, msgbody, pillars):
+    log.info("Got spawn request for '%s'" % instance_name)
+    profile = msgbody.get('profile', DEFAULT_PROFILE)
+    if shutdown(instance_name):
         # The Digital Ocean salt-cloud implementation will still find the
         # old instance if we try and recreate it too soon after deleting
         # it.
@@ -158,21 +138,21 @@ def launch_fp(email, serialno, refresh_token, msg, pillars):
                             'production_controller': PRODUCTION_CONTROLLER,
                             'proxy_port': proxy_port,
                             'shell': '/bin/bash'}}})
-    set_fp_pillar(instance_name, email, refresh_token, msg, pillars)
+    set_pillar(instance_name, pillars)
     apply_map()
 
 def apply_map():
     os.system("%s -y -m %s %s" % (SALT_CLOUD_PATH, MAP_FILE, REDIRECT))
 
 # XXX DRY: remove duplication with launch_fp()
-def launch(instance_type, msg):
+def launch(instance_type, msgbody):
     it = instance_type
     log.info("Got launch request for '%s' instance" % it)
-    profile = get_profile(msg)
+    profile = msgbody.get('profile', DEFAULT_PROFILE)
     # For some reason, this came as a unicode string and that would
     # render as "!!python/unicode 'fl-...'" which, besides being
     # ugly, would confuse the YAML reader.
-    id = str(msg.get_body()['launch-%s' % it])
+    id = msgbody['launch-%s' % it]
     if not id.startswith("%s-" % it):
         log.error("Expected id starting with '%s-'" % it)
         return
@@ -221,18 +201,6 @@ def shutdown(prefix):
                     os.system("%s -y -d %s %s" % (SALT_KEY_PATH, entry_name, REDIRECT))
                     count += 1
     return count
-
-def set_fp_pillar(instance_name, email, refresh_token, msg, extra_pillars):
-    d = {'refresh_token': refresh_token,
-         'user': email,
-         'sqs_msg': encode_sqs_msg(msg)}
-    d.update(extra_pillars)
-    set_pillar(instance_name, d)
-
-def encode_sqs_msg(msg):
-    # DRY warning:
-    # lantern_aws/salt/fallback_proxy/report_completion.py
-    return b64encode(dumps(msg))
 
 def set_pillar(instance_id, extra_pillars):
     filename = '/srv/pillar/%s.sls' % instance_id
@@ -285,6 +253,25 @@ def clip_email(email):
 def random_auth_token():
     return ''.join(random.choice(AUTH_TOKEN_ALPHABET)
                    for _ in xrange(AUTH_TOKEN_LENGTH))
+
+def deunicodify(x):
+    """
+    Recent versions of boto will convert the contents of SQS messages to
+    unicode, for some reason.  Salt's YAML handling chokes on that.  Here we
+    convert all strings of type `unicode`, which are assumed to be plain
+    ASCII, to `str`s.
+    """
+    if isinstance(x, unicode):
+        return x.encode('ascii')
+    elif isinstance(x, str) or isinstance(x, int) or isinstance(x, float):
+        return x
+    elif isinstance(x, list):
+        return map(deunicodify, x)
+    elif isinstance(x, dict):
+        return {deunicodify(k): deunicodify(v)
+                for k, v in x.iteritems()}
+    else:
+        raise RuntimeError("Object of unsupported type: %r" % x)
 
 if __name__ == '__main__':
     # I have to do all this crap because salt hijacks the root logger.

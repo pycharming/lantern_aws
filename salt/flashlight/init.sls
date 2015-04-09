@@ -26,7 +26,7 @@ libappindicator3-1:
     
 fl-installed:
     cmd.run:
-        - name: 'curl -L https://github.com/getlantern/flashlight-build/releases/download/0.0.9/flashlight_linux_amd64 -o flashlight && chmod a+x flashlight'
+        - name: 'curl -L https://github.com/getlantern/flashlight-build/releases/download/0.0.14/flashlight_linux_amd64 -o flashlight && chmod a+x flashlight'
         - cwd: '/usr/bin'
         - user: root
         - require:

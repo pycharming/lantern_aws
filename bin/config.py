@@ -1,5 +1,7 @@
-import here
 import os.path
+import sys
+
+import here
 
 # Values for production deployment.
 aws_region = 'ap-southeast-1'
@@ -39,5 +41,5 @@ key_path = os.path.join(here.secrets_path,
                         'lantern_aws',
                         'cloudmaster.id_rsa')
 
-print "Using controller: %s" % controller
-print "Using cloudmaster: %s" % cloudmaster_name
+print >> sys.stderr, "Using controller: %s" % controller
+print >> sys.stderr, "Using cloudmaster: %s" % cloudmaster_name

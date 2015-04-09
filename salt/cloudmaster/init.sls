@@ -64,3 +64,10 @@ check-fallbacks-proxying:
         - require:
             - pip: lockfile
 {% endfor %}
+
+/usr/bin/regenerate-fallbacks-list:
+    file.managed:
+        - source: salt://cloudmaster/regenerate_fallbacks_list.py
+        - user: root
+        - group: root
+        - mode: 700
