@@ -11,17 +11,14 @@ planid_768mb = u'31'
 planid_1gb = u'32'
 ubuntu14_10_64bit = u'181'
 aranhoide_ssh_key_id = u'55255a40b2742'
-#aranhoide_ssh_key_id = u'aranhoide'
-label = 'fp-'
 
-bootstrap_tmpl = "ssh -o StrictHostKeyChecking=no root@%s 'curl -L https://bootstrap.saltstack.com | sh -s -- -A 188.166.52.119 -i %s git v2014.7.0'"
-#bootstrap_tmpl = "ssh -o StrictHostKeyChecking=no root@%s 'curl -L https://bootstrap.saltstack.com | sh -s -- -A 128.199.93.248 -i %s git v2014.7.0'"
-
-
+#bootstrap_tmpl = "ssh -o StrictHostKeyChecking=no root@%s 'curl -L https://bootstrap.saltstack.com | sh -s -- -A 188.166.52.119 -i %s git v2014.7.0'"
+bootstrap_tmpl = "ssh -o StrictHostKeyChecking=no root@%s 'curl -L https://bootstrap.saltstack.com | sh -s -- -A 128.199.93.248 -i %s git v2014.7.0'"
 vltr = Vultr(api_key)
 
+
 def minion_id(prefix, n):
-    return '%s-jp-20150408-%s' % (prefix, str(n).zfill(3))
+    return '%s-jp-20150409-%s' % (prefix, str(n).zfill(3))
 
 def create(prefix, start, number):
     for i in xrange(start, start+number):
