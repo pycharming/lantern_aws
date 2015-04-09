@@ -17,6 +17,13 @@ aranhoide_ssh_key_id = u'55255a40b2742'
 bootstrap_tmpl = "ssh -o StrictHostKeyChecking=no root@%s 'curl -L https://bootstrap.saltstack.com | sh -s -- -A 128.199.93.248 -i %s git v2014.7.0'"
 vltr = Vultr(api_key)
 
+def ip_prefix(ip):
+    return ip[:ip.rfind('.', 0, ip.rfind('.'))+1]
+
+def ip_prefixes():
+    return set(ip_prefix(d['main_ip'])
+               for d in vltr.server_list(None).itervalues()
+               if d['label'].startswith('fl-jp-'))
 
 def minion_id(prefix, n):
     return '%s-jp-%s-%s' % (
