@@ -1,1 +1,1 @@
-../../../too-many-secrets/allfallbacks_config_folder.txt
+../../secret/allfallbacks_config_folder.txt
