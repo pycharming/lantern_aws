@@ -1,1 +1,0 @@
-../../../lantern/install/wrapper/dpkg.bash
