@@ -3,6 +3,7 @@
 import logging
 import os
 import sys
+import yaml
 
 import boto.sqs
 from boto.sqs.jsonmessage import JSONMessage
@@ -17,9 +18,29 @@ AWS_KEY = "{{ pillar['aws_key'] }}"
 aws_creds = {'aws_access_key_id': AWS_ID,
              'aws_secret_access_key': AWS_KEY}
 CONTROLLER = "{{ grains['controller'] }}"
+logfile = 'fallbacks_failing_to_proxy.log.yaml'
+strikes = 3
 
 here = os.path.dirname(sys.argv[0]) if __name__ == '__main__' else __file__
 
+
+def truly_alarming_failures(failures):
+    """
+    It seems like an artifact of the way we're testing that an arbitrary
+    single fallback is detected as not proxying.  Now, if a fallback is
+    having real trouble, it will fail a few times in a row.  So we only
+    send an alarm email if it fails `strikes` times in a row.
+    """
+    try:
+        old_log = yaml.load(file(logfile))
+    except IOError:
+        old_log = []
+    log = ([failures] + old_log)[:strikes]
+    yaml.dump(log,
+              file(logfile, 'w'))
+    return [x for x in failures
+            if sum(1 for e in log
+                   if x in e) >= strikes]
 
 def report(failures):
     fps_str = '\n' + '\n'.join(sorted(failures))
@@ -48,7 +69,7 @@ if __name__ == '__main__':
     log.addHandler(handler)
     log.info("report starting...")
     try:
-        report(sys.argv[1:])
+        report(truly_alarming_failures(sys.argv[1:]))
     except Exception as e:
         log.exception(e)
     log.info("report done.")
