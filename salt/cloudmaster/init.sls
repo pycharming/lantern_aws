@@ -23,8 +23,6 @@ include:
 
 {% if grains['controller'] == grains['production_controller'] %}
 
-{% set scripts=scripts + [('check_unresponsive_fallbacks', '29')] %}
-
 /home/lantern/alert_fallbacks_failing_to_proxy.py:
     file.managed:
         - source: salt://cloudmaster/alert_fallbacks_failing_to_proxy.py
@@ -64,6 +62,9 @@ check-fallbacks-proxying:
         - require:
             - pip: lockfile
 {% endfor %}
+
+/home/lantern/check_unresponsive_fallbacks.py:
+    cron.absent
 
 /usr/bin/regenerate-fallbacks-list:
     file.managed:
