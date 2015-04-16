@@ -69,7 +69,9 @@ if __name__ == '__main__':
     log.addHandler(handler)
     log.info("report starting...")
     try:
-        report(truly_alarming_failures(sys.argv[1:]))
+        alarms = truly_alarming_failures(sys.argv[1:])
+        if alarms:
+            report(alarms)
     except Exception as e:
         log.exception(e)
     log.info("report done.")
