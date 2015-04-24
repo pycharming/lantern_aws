@@ -1,14 +1,6 @@
 include:
     - proxy_ufw_rules
 
-curl:
-  pkg:
-    - installed
-
-mailutils:
-  pkg:
-    - installed
-
 /usr/bin/peerscanner:
     file.absent
     
@@ -18,7 +10,6 @@ ps-installed:
         - cwd: '/usr/bin'
         - user: root
         - require:
-          - pkg: curl
           - file: /usr/bin/peerscanner
 
 ps-upstart-script:
@@ -57,9 +48,6 @@ monitor-script:
         - user: lantern
         - group: lantern
         - mode: 744
-        - require:
-            - pkg: mailutils
-            - pkg: curl
 
 monitor:
     cron.present:

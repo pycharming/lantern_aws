@@ -9,18 +9,6 @@ include:
 {% set registerat="" %}
 {% endif %}
 
-curl:
-  pkg:
-    - installed
-
-mailutils:
-  pkg:
-    - installed
-
-libappindicator3-1:
-  pkg:
-    - installed
-
 /usr/bin/flashlight:
     file.absent
     
@@ -30,7 +18,6 @@ fl-installed:
         - cwd: '/usr/bin'
         - user: root
         - require:
-          - pkg: curl
           - file: /usr/bin/flashlight
 
 sudo /sbin/restart flashlight 2>&1 | logger -t flashlight_restarter:
@@ -77,9 +64,6 @@ monitor-script:
         - user: lantern
         - group: lantern
         - mode: 744
-        - require:
-            - pkg: mailutils
-            - pkg: curl
 
 monitor:
     cron.present:

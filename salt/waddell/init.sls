@@ -1,10 +1,6 @@
 include:
     - proxy_ufw_rules
 
-curl:
-  pkg:
-    - installed
-
 /usr/bin/waddell:
     file.absent
 
@@ -22,8 +18,6 @@ waddell-installed:
         - name: 'curl -L https://github.com/getlantern/flashlight-build/releases/download/0.0.4/waddell_linux_amd64 -o waddell && chmod a+x waddell'
         - cwd: '/usr/bin'
         - user: root
-        - require:
-          - pkg: curl
 
 waddell-upstart-script:
     file.managed:
