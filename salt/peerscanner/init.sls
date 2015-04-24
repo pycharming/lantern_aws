@@ -1,16 +1,10 @@
 include:
     - proxy_ufw_rules
 
-/usr/bin/peerscanner:
-    file.absent
-    
-ps-installed:
-    cmd.run:
-        - name: 'curl -L https://github.com/getlantern/lantern/releases/download/0.0.16/peerscanner_linux_amd64 -o peerscanner && chmod a+x peerscanner'
-        - cwd: '/usr/bin'
-        - user: root
-        - require:
-          - file: /usr/bin/peerscanner
+{% from 'install_from_release.sls' import install_from_release %}
+
+{# define cmd: peerscanner-installed #}
+{{ install_from_release('peerscanner', '0.0.16') }}
 
 ps-upstart-script:
     file.managed:
@@ -21,7 +15,7 @@ ps-upstart-script:
         - group: root
         - mode: 644
         - require:
-            - cmd: ps-installed
+            - cmd: peerscanner-installed
 
 ps-service-registered:
     cmd.run:
@@ -36,7 +30,7 @@ peerscanner:
         - enable: yes
         - require:
             - cmd: ufw-rules-ready
-            - cmd: ps-installed
+            - cmd: peerscanner-installed
             - cmd: ps-service-registered
         - watch:
             - file: /usr/bin/peerscanner

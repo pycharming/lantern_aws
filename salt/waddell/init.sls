@@ -1,8 +1,7 @@
 include:
     - proxy_ufw_rules
 
-/usr/bin/waddell:
-    file.absent
+{% from 'install_from_release.sls' import install_from_release %}
 
 {% for name in 'waddell_pk.pem', 'waddell_cert.pem' %}
 /home/lantern/{{ name }}:
@@ -12,12 +11,9 @@ include:
         - group: lantern
         - mode: 600
 {% endfor %} 
-    
-waddell-installed:
-    cmd.run:
-        - name: 'curl -L https://github.com/getlantern/lantern/releases/download/0.0.4/waddell_linux_amd64 -o waddell && chmod a+x waddell'
-        - cwd: '/usr/bin'
-        - user: root
+
+{# define cmd: waddel-installed #}
+{{ install_from_release('waddell', '0.0.4') }}
 
 waddell-upstart-script:
     file.managed:

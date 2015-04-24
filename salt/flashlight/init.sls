@@ -1,6 +1,7 @@
 include:
     - proxy_ufw_rules
 
+{% from 'install_from_release.sls' import install_from_release %}
 {% set zone='getiantem.org' %}
 {% set frontfqdns = "{cloudflare: " + grains['id'] + "." + zone + "}" %}
 {% if grains.get('controller', pillar.get('controller', 'not-production')) == grains.get('production_controller', 'lanternctrl1-2') %}
@@ -9,16 +10,8 @@ include:
 {% set registerat="" %}
 {% endif %}
 
-/usr/bin/flashlight:
-    file.absent
-    
-fl-installed:
-    cmd.run:
-        - name: 'curl -L https://github.com/getlantern/lantern/releases/download/0.0.17/lantern_linux_amd64 -o flashlight && chmod a+x flashlight'
-        - cwd: '/usr/bin'
-        - user: root
-        - require:
-          - file: /usr/bin/flashlight
+{# define cmd: flashlight-installed #}
+{{ install_from_release('flashlight', '0.0.17') }}
 
 sudo /sbin/restart flashlight 2>&1 | logger -t flashlight_restarter:
     cron.absent:
@@ -37,7 +30,7 @@ fl-upstart-script:
         - group: root
         - mode: 644
         - require:
-            - cmd: fl-installed
+            - cmd: flashlight-installed
 
 fl-service-registered:
     cmd.run:
@@ -53,7 +46,7 @@ flashlight:
             - cmd: fl-service-registered
         - watch:
             - file: /usr/bin/flashlight
-            - cmd: fl-installed
+            - cmd: flashlight-installed
 
 monitor-script:
     file.managed:
