@@ -218,7 +218,7 @@ list lives in flashlight/genconfig/fallbacks.json.  To update it run
 
 Where `<flashlight-root>` is where your checkout of the flashlight project
 lives (at the time of this writing, you may want to actually update the
-flashlight checkout within the `flashlight-build` project instead.
+flashlight checkout within the `lantern` project instead.
 
 ## Troubleshooting
 

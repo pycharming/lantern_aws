@@ -15,7 +15,7 @@ include:
     
 waddell-installed:
     cmd.run:
-        - name: 'curl -L https://github.com/getlantern/flashlight-build/releases/download/0.0.4/waddell_linux_amd64 -o waddell && chmod a+x waddell'
+        - name: 'curl -L https://github.com/getlantern/lantern/releases/download/0.0.4/waddell_linux_amd64 -o waddell && chmod a+x waddell'
         - cwd: '/usr/bin'
         - user: root
 

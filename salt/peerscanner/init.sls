@@ -6,7 +6,7 @@ include:
     
 ps-installed:
     cmd.run:
-        - name: 'curl -L https://github.com/getlantern/flashlight-build/releases/download/0.0.16/peerscanner_linux_amd64 -o peerscanner && chmod a+x peerscanner'
+        - name: 'curl -L https://github.com/getlantern/lantern/releases/download/0.0.16/peerscanner_linux_amd64 -o peerscanner && chmod a+x peerscanner'
         - cwd: '/usr/bin'
         - user: root
         - require:
