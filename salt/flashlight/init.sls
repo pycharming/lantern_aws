@@ -51,7 +51,6 @@ flashlight:
         - require:
             - cmd: ufw-rules-ready
             - cmd: fl-service-registered
-            - pkg: libappindicator3-1
         - watch:
             - file: /usr/bin/flashlight
             - cmd: fl-installed
