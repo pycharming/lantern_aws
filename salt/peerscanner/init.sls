@@ -1,25 +1,10 @@
 include:
     - proxy_ufw_rules
 
-curl:
-  pkg:
-    - installed
+{% from 'install_from_release.sls' import install_from_release %}
 
-mailutils:
-  pkg:
-    - installed
-
-/usr/bin/peerscanner:
-    file.absent
-    
-ps-installed:
-    cmd.run:
-        - name: 'curl -L https://github.com/getlantern/flashlight-build/releases/download/0.0.16/peerscanner_linux_amd64 -o peerscanner && chmod a+x peerscanner'
-        - cwd: '/usr/bin'
-        - user: root
-        - require:
-          - pkg: curl
-          - file: /usr/bin/peerscanner
+{# define cmd: peerscanner-installed #}
+{{ install_from_release('peerscanner', '0.0.16') }}
 
 ps-upstart-script:
     file.managed:
@@ -30,7 +15,7 @@ ps-upstart-script:
         - group: root
         - mode: 644
         - require:
-            - cmd: ps-installed
+            - cmd: peerscanner-installed
 
 ps-service-registered:
     cmd.run:
@@ -45,7 +30,7 @@ peerscanner:
         - enable: yes
         - require:
             - cmd: ufw-rules-ready
-            - cmd: ps-installed
+            - cmd: peerscanner-installed
             - cmd: ps-service-registered
         - watch:
             - file: /usr/bin/peerscanner
@@ -57,9 +42,6 @@ monitor-script:
         - user: lantern
         - group: lantern
         - mode: 744
-        - require:
-            - pkg: mailutils
-            - pkg: curl
 
 monitor:
     cron.present:

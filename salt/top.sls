@@ -14,6 +14,7 @@ base:
         - lantern_build_prereqs
         - salt_cloud
         - cloudmaster
+        - cfrjanitor
     'fp-*':
         - lantern_build_prereqs
         - apt_upgrade
