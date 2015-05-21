@@ -1,7 +1,15 @@
 from itertools import *
 import os
 
-import boto.ec2
+try:
+    import boto.ec2
+except ImportError:
+    print
+    print "No boto module found."
+    print "try `pip install boto`"
+    print
+    import sys
+    sys.exit(1)
 
 import config
 import here

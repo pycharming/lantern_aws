@@ -5,7 +5,15 @@ import sys
 import time
 from functools import wraps
 
-import digitalocean as do
+try:
+    import digitalocean as do
+except ImportError:
+    print
+    print "No digitalocean module found."
+    print "Try `pip install python-digitalocean`"
+    print
+    sys.exit(1)
+
 import yaml
 
 import config
