@@ -7,8 +7,7 @@ import salt.client
 import salt.key
 
 
-def collect(country):
-    prefix = 'fp-%s-' % country
+def collect(prefix):
     sk = salt.cli.SaltKey()
     sk.parse_args()
     k = salt.key.Key(sk.config)
@@ -48,11 +47,11 @@ def get_data(client, from_whom):
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print "Usage: %s <country>" % sys.argv[0]
-        print "(e.g. %s jp)" % sys.argv[0]
+        print "Usage: %s <prefix>" % sys.argv[0]
+        print "(e.g. %s fp-jp-)" % sys.argv[0]
         sys.exit(1)
-    country = sys.argv[1]
-    json, uninitialized, nonresponding = collect(country)
+    prefix = sys.argv[1]
+    json, uninitialized, nonresponding = collect(prefix)
     print json
     if uninitialized:
         print >> sys.stderr, "Uninitialized minions:"
