@@ -214,11 +214,19 @@ Whenever you launch or kill fallback proxies, you should update the list of
 chained servers in the configuration that gets pushed to Lantern clients.  This
 list lives in flashlight/genconfig/fallbacks.json.  To update it run
 
-    bin/ssh_cloudmaster.py regenerate-fallbacks-list > <flashlight-root>/genconfig/fallback.json
+    bin/ssh_cloudmaster.py 'regenerate-fallbacks-list <prefix>' > <flashlight-root>/genconfig/fallback.json
 
-Where `<flashlight-root>` is where your checkout of the flashlight project
+Where
+
+- `<flashlight-root>` is where your checkout of the flashlight project
 lives (at the time of this writing, you may want to actually update the
-flashlight checkout within the `lantern` project instead.
+flashlight checkout within the `lantern` project instead), and
+
+- `<prefix>` is a prefix for the name of the fallback proxies you want to
+  include in this configuration.  For example, to compile a configuration of
+all the fallbacks in our tokyo datacenter, you'd say
+
+    bin/ssh_cloudmaster.py 'regenerate-fallbacks-list fp-jp-' > ~/src/lantern/src/github.com/flashlight/genconfig/fallback.json
 
 ## Troubleshooting
 
