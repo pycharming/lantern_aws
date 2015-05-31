@@ -9,12 +9,11 @@ from vultr.vultr import Vultr
 api_key = "XXX"
 tokyo_dcid = u'25'
 planid_768mb = u'31'
-planid_1gb = u'32'
+planid_1gb = u'106'
 ubuntu14_10_64bit = u'181'
 aranhoide_ssh_key_id = u'55255a40b2742'
 
-#bootstrap_tmpl = "ssh -o StrictHostKeyChecking=no root@%s 'curl -L https://bootstrap.saltstack.com | sh -s -- -A 188.166.52.119 -i %s git v2014.7.0'"
-bootstrap_tmpl = "ssh -o StrictHostKeyChecking=no root@%s 'curl -L https://bootstrap.saltstack.com | sh -s -- -A 128.199.93.248 -i %s git v2014.7.0'"
+bootstrap_tmpl = "ssh -o StrictHostKeyChecking=no root@%s 'curl -L https://raw.githubusercontent.com/saltstack/salt-bootstrap/902da734465798edb3aa6a68445ada358a69b0ef/bootstrap-salt.sh | sh -s -- -A 128.199.93.248 -i %s git v2014.7.0'"
 vltr = Vultr(api_key)
 
 def ip_prefix(ip):
