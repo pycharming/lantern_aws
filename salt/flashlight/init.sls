@@ -45,7 +45,6 @@ flashlight:
             - cmd: ufw-rules-ready
             - cmd: fl-service-registered
         - watch:
-            - file: /usr/bin/flashlight
             - cmd: flashlight-installed
 
 monitor-script:

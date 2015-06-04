@@ -30,10 +30,9 @@ peerscanner:
         - enable: yes
         - require:
             - cmd: ufw-rules-ready
-            - cmd: peerscanner-installed
             - cmd: ps-service-registered
         - watch:
-            - file: /usr/bin/peerscanner
+            - cmd: peerscanner-installed
 
 monitor-script:
     file.managed:

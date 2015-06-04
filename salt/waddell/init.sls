@@ -38,9 +38,8 @@ waddell:
         - require:
             # All but the last requirement are redundant, only for robustness.
             - cmd: ufw-rules-ready
-            - cmd: waddell-installed
             - cmd: waddell-service-registered
             - file: /home/lantern/waddell_pk.pem
             - file: /home/lantern/waddell_cert.pem
         - watch:
-            - file: /usr/bin/waddell
+            - cmd: waddell-installed
