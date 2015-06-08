@@ -6,7 +6,7 @@ import os
 from vultr.vultr import Vultr
 
 
-api_key = "XXX"
+api_key = os.getenv("VULTR_APIKEY")
 tokyo_dcid = u'25'
 planid_768mb = u'31'
 planid_1gb = u'106'
