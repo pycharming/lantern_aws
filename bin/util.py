@@ -75,6 +75,11 @@ def read_do_credential():
                              ['client_id', 'api_key', 'rw_token'])
 
 @memoized
+def read_vultr_credential():
+    return secrets_from_yaml(['vultr.md'],
+                             ['api-key'])[0]
+
+@memoized
 def read_dnsimple_credential():
     return secrets_from_yaml(['dnsimple.txt'],
                              ['email', 'api_token'])
