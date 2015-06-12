@@ -148,7 +148,8 @@ def move_root_file(src, dst):
                                  ' && sudo chmod 600 %s') % (src, dst, dst, dst))
 
 def upload_pillars():
-    do_id, do_key, _ = util.read_do_credential()
+    do_id, do_key, do_token = util.read_do_credential()
+    vultr_apikey = util.read_vultr_credential()
     aws_id, aws_key = util.read_aws_credential()
     cfr_id, cfr_key = util.read_aws_credential(
             os.path.join(here.secrets_path,
@@ -167,6 +168,8 @@ def upload_pillars():
             r' && echo "include: [{{ grains[\"id\"] }}]" >> salt.sls '
             ' && echo "do_id: %s"  > do_credential.sls'
             ' && echo "do_key: %s" >> do_credential.sls'
+            ' && echo "do_token: %s" >> do_credential.sls'
+            ' && echo "vultr_apikey: %s" > vultr_credential.sls'
             ' && echo "aws_id: %s"  > aws_credential.sls'
             ' && echo "aws_key: %s" >> aws_credential.sls'
             ' && echo "cfl_id: %s"  > cfl_credential.sls'
@@ -175,8 +178,8 @@ def upload_pillars():
             ' && echo "cfr_key: %s" >> cfr_credential.sls'
             ' && echo "dsp_id: %s"  > dsp_credential.sls'
             ' && echo "dsp_key: %s" >> dsp_credential.sls'
-        r' && echo "base: {\"*\": [salt], \"fp-*\": [aws_credential], \"*cloudmaster*\": [aws_credential, do_credential, cfr_credential], \"ps-*\": [cfl_credential, cfr_credential, dsp_credential]}" > top.sls '
-            ' && sudo mv salt.sls top.sls $(hostname).sls aws_credential.sls cfl_credential.sls cfr_credential.sls do_credential.sls dsp_credential.sls /srv/pillar/ '
+           r' && echo "base: {\"*\": [salt], \"fp-*\": [aws_credential], \"*cloudmaster*\": [aws_credential, do_credential, vultr_credential, cfr_credential], \"ps-*\": [cfl_credential, cfr_credential, dsp_credential]}" > top.sls '
+            ' && sudo mv salt.sls top.sls $(hostname).sls aws_credential.sls cfl_credential.sls cfr_credential.sls do_credential.sls vultr_credential.sls dsp_credential.sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.private_networking,
@@ -185,6 +188,8 @@ def upload_pillars():
                  config.salt_version,
                  do_id,
                  do_key,
+                 do_token,
+                 vultr_apikey,
                  aws_id,
                  aws_key,
                  cfl_id,

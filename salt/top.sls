@@ -15,6 +15,7 @@ base:
         - salt_cloud
         - cloudmaster
         - cfrjanitor
+        - check_vpss
     'fp-*':
         - lantern_build_prereqs
         - apt_upgrade
