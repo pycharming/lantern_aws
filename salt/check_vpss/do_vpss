@@ -5,11 +5,6 @@ chat.getlantern.org
 docker-test
 fakedns.getlantern.org  # a broken dns server, for testing firetweet from uncensored regions
 
-# flashlight (fronted) servers in the nyc3 datacenter, used by firetweet to
-# avoid Twitter phone number validation popups when registering users' accounts.
-fl-donyc3-20150608-001
-fl-donyc3-20150608-002
-
 # flashlight (fronted) servers in the ams3 used by clients in countries that have no
 # specific data center assigned
 fl-nl-20150226-002
@@ -66,30 +61,6 @@ fp-afisk-at-getlantern-dot-org-50e8-4-2014-2-24
 fp-afisk-at-getlantern-dot-org-50e8-5-2015-1-11
 fp-aranhoide-at-gmail-dot-com-13a5-12-2014-10-10
 fp-default-fallback-donot-delete-38e8-0-2014-6-6
-
-# fallback (chained, lantern-java) proxies in the nyc3 datacenter, used by
-# firetweet to avoid Twitter phone verification screens when registering user
-# accounts.
-fp-donyc3-20150608-001
-fp-donyc3-20150608-002
-fp-donyc3-20150608-003
-fp-donyc3-20150608-004
-fp-donyc3-20150608-005
-fp-donyc3-20150608-006
-fp-donyc3-20150608-007
-fp-donyc3-20150608-008
-fp-donyc3-20150608-009
-fp-donyc3-20150608-010
-fp-donyc3-20150608-011
-fp-donyc3-20150608-012
-fp-donyc3-20150608-013
-fp-donyc3-20150608-014
-fp-donyc3-20150608-015
-fp-donyc3-20150608-016
-fp-donyc3-20150608-017
-fp-donyc3-20150608-018
-fp-donyc3-20150608-019
-fp-donyc3-20150608-020
 
 # fallback (chained, lantern-java) proxies in the nyc2 datacenter, used by
 # lantern 1.5 clients.
