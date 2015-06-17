@@ -11,11 +11,11 @@ base:
         - enable_swap
         - timezone
     '*cloudmaster*':
-        - lantern_build_prereqs
         - salt_cloud
         - cloudmaster
         - cfrjanitor
         - check_vpss
+        - checkfallbacks
     'fp-*':
         - lantern_build_prereqs
         - apt_upgrade
