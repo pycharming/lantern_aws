@@ -17,7 +17,7 @@ def send_mail(from_, to, subject, body):
     s.sendmail(from_, [to], msg.as_string())
     s.close()
 
-cmd = subprocess.Popen("checkfallbacks -fallbacks /home/lantern/fallbacks-to-check.json -connections 50 | grep '\[failed fallback check\]'",
+cmd = subprocess.Popen("checkfallbacks -fallbacks /home/lantern/fallbacks-to-check.json -connections 20 | grep '\[failed fallback check\]'",
                        shell=True,
                        stdout=subprocess.PIPE)
 errors = list(cmd.stdout)
