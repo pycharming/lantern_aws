@@ -5,6 +5,8 @@ chat.getlantern.org
 docker-test
 fakedns.getlantern.org  # a broken dns server, for testing firetweet from uncensored regions
 
+issue-2184  # xiam is using this droplet to debug that issue
+
 # flashlight (fronted) servers in the ams3 used by clients in countries that have no
 # specific data center assigned
 fl-nl-20150226-002
