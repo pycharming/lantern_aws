@@ -89,6 +89,11 @@ def read_cfl_credential():
     return secrets_from_yaml(['cloudflare.txt'],
                              ['user', 'api_key'])
 
+@memoized
+def read_cfgsrv_credential():
+    return secrets_from_yaml(['lantern_aws', 'config_server.yaml'],
+                             ['auth_token'])[0]
+
 def read_azure_ssh_pass():
     return secrets_from_yaml(['lantern_aws', 'azure.yaml'],
                              ['ssh-pass'])[0]

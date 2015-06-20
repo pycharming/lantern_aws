@@ -106,17 +106,33 @@ psutil:
             - pkg: build-essential
             - pkg: python-dev
 
+requests:
+  pip.installed
+
+/home/lantern/check_load.py:
+  file.managed:
+    - source: salt://fallback_proxy/check_load.py
+    - template: jinja
+    - user: lantern
+    - group: lantern
+    - mode: 755
+    - cwd: /home/lantern
+    - require:
+        - pip: requests
+
 report-stats:
     cron.present:
         - name: /home/lantern/report_stats.py
-        - minute: '*/10'
+        - minute: '*/11'
         - user: lantern
         - require:
             - file: /home/lantern/report_stats.py
             - pip: psutil
             - service: lantern
 
+
 {% if grains.get('controller', pillar.get('controller', 'not-the-production-controller')) == grains.get('production_controller', 'lanternctrl1-2') %}
+
 check-lantern:
     cron.present:
         - name: /home/lantern/check_lantern.py
@@ -126,6 +142,14 @@ check-lantern:
             - file: /home/lantern/check_lantern.py
             - pip: psutil
             - service: lantern
+
+"/home/lantern/check_load.py 2>&1 | logger -t check_load":
+  cron.present:
+    - minute: "*/7"
+    - user: lantern
+    - require:
+        - file: /home/lantern/check_load.py
+
 {% endif %}
 
 
