@@ -109,7 +109,8 @@ def set_secret_permissions():
     We can't even create an instance unless we restrict the permissions of the
     corresponding .pem.
     """
-    for path, dirnames, filenames in os.walk(here.secrets_path):
+    for path, dirnames, filenames in os.walk(os.path.join(here.secrets_path,
+                                                          'lantern_aws')):
         for name in filenames:
             os.chmod(os.path.join(path, name), stat.S_IREAD)
 
