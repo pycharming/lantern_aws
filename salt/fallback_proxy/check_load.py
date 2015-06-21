@@ -44,7 +44,7 @@ if la15m > report_threshold:
 
 if not os.path.exists(flag_filename) and la15m > split_threshold:
     for attempt in xrange(7):
-        resp = requests.post("https://config-test.getiantem.org/split-server",
+        resp = requests.post("https://config.getiantem.org/split-server",
                              headers={"X-Lantern-Auth-Token": auth_token})
         if resp.status_code == 200:
             file(flag_filename, 'w').write(str(datetime.datetime.now()))
