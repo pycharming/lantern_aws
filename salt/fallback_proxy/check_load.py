@@ -15,8 +15,8 @@ auth_token = "{{ pillar['cfgsrv_token'] }}"
 flag_filename = "server_split"
 instance_id = "{{ grains['id'] }}"
 ip = "{{ external_ip(grains) }}"
-report_threshold = 0.7
-split_threshold = 0.6
+report_threshold = 0.8
+split_threshold = 0.7
 
 
 #XXX: extract as a library.
