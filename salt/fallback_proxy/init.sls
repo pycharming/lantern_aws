@@ -131,7 +131,7 @@ report-stats:
             - service: lantern
 
 
-{% if grains.get('controller', pillar.get('controller', 'not-the-production-controller')) == grains.get('production_controller', 'lanternctrl1-2') %}
+{% if pillar['in_production'] %}
 
 check-lantern:
     cron.present:

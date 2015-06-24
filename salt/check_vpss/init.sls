@@ -26,7 +26,7 @@ vultr:
     - group: lantern
     - mode: 755
 
-{% if grains.get('controller', pillar.get('controller', 'not-production')) == grains.get('production_controller', 'lanternctrl1-2') %}
+{% if pillar['in_production'] %}
 /home/lantern/check_vpss.py 2>&1 | /usr/bin/logger -t check_vpss:
   cron.present:
     - hour: 2

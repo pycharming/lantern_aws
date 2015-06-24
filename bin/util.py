@@ -20,6 +20,8 @@ import config
 import here
 
 
+def in_production():
+    return config.cloudmaster_name in config.production_cloudmasters
 
 def memoized(f):
     d = {}

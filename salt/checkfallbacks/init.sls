@@ -18,7 +18,7 @@
     - mode: 755
 
 "/usr/bin/checkfallbacks.py | logger -t checkfallbacks":
-{% if grains.get('controller', pillar.get('controller', 'not-production')) == grains.get('production_controller', 'lanternctrl1-2') %}
+{% if pillar['in_production'] %}
   cron.present:
     - minute: '*/11'
     - user: lantern

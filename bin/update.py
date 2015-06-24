@@ -21,7 +21,7 @@ nothing to commit, working directory clean
 EXPECTED_PRODUCTION_GIT_PULL_OUTPUT = "Already up-to-date.\n"
 
 def check_master_if_in_production():
-    if config.controller == config.production_controller:
+    if util.in_production():
         status_output = normalize_status_output(
                 subprocess.check_output(['git', 'status']))
         if status_output != EXPECTED_PRODUCTION_GIT_STATUS_OUTPUT:
@@ -164,6 +164,7 @@ def upload_pillars():
             ' && echo "default_profile: %s" >> $(hostname).sls '
             ' && echo "azure_ssh_pass: %s" >> $(hostname).sls '
             ' && echo "salt_version: %s" > salt.sls '
+            ' && echo "in_production: %s" > global.sls '
             # Hack so every instance will read specific pillars from a file
             # named with the <instance_name>.sls scheme.
             r' && echo "include: [{{ grains[\"id\"] }}]" >> salt.sls '
@@ -180,14 +181,15 @@ def upload_pillars():
             ' && echo "dsp_id: %s"  > dsp_credential.sls'
             ' && echo "dsp_key: %s" >> dsp_credential.sls'
             ' && echo "cfgsrv_token: %s" > cfgsrv_credential.sls'
-           r' && echo "base: {\"*\": [salt], \"fp-*\": [aws_credential, cfgsrv_credential], \"*cloudmaster*\": [aws_credential, do_credential, vultr_credential, cfr_credential], \"ps-*\": [cfl_credential, cfr_credential, dsp_credential]}" > top.sls '
-            ' && sudo mv salt.sls top.sls $(hostname).sls aws_credential.sls cfl_credential.sls cfr_credential.sls do_credential.sls vultr_credential.sls dsp_credential.sls cfgsrv_credential.sls /srv/pillar/ '
+           r' && echo "base: {\"*\": [salt, global], \"fp-*\": [aws_credential, cfgsrv_credential], \"*cloudmaster*\": [aws_credential, do_credential, vultr_credential, cfr_credential], \"ps-*\": [cfl_credential, cfr_credential, dsp_credential]}" > top.sls '
+            ' && sudo mv salt.sls global.sls top.sls $(hostname).sls aws_credential.sls cfl_credential.sls cfr_credential.sls do_credential.sls vultr_credential.sls dsp_credential.sls cfgsrv_credential.sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.private_networking,
                  config.default_profile,
                  azure_ssh_pass,
                  config.salt_version,
+                 util.in_production(),
                  do_id,
                  do_key,
                  do_token,
