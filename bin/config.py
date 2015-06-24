@@ -11,6 +11,7 @@ do_region = 'Singapore 1'
 # Set this to False unless you know that the datacenter supports it.
 private_networking = True
 controller = production_controller = 'lanternctrl1-2'
+production_cloudmasters = ['production-cloudmaster']
 cloudmaster_name = 'production-cloudmaster'
 free_for_all_sg_name = 'free-for-all'
 

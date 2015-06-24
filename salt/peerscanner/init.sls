@@ -24,7 +24,7 @@ ps-service-registered:
             - file: ps-upstart-script
 
 {# Don't automatically start the server in test setups. #}
-{% if grains.get('controller', pillar.get('controller', 'not-production')) == grains.get('production_controller', 'lanternctrl1-2') %}
+{% if pillar['in_production'] %}
 peerscanner:
     service.running:
         - enable: yes

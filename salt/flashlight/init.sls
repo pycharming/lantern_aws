@@ -4,7 +4,7 @@ include:
 {% from 'install_from_release.sls' import install_from_release %}
 {% set zone='getiantem.org' %}
 {% set frontfqdns = "{cloudflare: " + grains['id'] + "." + zone + "}" %}
-{% if grains.get('controller', pillar.get('controller', 'not-production')) == grains.get('production_controller', 'lanternctrl1-2') %}
+{% if pillar['in_production'] %}
 {% set registerat="-registerat https://peerscanner." + zone %}
 {% else %}
 {% set registerat="" %}

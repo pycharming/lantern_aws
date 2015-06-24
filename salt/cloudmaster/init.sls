@@ -1,9 +1,6 @@
 include:
     - salt_cloud
     - lockfile
-{% if grains['controller'] == grains['production_controller'] %}
-    - lantern
-{% endif %}
 
 /etc/ufw/applications.d/salt:
     file.managed:
