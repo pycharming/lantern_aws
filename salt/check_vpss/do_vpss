@@ -300,8 +300,13 @@ getlantern.org
 lantern-ui2
 lantern-ui3
 lantern.io
+mail-responder-ny2
 mail-responder-ny3
 mail-responder-sfo
+mail-responder-am1
+mail-responder-am2
+mail-responder-am3
+mail-responder-fr1
 
 # the cloudmaster we use for the production fleet of salt minions
 production-cloudmaster  
