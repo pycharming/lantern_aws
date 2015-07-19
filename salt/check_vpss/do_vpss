@@ -294,9 +294,11 @@ fp-nl-20150531-020
 # A test fallback server used by aranhoide, in the ams3 data center.
 fp-nl-ara-001
 
+# Various stuff.
 geo1
 getlantern
 getlantern.org
+beta.getlantern.org
 lantern-ui2
 lantern-ui3
 lantern.io
