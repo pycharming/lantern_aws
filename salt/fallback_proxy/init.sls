@@ -2,6 +2,7 @@
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
 {% set proxy_port=grains.get('proxy_port', 62443) %}
+{% set traffic_check_period_minutes=5 %}
 {% from 'ip.sls' import external_ip %}
 
 {% set lantern_args = "-Xmx350m org.lantern.simple.Give "
@@ -16,6 +17,8 @@
 {% set template_files=[
     ('/etc/init.d/', 'lantern', 'lantern.init', 'root', 700),
     ('/home/lantern/', 'check_lantern.py', 'check_lantern.py', 'root', 700),
+    ('/home/lantern/', 'check_load.py', 'check_load.py', 'lantern', 700),
+    ('/home/lantern/', 'check_traffic.py', 'check_traffic.py', 'lantern', 700),
     ('/home/lantern/', 'kill_lantern.py', 'kill_lantern.py', 'lantern', 700),
     ('/home/lantern/', 'report_stats.py', 'report_stats.py', 'lantern', 700),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
@@ -46,6 +49,7 @@ include:
             proxy_protocol: {{ proxy_protocol }}
             auth_token: {{ auth_token }}
             external_ip: {{ external_ip(grains) }}
+            traffic_check_period_minutes: {{ traffic_check_period_minutes }}
         - user: {{ user }}
         - group: {{ user }}
         - mode: {{ mode }}
@@ -101,24 +105,13 @@ build-essential:
 
 psutil:
     pip.installed:
-        - name: psutil==2.1.0
+        - name: psutil==2.1.1
         - require:
             - pkg: build-essential
             - pkg: python-dev
 
 requests:
   pip.installed
-
-/home/lantern/check_load.py:
-  file.managed:
-    - source: salt://fallback_proxy/check_load.py
-    - template: jinja
-    - user: lantern
-    - group: lantern
-    - mode: 755
-    - cwd: /home/lantern
-    - require:
-        - pip: requests
 
 report-stats:
     cron.present:
@@ -149,6 +142,15 @@ check-lantern:
     - user: lantern
     - require:
         - file: /home/lantern/check_load.py
+        - pip: requests
+
+"/home/lantern/check_traffic.py 2>&1 | logger -t check_traffic":
+  cron.present:
+    - minute: "*/{{ traffic_check_period_minutes }}"
+    - user: lantern
+    - require:
+        - file: /home/lantern/check_traffic.py
+        - pip: psutil
 
 {% endif %}
 
