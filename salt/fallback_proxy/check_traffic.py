@@ -25,7 +25,7 @@ ip = "{{ external_ip(grains) }}"
 traffic_log_filename = "traffic_log.yaml"
 
 day = 24 * 60 * 60
-alarm_threshold = 0.2
+alarm_threshold = 0.1
 
 
 #XXX: extract as a library.
