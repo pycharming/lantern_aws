@@ -10,7 +10,7 @@ api_key = os.getenv("VULTR_APIKEY")
 tokyo_dcid = u'25'
 planid_768mb = u'31'
 planid_1gb = u'106'
-ubuntu14_10_64bit = u'181'
+ubuntu14_04_64bit = u'160'
 aranhoide_ssh_key_id = u'55255a40b2742'
 
 bootstrap_tmpl = "ssh -o StrictHostKeyChecking=no root@%s 'curl -L https://raw.githubusercontent.com/saltstack/salt-bootstrap/902da734465798edb3aa6a68445ada358a69b0ef/bootstrap-salt.sh | sh -s -- -A 128.199.93.248 -i %s git v2014.7.0'"
@@ -36,7 +36,7 @@ def create(prefix, start, number):
         print "Creating %s ..." % label
         print vltr.server_create(tokyo_dcid,
                                  planid_1gb,
-                                 ubuntu14_10_64bit,
+                                 ubuntu14_04_64bit,
                                  label=label,
                                  enable_private_network="yes",
                                  sshkeyid=aranhoide_ssh_key_id)
