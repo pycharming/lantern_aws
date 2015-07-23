@@ -49,5 +49,17 @@ def check_queued_servers(dc, dry_run=True):
                 print r().lrem(key, cfg, 1)
                 print
 
+def print_queued_server_ids(dc):
+    if dc.startswith('vl'):
+        d = {d['main_ip']: d['label']
+             for d in vu.vltr.server_list(None).itervalues()}
+    elif dc.startswith('do'):
+        d = {d.ip_address: name
+             for name, d in do.droplets_by_name.iteritems()}
+    key = dc + ':srvq'
+    queued_cfgs = r().lrange(key, 0, -1)
+    for i, cfg in enumerate(reversed(queued_cfgs)):
+        ip = cfg.split('|')[0]
+        print i+1, d[ip]
 
 
