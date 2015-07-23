@@ -168,7 +168,11 @@ vultr:
         - group: lantern
         - mode: 700
 
+# bug: missing -t
 "/home/lantern/check_vultr_transfer.py | logger check_vultr_transfer":
+  cron.absent
+
+"/home/lantern/check_vultr_transfer.py | logger -t check_vultr_transfer":
   cron.present:
     - minute: "*/22"
     - user: lantern
