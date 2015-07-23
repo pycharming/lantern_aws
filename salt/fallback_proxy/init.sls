@@ -17,6 +17,7 @@
 {% set template_files=[
     ('/etc/init.d/', 'lantern', 'lantern.init', 'root', 700),
     ('/home/lantern/', 'check_lantern.py', 'check_lantern.py', 'root', 700),
+    ('/home/lantern/', 'util.py', 'util.py', 'lantern', 400),
     ('/home/lantern/', 'check_load.py', 'check_load.py', 'lantern', 700),
     ('/home/lantern/', 'check_traffic.py', 'check_traffic.py', 'lantern', 700),
     ('/home/lantern/', 'kill_lantern.py', 'kill_lantern.py', 'lantern', 700),
@@ -54,6 +55,7 @@ include:
         - group: {{ user }}
         - mode: {{ mode }}
 {% endfor %}
+
 
 fallback-proxy-dirs-and-files:
     cmd.run:
@@ -151,6 +153,30 @@ check-lantern:
     - require:
         - file: /home/lantern/check_traffic.py
         - pip: psutil
+
+{% if grains['id'].startswith('fp-jp-') %}
+
+vultr:
+  pip.installed:
+    - name: vultr==0.1.2
+
+/home/lantern/check_vultr_transfer.py:
+    file.managed:
+        - source: salt://fallback_proxy/check_vultr_transfer.py
+        - template: jinja
+        - user: lantern
+        - group: lantern
+        - mode: 700
+
+"/home/lantern/check_vultr_transfer.py | logger check_vultr_transfer":
+  cron.present:
+    - minute: "*/22"
+    - user: lantern
+    - require:
+        - file: /home/lantern/check_vultr_transfer.py
+        - pip: vultr
+
+{% endif %}
 
 {% endif %}
 
