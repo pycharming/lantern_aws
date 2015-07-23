@@ -2,7 +2,7 @@
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
 {% set proxy_port=grains.get('proxy_port', 62443) %}
-{% set traffic_check_period_minutes=5 %}
+{% set traffic_check_period_minutes=20 %}
 {% from 'ip.sls' import external_ip %}
 
 {% set lantern_args = "-Xmx350m org.lantern.simple.Give "
