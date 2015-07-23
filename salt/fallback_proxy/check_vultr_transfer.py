@@ -6,6 +6,8 @@ import os
 
 from vultr.vultr import Vultr
 
+import util
+
 
 instance_id = "{{ grains['id'] }}"
 # For offline testing.
