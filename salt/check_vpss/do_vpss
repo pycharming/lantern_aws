@@ -354,6 +354,7 @@ mail-responder-am1
 mail-responder-am2
 mail-responder-am3
 mail-responder-fr1
+influxdb
 
 # the cloudmaster we use for the production fleet of salt minions
 production-cloudmaster  
