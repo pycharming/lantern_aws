@@ -46,4 +46,3 @@ def split_server(msg):
     else:
         send_alarm("Unable to split chained fallback",
                    "I tried to split myself because I %s, but I couldn't." % msg)
-        return 'failure'
