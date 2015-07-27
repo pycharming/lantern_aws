@@ -31,18 +31,31 @@ def send_alarm(subject, body):
                                                         ip,
                                                         body))
 
-def split_server(msg):
+def split_server(msg, retire=False):
+    if retire:
+        # Uppercase so it catches our eye in the fallback-alarms list. As of
+        # this writing, we need to manually unregister these fallbacks from the
+        # list of ones to check and then shut them down.
+        participle = "RETIRED"
+        infinitive = "RETIRE"
+    else:
+        participle = infinitive = 'split'
     if os.path.exists(flag_filename):
         return
     for attempt in xrange(7):
+        if retire:
+            data = {'dislodge-users?': 'true'}
+        else:
+            data = {}
         resp = requests.post("https://config.getiantem.org/split-server",
-                             headers={"X-Lantern-Auth-Token": auth_token})
+                             headers={"X-Lantern-Auth-Token": auth_token},
+                             data=data)
         if resp.status_code == 200:
             file(flag_filename, 'w').write(str(datetime.datetime.now()))
-            send_alarm("Chained fallback split",
-                       "split because I " + msg)
+            send_alarm("Chained fallback " + participle,
+                       participle + " because I " + msg)
             return
         time.sleep(2 << attempt)
     else:
-        send_alarm("Unable to split chained fallback",
-                   "I tried to split myself because I %s, but I couldn't." % msg)
+        send_alarm("Unable to %s chained fallback" % infinitive,
+                   "I tried to %s myself because I %s, but I couldn't." % (infinitive, msg))
