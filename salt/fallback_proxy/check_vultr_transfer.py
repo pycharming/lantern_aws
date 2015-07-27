@@ -25,6 +25,9 @@ vultr = Vultr(api_key)
 # consumed this much of our monthly allowance.
 significant_usage = 0.25
 
+# Servers reaching this threshold at any time of the month are split and their
+# current users are reassigned to other servers.
+retire_threshold = 0.95
 
 def vultr_dict():
     try:
@@ -52,24 +55,24 @@ def time_portion():
     elapsed = now - beginning_of_month
     return elapsed.total_seconds() / whole_month.total_seconds()
 
-def over_quota(vd, t):
-    usage = usage_portion(vd)
-    return usage > significant_usage and usage > t
-
 def run():
     print "Starting..."
     vd = vultr_dict()
+    usage = usage_portion(vd)
     t = time_portion()
-    if over_quota(vd, t):
+    if usage > retire_threshold:
+        print "Retiring!"
+        util.split_server(msg, retire=True)
+    elif usage > significant_usage and usage > t:
         msg = ("used %s out of %s allowed traffic quota (%.2f%%)"
                " in %.2f%% of the current month" % (vd['current_bandwidth_gb'],
                                                     vd['allowed_bandwidth_gb'],
-                                                    usage_portion(vd) * 100,
+                                                    usage * 100,
                                                     t * 100))
         print "Splitting because I", msg
-        util.split_server(msg)
+        util.split_server(msg, retire=False)
     else:
-        print "Usage portion %s under time portion %s; not splitting." % (usage_portion(vd),
+        print "Usage portion %s under time portion %s; not splitting." % (usage,
                                                                           t)
     print "Done."
 
