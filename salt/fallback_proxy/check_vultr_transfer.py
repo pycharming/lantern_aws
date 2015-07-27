@@ -60,15 +60,15 @@ def run():
     vd = vultr_dict()
     usage = usage_portion(vd)
     t = time_portion()
+    msg = ("used %s out of %s allowed traffic quota (%.2f%%)"
+           % (vd['current_bandwidth_gb'],
+              vd['allowed_bandwidth_gb'],
+              usage * 100))
     if usage > retire_threshold:
-        print "Retiring!"
+        print "Retiring because I", msg
         util.split_server(msg, retire=True)
     elif usage > significant_usage and usage > t:
-        msg = ("used %s out of %s allowed traffic quota (%.2f%%)"
-               " in %.2f%% of the current month" % (vd['current_bandwidth_gb'],
-                                                    vd['allowed_bandwidth_gb'],
-                                                    usage * 100,
-                                                    t * 100))
+        msg += " in %.2f%% of the current month" % (t * 100)
         print "Splitting because I", msg
         util.split_server(msg, retire=False)
     else:
