@@ -11,7 +11,8 @@ auth_token = "{{ pillar['cfgsrv_token'] }}"
 instance_id = "{{ grains['id'] }}"
 # {% from 'ip.sls' import external_ip %}
 ip = "{{ external_ip(grains) }}"
-flag_filename = "server_split"
+split_flag_filename = "server_split"
+retire_flag_filename = "server_retired"
 
 
 def send_mail(from_, to, subject, body):
@@ -33,20 +34,20 @@ def send_alarm(subject, body):
 
 def split_server(msg, retire=False):
     if retire:
+        data = {'dislodge-users?': 'true'}
+        flag_filename = retire_flag_filename
         # Uppercase so it catches our eye in the fallback-alarms list. As of
         # this writing, we need to manually unregister these fallbacks from the
         # list of ones to check and then shut them down.
         participle = "RETIRED"
         infinitive = "RETIRE"
     else:
+        data = {}
+        flag_filename = split_flag_filename
         participle = infinitive = 'split'
     if os.path.exists(flag_filename):
         return
     for attempt in xrange(7):
-        if retire:
-            data = {'dislodge-users?': 'true'}
-        else:
-            data = {}
         resp = requests.post("https://config.getiantem.org/split-server",
                              headers={"X-Lantern-Auth-Token": auth_token},
                              data=data)
