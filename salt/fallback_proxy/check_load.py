@@ -5,8 +5,8 @@ import os
 import util
 
 
-report_threshold = 0.8
-split_threshold = 0.7
+report_threshold = 1.3
+split_threshold = 0.9
 
 
 _, _, la15m = os.getloadavg()
