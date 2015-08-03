@@ -60,6 +60,6 @@ def print_queued_server_ids(dc):
     queued_cfgs = r().lrange(key, 0, -1)
     for i, cfg in enumerate(reversed(queued_cfgs)):
         ip = cfg.split('|')[0]
-        print i+1, d[ip]
+        print i+1, d.get(ip)
 
 
