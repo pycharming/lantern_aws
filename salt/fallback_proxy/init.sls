@@ -147,12 +147,13 @@ check-lantern:
         - pip: requests
 
 "/home/lantern/check_traffic.py 2>&1 | logger -t check_traffic":
-  cron.present:
-    - minute: "*/{{ traffic_check_period_minutes }}"
-    - user: lantern
-    - require:
-        - file: /home/lantern/check_traffic.py
-        - pip: psutil
+  cron.absent
+#  cron.present:
+#    - minute: "*/{{ traffic_check_period_minutes }}"
+#    - user: lantern
+#    - require:
+#        - file: /home/lantern/check_traffic.py
+#        - pip: psutil
 
 {% if grains['id'].startswith('fp-jp-') %}
 
