@@ -147,7 +147,8 @@ check-lantern:
         - pip: requests
 
 "/home/lantern/check_traffic.py 2>&1 | logger -t check_traffic":
-  cron.absent
+  cron.absent:
+    - user: lantern
 #  cron.present:
 #    - minute: "*/{{ traffic_check_period_minutes }}"
 #    - user: lantern
@@ -171,7 +172,8 @@ vultr:
 
 # bug: missing -t
 "/home/lantern/check_vultr_transfer.py | logger check_vultr_transfer":
-  cron.absent
+  cron.absent:
+    - user: lantern
 
 "/home/lantern/check_vultr_transfer.py | logger -t check_vultr_transfer":
   cron.present:
