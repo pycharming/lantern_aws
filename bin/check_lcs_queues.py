@@ -1,7 +1,9 @@
 """Check LCServer queues in the config server, vs the list of live servers."""
 
-import redis
 import os
+import subprocess
+
+import redis
 
 import do_fps as do
 import util
@@ -16,7 +18,7 @@ def r():
     return redis.from_url(url)
 
 def ip_by_srv():
-    return {(v, k)
+    return {v: k
             for k, v in r().hgetall("srvbysrvip").iteritems()}
 
 def srv_by_dc(dc):
@@ -62,4 +64,23 @@ def print_queued_server_ids(dc):
         ip = cfg.split('|')[0]
         print i+1, d.get(ip)
 
+def underused_vultr_vpss():
+    ibs = ip_by_srv()
+    open_ips = set(map(ibs.get, open_servers("vltok1")))
+    print "open ips is", len(open_ips)
+    queued_ips = set(cfg.split('|')[0] for cfg in r().lrange('vltok1:srvq', 0, -1))
+    print "queued ips is", len(queued_ips)
+    discard_ips = open_ips | queued_ips
+    print "discarded ips is", len(discard_ips)
+    vv = [x
+          for x in vu.vltr.server_list(None).values()
+          if x['label'].startswith('fp-jp-')
+          and x['main_ip'] not in discard_ips]
+    vv.sort(key=lambda x: x['current_bandwidth_gb'])
+    return vv
 
+def access_data(ip):
+    return subprocess.check_output(['ssh', ip, '-o', 'StrictHostKeyChecking=no', 'sudo cat /home/lantern/access_data.json'])
+
+def save_access_data(ip_list, filename="../../lantern/src/github.com/getlantern/flashlight/genconfig/fallbacks.json"):
+    file(filename, 'w').write("[\n" + ",\n".join(map(access_data, ip_list)) + "\n]\n")
