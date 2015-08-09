@@ -63,24 +63,41 @@ def print_queued_server_ids(dc):
     for i, cfg in enumerate(reversed(queued_cfgs)):
         ip = cfg.split('|')[0]
         print i+1, d.get(ip)
+pq = print_queued_server_ids  # shortcut since I use this a lot.
+
+def discard_ips(dc):
+    ibs = ip_by_srv()
+    open_ips = set(map(ibs.get, open_servers(dc)))
+    queued_ips = set(cfg.split('|')[0] for cfg in r().lrange(dc + ':srvq', 0, -1))
+    return open_ips | queued_ips
 
 def underused_vultr_vpss():
-    ibs = ip_by_srv()
-    open_ips = set(map(ibs.get, open_servers("vltok1")))
-    print "open ips is", len(open_ips)
-    queued_ips = set(cfg.split('|')[0] for cfg in r().lrange('vltok1:srvq', 0, -1))
-    print "queued ips is", len(queued_ips)
-    discard_ips = open_ips | queued_ips
-    print "discarded ips is", len(discard_ips)
+    dips = discard_ips('vltok1')
     vv = [x
           for x in vu.vltr.server_list(None).values()
           if x['label'].startswith('fp-jp-')
-          and x['main_ip'] not in discard_ips]
+          and x['main_ip'] not in dips]
     vv.sort(key=lambda x: x['current_bandwidth_gb'])
     return vv
 
+def ssh(ip, cmd):
+    return subprocess.check_output(['ssh', ip, '-o', 'StrictHostKeyChecking=no', cmd])
+
+def load_avg(ip):
+    return float(ssh(ip, 'uptime').split()[-1])
+
+def underused_do_vpss():
+    dips = discard_ips('doams3')
+    vv = [x
+          for name, x in do.droplets_by_name.iteritems()
+          if name.startswith('fp-nl-')
+          and x.ip_address not in dips]
+    d = {x: load_avg(x.ip_address) for x in vv}
+    vv.sort(key=d.get)
+    return d, vv
+
 def access_data(ip):
-    return subprocess.check_output(['ssh', ip, '-o', 'StrictHostKeyChecking=no', 'sudo cat /home/lantern/access_data.json'])
+    return ssh(ip, 'sudo cat /home/lantern/access_data.json')
 
 def save_access_data(ip_list, filename="../../lantern/src/github.com/getlantern/flashlight/genconfig/fallbacks.json"):
     file(filename, 'w').write("[\n" + ",\n".join(map(access_data, ip_list)) + "\n]\n")
