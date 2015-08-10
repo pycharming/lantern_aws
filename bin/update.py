@@ -45,8 +45,6 @@ def not_up_to_date():
 
 def update():
     util.set_secret_permissions()
-    print "Uploading secrets..."
-    upload_secrets()
     print "Uploading minion config..."
     upload_cloudmaster_minion_config()
     print "Uploading master config..."
@@ -86,13 +84,6 @@ assert not error
             and ("error" in line.lower()
                  or "False" in line)):
             print line
-
-def upload_secrets():
-    error = scp(os.path.join(here.secrets_path, 'lantern_aws', 'azure.pem'),
-                '/root/')
-    if error:
-        return error
-    return move_root_file('/root/azure.pem', '/etc/salt/azure.pem')
 
 def rsync_salt():
     return rsync(here.salt_states_path, '/srv/salt')
@@ -155,14 +146,12 @@ def upload_pillars():
             os.path.join(here.secrets_path,
                          'cloudfront.aws_credential'))
     cfl_id, cfl_key = util.read_cfl_credential()
-    azure_ssh_pass = util.read_azure_ssh_pass()
     dsp_id, dsp_key = util.read_dnsimple_credential()
     cfgsrv_token = util.read_cfgsrv_credential()
     util.ssh_cloudmaster((
             'echo "branch: check-all-fallbacks" > $(hostname).sls '
             ' && echo "private_networking: %s" >> $(hostname).sls '
             ' && echo "default_profile: %s" >> $(hostname).sls '
-            ' && echo "azure_ssh_pass: %s" >> $(hostname).sls '
             ' && echo "salt_version: %s" > salt.sls '
             ' && echo "in_production: %s" > global.sls '
             # Hack so every instance will read specific pillars from a file
@@ -187,7 +176,6 @@ def upload_pillars():
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.private_networking,
                  config.default_profile,
-                 azure_ssh_pass,
                  config.salt_version,
                  util.in_production(),
                  do_id,

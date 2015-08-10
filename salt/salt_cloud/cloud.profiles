@@ -44,27 +44,3 @@ do_sg_2GB:
     image: "14.04 x64"
     size: 2GB
     script_args: '-- git {{ pillar['salt_version'] }}'
-
-azure_sea_xs:
-    provider: azure
-    image: '0b11de9248dd4d87b18621318e037d37__RightImage-Ubuntu-14.04-x64-v14.1.5.1'
-    size: ExtraSmall
-    location: 'Southeast Asia'
-    ssh_username: lantern
-    #XXX: disable SSH passwords in the bash login.
-    ssh_password: {{ pillar['azure_ssh_pass'] }}
-    slot: production
-    media_link: 'https://portalvhdsmn3x1p28ykpj.blob.core.windows.net/vhds'
-    script_args: '-- git {{ pillar['salt_version'] }}'
-
-azure_sea_s:
-    provider: azure
-    image: '0b11de9248dd4d87b18621318e037d37__RightImage-Ubuntu-14.04-x64-v14.1.5.1'
-    size: Small
-    location: 'Southeast Asia'
-    ssh_username: lantern
-    #XXX: disable SSH passwords in the bash login.
-    ssh_password: {{ pillar['azure_ssh_pass'] }}
-    slot: production
-    media_link: 'https://portalvhdsmn3x1p28ykpj.blob.core.windows.net/vhds'
-    script_args: '-- git {{ pillar['salt_version'] }}'
