@@ -4,20 +4,12 @@ python-digitalocean:
 vultr:
   pip.installed
 
-/home/lantern/do_vpss:
-  file.managed:
-    - source: salt://check_vpss/do_vpss
-    - user: lantern
-    - group: lantern
-    - mode: 644
-        
-/home/lantern/vultr_vpss:
-  file.managed:
-    - source: salt://check_vpss/vultr_vpss
-    - user: lantern
-    - group: lantern
-    - mode: 644
-      
+python-hiredis:
+  pkg.installed
+
+python-redis:
+  pkg.installed
+
 /home/lantern/check_vpss.py:
   file.managed:
     - source: salt://check_vpss/check_vpss.py
@@ -35,7 +27,6 @@ vultr:
     - require:
         - pip: python-digitalocean
         - pip: vultr
+        - pkg: python-redis
         - file: /home/lantern/check_vpss.py
-        - file: /home/lantern/do_vpss
-        - file: /home/lantern/vultr_vpss
 {% endif %}

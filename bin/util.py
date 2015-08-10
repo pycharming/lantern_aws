@@ -94,7 +94,7 @@ def read_cfl_credential():
 @memoized
 def read_cfgsrv_credential():
     return secrets_from_yaml(['lantern_aws', 'config_server.yaml'],
-                             ['auth_token'])[0]
+                             ['auth_token', 'redis_url'])
 
 def secrets_from_yaml(path, keys):
     d = yaml.load(file(os.path.join(here.secrets_path, *path)))
