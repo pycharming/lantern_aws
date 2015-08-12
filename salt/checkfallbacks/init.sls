@@ -19,7 +19,6 @@
     - require:
         - cmd: checkfallbacks-installed
         - file: /usr/bin/checkfallbacks.py
-        - file: /home/lantern/fallbacks-to-check.json
 {% else %}
   cron.absent:
     - user: lantern
