@@ -1,10 +1,18 @@
 #!/usr/bin/env python
 
 from email.mime.text import MIMEText
+import json
 import os
 import smtplib
 import subprocess
 import sys
+import yaml
+
+import redis
+
+
+redis_url = os.getenv('REDISCLOUD_PRODUCTION_URL') or "{{ pillar['cfgsrv_redis_url'] }}"
+redis_shell = redis.from_url(redis_url)
 
 
 #XXX: extract as a library.
@@ -17,7 +25,19 @@ def send_mail(from_, to, subject, body):
     s.sendmail(from_, [to], msg.as_string())
     s.close()
 
-cmd = subprocess.Popen("checkfallbacks -fallbacks /home/lantern/fallbacks-to-check.json -connections 20 | grep '\[failed fallback check\]'",
+prefix = 'fallbacks-to-check'
+try:
+    local_version = file(prefix + '-version').read()
+except IOError:
+    local_version = None
+remote_version = redis_shell.get('cfgbysrv:version')
+if local_version != remote_version:
+    json.dump([yaml.load(x).values()[0]
+               for x in redis_shell.hgetall('cfgbysrv').values()],
+              file(prefix + '.json', 'w'))
+    file(prefix + '-version', 'w').write(remote_version)
+
+cmd = subprocess.Popen("checkfallbacks -fallbacks %s.json -connections 20 | grep '\[failed fallback check\]'" % prefix,
                        shell=True,
                        stdout=subprocess.PIPE)
 errors = list(cmd.stdout)
