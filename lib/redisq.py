@@ -4,8 +4,25 @@
 import os
 import time
 
-def read_local(filename):
-    return file(os.path.join(os.path.dirname(__file__), filename)).read()
+# KEYS[1]: name of the queue to use.
+# ARGV[1]: current unix timestamp.
+qread_src = """
+local item = redis.call("rpop", KEYS[1])
+if string.find(item, "*") then
+  redis.call("lpush", KEYS[1], item)
+else
+  redis.call("lpush", KEYS[1], item .. "*" .. ARGV[1])
+end
+return item
+"""
+
+# KEYS[1]: name of the queue to use
+# ARGV[1]: name of the old item
+# ARGV[2]: name of the new item
+qreplace_src = """
+redis.call("lrem", KEYS[1], 1, ARGV[1])
+redis.call("lpush", KEYS[1], ARGV[2])
+"""
 
 def now():
     # This only needs be consistent within the cloudmaster itself.
@@ -19,18 +36,18 @@ class Queue:
         self.timeout = timeout
         self.sleep_time = sleep_time
         self.check_done = check_done
-        qread = redis_shell.register_script(read_local('qread.lua'))
+        qread = redis_shell.register_script(qread_src)
         def read():
             return qread(keys=[self.qname], args=[now()])
         self._read = read
-        qreplace = redis_shell.register_script(read_local('qreplace.lua'))
+        qreplace = redis_shell.register_script(qreplace_src)
         def refresh(item):
             item_id = item.split('*')[0]
             qreplace(keys=[self.qname],
                      args=[item, item_id + "*" + now()])
         self._refresh = refresh
 
-    def get_job(self):
+    def next_job(self):
         while True:
             item = self._read()
             if '*' in item:
