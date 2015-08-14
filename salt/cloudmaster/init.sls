@@ -40,3 +40,25 @@ include:
         - user: root
         - group: root
         - mode: 700
+
+/home/lantern/.ssh:
+    file.directory:
+        - user: lantern
+        - gid: lantern
+        - mode: 700
+
+/home/lantern/.ssh/id_rsa:
+    file.managed:
+        - source: salt://cloudmaster/id_rsa
+        - user: lantern
+        - mode: 400
+        - require:
+            - file: /home/lantern/.ssh
+
+/home/lantern/.ssh/id_rsa.pub:
+    file.managed:
+        - source: salt://cloudmaster/id_rsa.pub
+        - user: lantern
+        - mode: 400
+        - require:
+            - file: /home/lantern/.ssh
