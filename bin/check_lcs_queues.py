@@ -29,13 +29,15 @@ def srv_by_dc(dc):
 def open_servers(dc):
     return sorted(r().zrangebyscore(dc + ':slices', '-inf', '+inf'))
 
-def existing_ips(dc):
+def existing_ips(dc, name_prefix=""):
     if dc.startswith("vl"):
         return set(d['main_ip']
-                   for d in vu.vltr.server_list(None).itervalues())
+                   for d in vu.vltr.server_list(None).itervalues()
+                   if d['label'].startswith(name_prefix))
     elif dc.startswith("do"):
         return set(d.ip_address
-                   for d in do.droplets_by_name.itervalues())
+                   for d in do.droplets_by_name.itervalues()
+                   if d.name.startswith(name_prefix))
     else:
         assert False
 
@@ -51,25 +53,29 @@ def check_queued_servers(dc, dry_run=True):
                 print r().lrem(key, cfg, 1)
                 print
 
-def print_queued_server_ids(dc):
+def queued_ips(dc):
+    return [cfg.split('|')[0] for cfg in r().lrange(dc + ':srvq', 0, -1)]
+
+def names_by_ip(dc):
     if dc.startswith('vl'):
-        d = {d['main_ip']: d['label']
-             for d in vu.vltr.server_list(None).itervalues()}
+        return {d['main_ip']: d['label']
+                for d in vu.vltr.server_list(None).itervalues()}
     elif dc.startswith('do'):
-        d = {d.ip_address: name
-             for name, d in do.droplets_by_name.iteritems()}
+        return {d.ip_address: name
+                for name, d in do.droplets_by_name.iteritems()}
+
+def print_queued_server_ids(dc):
+    d = names_by_ip(dc)
     key = dc + ':srvq'
     queued_cfgs = r().lrange(key, 0, -1)
-    for i, cfg in enumerate(reversed(queued_cfgs)):
-        ip = cfg.split('|')[0]
+    for i, ip in enumerate(reversed(queued_ips(dc))):
         print i+1, d.get(ip)
 pq = print_queued_server_ids  # shortcut since I use this a lot.
 
 def discard_ips(dc):
     ibs = ip_by_srv()
     open_ips = set(map(ibs.get, open_servers(dc)))
-    queued_ips = set(cfg.split('|')[0] for cfg in r().lrange(dc + ':srvq', 0, -1))
-    return open_ips | queued_ips
+    return open_ips | set(queued_ips(dc))
 
 def underused_vultr_vpss():
     dips = discard_ips('vltok1')
@@ -101,3 +107,27 @@ def access_data(ip):
 
 def save_access_data(ip_list, filename="../../lantern/src/github.com/getlantern/flashlight/genconfig/fallbacks.json"):
     file(filename, 'w').write("[\n" + ",\n".join(map(access_data, ip_list)) + "\n]\n")
+
+def unused_servers(dc):
+    if dc.startswith('vl'):
+        prefix = "fp-jp-"
+    elif dc.startswith('do'):
+        prefix = "fp-nl-"
+    else:
+        assert False
+    ips = set(existing_ips(dc, name_prefix=prefix)) - set(queued_ips(dc))
+    ret = set()
+    for ip in ips:
+        id_ = r().hget("srvbysrvip", ip)
+        if not id_ or not r().hget("cfgbysrv", id_):
+            ret.add(ip)
+    return ret
+
+def remove_fp(dc, ip):
+    for cfg in r().hgetall('cfgbysrv').itervalues():
+        if cfg.split('|')[0] == ip:
+            print "deleting one config..."
+            r().lrem('cfgbysrv', cfg, 0)
+            r().incr('cfgbysrv:version')
+    print r().lrem(dc + ':vpss', names_by_ip(dc)[ip], 0)
+    r().incr(dc + ':vpss:version')
