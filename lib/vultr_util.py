@@ -1,9 +1,18 @@
 #!/usr/bin/env python
 
 from datetime import datetime
+import json
 import os
+import random
+import socket
+import string
+import subprocess
+import sys
+import tempfile
+import time
+import traceback
 
-from vultr.vultr import Vultr
+from vultr.vultr import Vultr, VultrError
 
 
 api_key = os.getenv("VULTR_APIKEY")
@@ -11,18 +20,45 @@ tokyo_dcid = u'25'
 planid_768mb = u'31'
 planid_1gb = u'106'
 ubuntu14_04_64bit = u'160'
-aranhoide_ssh_key_id = u'55255a40b2742'
-cloudmaster_ssh_key_id = u'55cd76a2f2f14'
 
-bootstrap_tmpl = "ssh -o StrictHostKeyChecking=no root@%s 'curl -L https://raw.githubusercontent.com/saltstack/salt-bootstrap/902da734465798edb3aa6a68445ada358a69b0ef/bootstrap-salt.sh | sh -s -- -A 128.199.93.248 -i %s git v2014.7.0'"
-vltr = Vultr(api_key)
+auth_token_alphabet = string.letters + string.digits
+auth_token_length = 64
+
+pillar_tmpl = """\
+controller: lanternctrl1-2
+auth_token: %s
+install-from: git
+instance_id: %s
+proxy_protocol: tcp
+"""
+
+# XXX: feed cloudmaster's internal IP when we launch one in Tokyo.
+def ssh_tmpl(ssh_cmd):
+    return "sshpass -p %s ssh -o StrictHostKeyChecking=no root@%s " + ("'%s'" % ssh_cmd)
+
+#bootstrap_tmpl = ssh_tmpl("curl -L https://raw.githubusercontent.com/saltstack/salt-bootstrap/902da734465798edb3aa6a68445ada358a69b0ef/bootstrap-salt.sh | sh -s -- -X -A 128.199.93.248 -i %s git v2014.7.0")
+bootstrap_tmpl = ssh_tmpl("curl -L https://raw.githubusercontent.com/saltstack/salt-bootstrap/902da734465798edb3aa6a68445ada358a69b0ef/bootstrap-salt.sh | sh -s -- -X -A 188.166.52.119 -i %s git v2014.7.0")
+
+scpkeys_tmpl = "sshpass -p %s scp -p -C -o StrictHostKeyChecking=no minion.pem minion.pub root@%s:/etc/salt/pki/minion/"
+
+fetchaccessdata_tmpl = "sshpass -p %s scp -p -C -o StrictHostKeyChecking=no root@%s:/home/lantern/access_data.json ."
+
+start_tmpl = ssh_tmpl("service salt-minion restart")
+
+reboot_tmpl = ssh_tmpl("reboot")
+
+vultr = Vultr(api_key)
+
+def random_auth_token():
+    return ''.join(random.choice(auth_token_alphabet)
+                   for _ in xrange(auth_token_length))
 
 def ip_prefix(ip):
     return ip[:ip.rfind('.', 0, ip.rfind('.'))+1]
 
 def ip_prefixes():
     return set(ip_prefix(d['main_ip'])
-               for d in vltr.server_list(None).itervalues()
+               for d in vultr.server_list(None).itervalues()
                if d['label'].startswith('fl-jp-'))
 
 def minion_id(prefix, n):
@@ -32,12 +68,81 @@ def minion_id(prefix, n):
         str(n).zfill(3))
 
 def create_vps(label):
-    return vltr.server_create(tokyo_dcid,
-                              planid_1gb,
-                              ubuntu14_04_64bit,
-                              label=label,
-                              enable_private_network="yes",
-                              sshkeyid=aranhoide_ssh_key_id)
+    return vultr.server_create(tokyo_dcid,
+                               planid_1gb,
+                               ubuntu14_04_64bit,
+                               label=label,
+                               enable_private_network="yes")['SUBID']
+
+def wait_for_status_ok(subid):
+    while True:
+        try:
+            d = vultr.server_list(subid)
+            if (d['status'] == 'active'
+                and d['power_status'] == 'running'
+                and d['server_state'] == 'ok'):
+                return d
+        except VultrError:
+            traceback.print_exc()
+        print "Server not started up; waiting..."
+        time.sleep(10)
+
+def trycmd(cmd):
+    while os.system(cmd):
+        print "Command failed; retrying: %s" % cmd
+        time.sleep(10)
+
+def init_vps(subid):
+    # VPSs often (always?) report themselves as OK before stopping and
+    # completing setup. Trying to initialize them at this early stage seems to
+    # cause trouble.
+    wait_for_status_ok(subid)
+    print "Status OK for the first time.  I don't buy it.  Lemme wait again..."
+    time.sleep(10)
+    while True:
+        d = wait_for_status_ok(subid)
+        print "Status OK again; bootstrapping..."
+        ip = d['main_ip']
+        name = d['label']
+        passw = d['default_password']
+        if os.system(bootstrap_tmpl % (passw, ip, name)):
+            print "Error trying to bootstrap; retrying..."
+        else:
+            break
+        time.sleep(5)
+    print "Generating and copying keys..."
+    workdir = tempfile.mkdtemp(prefix='init_vps_%s_' % subid)
+    os.chdir(workdir)
+    trycmd('salt-key --gen-keys=%s' % name)
+    for suffix in ['.pem', '.pub']:
+        os.rename(name + suffix, 'minion' + suffix)
+    trycmd(scpkeys_tmpl % (passw, ip))
+    os.rename('minion.pub', os.path.join('/etc/salt/pki/master/minions', name))
+    print "Starting salt-minion..."
+    trycmd(start_tmpl % (passw, ip))
+    file("/srv/pillar/%s.sls" % name, 'w').write(
+        pillar_tmpl % (random_auth_token(), name))
+    while True:
+        print "Calling highstate..."
+        time.sleep(10)
+        trycmd("salt -t 1800 %s state.highstate" % name)
+        print "Rebooting"
+        trycmd(reboot_tmpl % (passw, ip))
+        time.sleep(10)
+        print "Fetching access data..."
+        trycmd(fetchaccessdata_tmpl % (passw, ip))
+        access_data = file('access_data.json').read()
+        file('fallbacks.json', 'w').write("[" + access_data + "]")
+        for tries in xrange(3):
+            out = subprocess.check_output(['checkfallbacks',
+                                           '-fallbacks', 'fallbacks.json',
+                                           '-connections', '1'])
+            if "[failed fallback check]" in out:
+                print "Fallback check failed; retrying..."
+            else:
+                print "VPS up!"
+                return json.loads(access_data)
+            time.sleep(10)
 
 def create_bunch(prefix, start, number):
     for i in xrange(start, start+number):
@@ -47,7 +152,7 @@ def create_bunch(prefix, start, number):
 
 def install_salt(prefix, start, number):
     server_ips = {d['label']: d['main_ip']
-                  for d in vltr.server_list(None).itervalues()}
+                  for d in vultr.server_list(None).itervalues()}
     for i in xrange(start, start+number):
         label = minion_id(prefix, i)
         if label not in server_ips:
