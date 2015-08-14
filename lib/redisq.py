@@ -30,12 +30,11 @@ def now():
 
 class Queue:
 
-    def __init__(self, qname, redis_shell, timeout, sleep_time, check_done):
+    def __init__(self, qname, redis_shell, timeout, sleep_time):
         self.qname = qname
         self.redis_shell = redis_shell
         self.timeout = timeout
         self.sleep_time = sleep_time
-        self.check_done = check_done
         qread = redis_shell.register_script(qread_src)
         def read():
             return qread(keys=[self.qname], args=[now()])
@@ -58,11 +57,5 @@ class Queue:
             if item_id == "-1":
                 time.sleep(self.sleep_time)
                 continue
-            if t is None:
-                return item_id
-            if time.time() - int(t) > self.timeout:
-                if self.check_done(item_id):
-                    self.redis_shell.lrem(self.qname, item, 1)
-                else:
-                    self._refresh(item)
-                    return item_id
+            if t is None or time.time() - int(t) > self.timeout:
+                return item_id, lambda: self.redis_shell.lrem(self.qname, item, 1)
