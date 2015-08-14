@@ -47,7 +47,7 @@ include:
         - gid: lantern
         - mode: 700
 
-/home/lantern/.ssh/id_rsa:
+/home/lantern/.ssh/cloudmaster.id_rsa:
     file.managed:
         - source: salt://cloudmaster/id_rsa
         - user: lantern
@@ -55,7 +55,7 @@ include:
         - require:
             - file: /home/lantern/.ssh
 
-/home/lantern/.ssh/id_rsa.pub:
+/home/lantern/.ssh/cloudmaster.id_rsa.pub:
     file.managed:
         - source: salt://cloudmaster/id_rsa.pub
         - user: lantern
