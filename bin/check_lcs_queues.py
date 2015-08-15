@@ -4,11 +4,17 @@ import os
 import subprocess
 
 import redis
+import sys
 
+try:
+    import vultr_util as vu
+except ImportError:
+    print
+    print "*** vultr_util module not found.  Please add [...]/lantern_aws/lib to your PYTHONPATH"
+    print
+    raise
 import do_fps as do
 import util
-import vultr_util as vu
-
 
 @util.memoized
 def r():
@@ -59,7 +65,7 @@ def queued_ips(dc):
 def names_by_ip(dc):
     if dc.startswith('vl'):
         return {d['main_ip']: d['label']
-                for d in vu.vltr.server_list(None).itervalues()}
+                for d in vu.vultr.server_list(None).itervalues()}
     elif dc.startswith('do'):
         return {d.ip_address: name
                 for name, d in do.droplets_by_name.iteritems()}
@@ -80,7 +86,7 @@ def discard_ips(dc):
 def underused_vultr_vpss():
     dips = discard_ips('vltok1')
     vv = [x
-          for x in vu.vltr.server_list(None).values()
+          for x in vu.vultr.server_list(None).values()
           if x['label'].startswith('fp-jp-')
           and x['main_ip'] not in dips]
     vv.sort(key=lambda x: x['current_bandwidth_gb'])

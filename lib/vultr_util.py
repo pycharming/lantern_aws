@@ -1,12 +1,6 @@
-#!/usr/bin/env python
-
 from datetime import datetime
-import json
 import os
-import random
 import socket
-import string
-import subprocess
 import sys
 import tempfile
 import time
@@ -14,23 +8,15 @@ import traceback
 
 from vultr.vultr import Vultr, VultrError
 
+import vps_util
+from vps_util import trycmd
+
 
 api_key = os.getenv("VULTR_APIKEY")
 tokyo_dcid = u'25'
 planid_768mb = u'31'
 planid_1gb = u'106'
 ubuntu14_04_64bit = u'160'
-
-auth_token_alphabet = string.letters + string.digits
-auth_token_length = 64
-
-pillar_tmpl = """\
-controller: lanternctrl1-2
-auth_token: %s
-install-from: git
-instance_id: %s
-proxy_protocol: tcp
-"""
 
 # XXX: feed cloudmaster's internal IP when we launch one in Tokyo.
 def ssh_tmpl(ssh_cmd):
@@ -41,7 +27,7 @@ bootstrap_tmpl = ssh_tmpl("curl -L https://raw.githubusercontent.com/saltstack/s
 
 scpkeys_tmpl = "sshpass -p %s scp -p -C -o StrictHostKeyChecking=no minion.pem minion.pub root@%s:/etc/salt/pki/minion/"
 
-fetchaccessdata_tmpl = "sshpass -p %s scp -p -C -o StrictHostKeyChecking=no root@%s:/home/lantern/access_data.json ."
+fetchaccessdata_tmpl = "sshpass -p %s scp -o StrictHostKeyChecking=no root@%s:/home/lantern/access_data.json ."
 
 start_tmpl = ssh_tmpl("service salt-minion restart")
 
@@ -49,9 +35,6 @@ reboot_tmpl = ssh_tmpl("reboot")
 
 vultr = Vultr(api_key)
 
-def random_auth_token():
-    return ''.join(random.choice(auth_token_alphabet)
-                   for _ in xrange(auth_token_length))
 
 def ip_prefix(ip):
     return ip[:ip.rfind('.', 0, ip.rfind('.'))+1]
@@ -87,11 +70,6 @@ def wait_for_status_ok(subid):
         print "Server not started up; waiting..."
         time.sleep(10)
 
-def trycmd(cmd):
-    while os.system(cmd):
-        print "Command failed; retrying: %s" % cmd
-        time.sleep(10)
-
 def init_vps(subid):
     # VPSs often (always?) report themselves as OK before stopping and
     # completing setup. Trying to initialize them at this early stage seems to
@@ -111,38 +89,22 @@ def init_vps(subid):
             break
         time.sleep(5)
     print "Generating and copying keys..."
-    workdir = tempfile.mkdtemp(prefix='init_vps_%s_' % subid)
-    os.chdir(workdir)
-    trycmd('salt-key --gen-keys=%s' % name)
-    for suffix in ['.pem', '.pub']:
-        os.rename(name + suffix, 'minion' + suffix)
-    trycmd(scpkeys_tmpl % (passw, ip))
-    os.rename('minion.pub', os.path.join('/etc/salt/pki/master/minions', name))
-    print "Starting salt-minion..."
-    trycmd(start_tmpl % (passw, ip))
-    file("/srv/pillar/%s.sls" % name, 'w').write(
-        pillar_tmpl % (random_auth_token(), name))
-    while True:
+    with vps_util.tempdir(subid):
+        trycmd('salt-key --gen-keys=%s' % name)
+        for suffix in ['.pem', '.pub']:
+            os.rename(name + suffix, 'minion' + suffix)
+        trycmd(scpkeys_tmpl % (passw, ip))
+        os.rename('minion.pub', os.path.join('/etc/salt/pki/master/minions', name))
+        print "Starting salt-minion..."
+        trycmd(start_tmpl % (passw, ip))
+        vps_util.save_pillar(name)
         print "Calling highstate..."
         time.sleep(10)
         trycmd("salt -t 1800 %s state.highstate" % name)
-        print "Rebooting"
-        trycmd(reboot_tmpl % (passw, ip))
-        time.sleep(10)
-        print "Fetching access data..."
-        trycmd(fetchaccessdata_tmpl % (passw, ip))
-        access_data = file('access_data.json').read()
-        file('fallbacks.json', 'w').write("[" + access_data + "]")
-        for tries in xrange(3):
-            out = subprocess.check_output(['checkfallbacks',
-                                           '-fallbacks', 'fallbacks.json',
-                                           '-connections', '1'])
-            if "[failed fallback check]" in out:
-                print "Fallback check failed; retrying..."
-            else:
-                print "VPS up!"
-                return json.loads(access_data)
-            time.sleep(10)
+        return vps_util.hammer_the_damn_thing_until_it_proxies(
+            name,
+            reboot_tmpl % (passw, ip),
+            fetchaccessdata_tmpl % (passw, ip))
 
 def create_bunch(prefix, start, number):
     for i in xrange(start, start+number):
