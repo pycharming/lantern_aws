@@ -31,8 +31,6 @@ fetchaccessdata_tmpl = "sshpass -p %s scp -o StrictHostKeyChecking=no root@%s:/h
 
 start_tmpl = ssh_tmpl("service salt-minion restart")
 
-reboot_tmpl = ssh_tmpl("reboot")
-
 vultr = Vultr(api_key)
 
 
@@ -87,7 +85,7 @@ def init_vps(subid):
             print "Error trying to bootstrap; retrying..."
         else:
             break
-        time.sleep(5)
+        time.sleep(10)
     print "Generating and copying keys..."
     with vps_util.tempdir(subid):
         trycmd('salt-key --gen-keys=%s' % name)
@@ -103,7 +101,7 @@ def init_vps(subid):
         trycmd("salt -t 1800 %s state.highstate" % name)
         return vps_util.hammer_the_damn_thing_until_it_proxies(
             name,
-            reboot_tmpl % (passw, ip),
+            ssh_tmpl('%%s') % (passw, ip),
             fetchaccessdata_tmpl % (passw, ip))
 
 def destroy_vps(name):

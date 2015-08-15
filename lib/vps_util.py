@@ -1,9 +1,7 @@
-__all__ = ['save_pillar', 'trycmd', 'hammer_the_damn_thing_until_it_proxies', 'tempdir']
-
-
 from contextlib import contextmanager
 import os
 import random
+import re
 import subprocess
 import string
 import sys
@@ -22,6 +20,8 @@ proxy_protocol: tcp
 
 auth_token_alphabet = string.letters + string.digits
 auth_token_length = 64
+
+highstate_re = re.compile(r'The function "state.highstate" is running as PID (\d+)')
 
 @contextmanager
 def tempdir(id_):
@@ -50,8 +50,19 @@ def trycmd(cmd, tries=sys.maxint):
         time.sleep(10)
     return False
 
+def highstate_pid(name):
+    out = subprocess.check_output(["salt", name, "state.running"])
+    lines = out.strip().split('\n')
+    if len(lines) > 1:
+        match = highstate_re.search(lines[1])
+        if match:
+            return match.groups()[0]
+    return None
+
 # For good measure.
-def hammer_the_damn_thing_until_it_proxies(name, reboot_cmd, fetchaccessdata_cmd):
+def hammer_the_damn_thing_until_it_proxies(name, ssh_tmpl, fetchaccessdata_cmd):
+    reboot_cmd = ssh_tmpl % 'reboot'
+    kill_tmpl = ssh_tmpl % 'kill -9 %s'
     with tempdir(name):
         while True:
             # Wait a bit to make sure highstate has started.
@@ -59,7 +70,7 @@ def hammer_the_damn_thing_until_it_proxies(name, reboot_cmd, fetchaccessdata_cmd
             trycmd(reboot_cmd)
             time.sleep(10)
             print "Fetching access data..."
-            if trycmd(fetchaccessdata_cmd, 10):
+            if trycmd(fetchaccessdata_cmd, 5):
                 access_data = file('access_data.json').read()
                 file('fallbacks.json', 'w').write("[" + access_data + "]")
                 for tries in xrange(3):
@@ -73,4 +84,7 @@ def hammer_the_damn_thing_until_it_proxies(name, reboot_cmd, fetchaccessdata_cmd
                         return yaml.load(access_data)
                     time.sleep(10)
             print "Minion seems to be misconfigured.  Let's try reapplying salt state..."
+            pid = highstate_pid(name)
+            if pid:
+                trycmd(kill_tmpl % pid, 5)
             trycmd("salt -t 1800 %s state.highstate" % name)

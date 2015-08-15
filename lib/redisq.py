@@ -43,9 +43,9 @@ class Queue:
         qreplace = redis_shell.register_script(qreplace_src)
         def refresh(item):
             item_id = item.split('*')[0]
-            new_item = item_id + "*"
+            new_item = item_id + "*" + now()
             qreplace(keys=[self.qname],
-                     args=[item, item_id + "*" + now()])
+                     args=[item, new_item])
             return new_item
         self._refresh = refresh
 
@@ -63,4 +63,7 @@ class Queue:
             if expired:
                 new = self._refresh(new)
             if t is None or expired:
-                return item_id, lambda: self.redis_shell.lrem(self.qname, new, 1)
+                def unregister():
+                    print "Unregistering", repr(new)
+                    self.redis_shell.lrem(self.qname, new, 1)
+                return item_id, unregister

@@ -17,6 +17,7 @@ LAUNCH_TIMEOUT = 60 * 60
 
 def run():
     dc = os.getenv("DC")
+    print "Using datacenter", dc
     qname = dc + ":srvreqq"
     redis_shell = redis.from_url(os.getenv('REDISCLOUD_PRODUCTION_URL'))
     reqq = redisq.Queue(qname, redis_shell, LAUNCH_TIMEOUT)
@@ -104,13 +105,13 @@ def upload_cfg(redis_shell, dc, access_data):
                        trusted=True,
                        qos=10,
                        weight=1000000)
-    #redis_shell.rpush(dc + ":srvq",
-    #                  "%s|\n    %s" % (ip, yaml.dump({'fallback-' + ip: access_data})))
-    print "now I would upload", repr("%s|\n    %s" % (ip, yaml.dump({'fallback-' + ip: access_data})))
-
+    redis_shell.rpush(dc + ":srvq",
+                      "%s|\n    %s" % (ip, yaml.dump({'fallback-' + ip: access_data})))
 
 def register_vps(redis_shell, dc, name):
+    print "Registering VPS", name
     redis_shell.rpush(dc + ':vpss', name)
+
 
 if __name__ == '__main__':
     run()
