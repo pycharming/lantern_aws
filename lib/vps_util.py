@@ -2,7 +2,6 @@ __all__ = ['save_pillar', 'trycmd', 'hammer_the_damn_thing_until_it_proxies', 't
 
 
 from contextlib import contextmanager
-import json
 import os
 import random
 import subprocess
@@ -10,6 +9,7 @@ import string
 import sys
 import tempfile
 import time
+import yaml
 
 
 pillar_tmpl = """\
@@ -50,6 +50,7 @@ def trycmd(cmd, tries=sys.maxint):
         time.sleep(10)
     return False
 
+# For good measure.
 def hammer_the_damn_thing_until_it_proxies(name, reboot_cmd, fetchaccessdata_cmd):
     with tempdir(name):
         while True:
@@ -69,7 +70,7 @@ def hammer_the_damn_thing_until_it_proxies(name, reboot_cmd, fetchaccessdata_cmd
                         print "Fallback check failed; retrying..."
                     else:
                         print "VPS up!"
-                        return json.loads(access_data)
+                        return yaml.load(access_data)
                     time.sleep(10)
             print "Minion seems to be misconfigured.  Let's try reapplying salt state..."
             trycmd("salt -t 1800 %s state.highstate" % name)

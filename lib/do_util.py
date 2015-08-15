@@ -39,3 +39,7 @@ def init_vps((name, ip), wait_for_hs=True):
         name,
         reboot_tmpl % ip,
         fetchaccessdata_tmpl % ip)
+
+def destroy_vps(name):
+    os.system('salt-cloud -yd ' + name)
+    os.system('salt-key -yd' + name)

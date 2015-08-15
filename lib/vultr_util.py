@@ -106,23 +106,10 @@ def init_vps(subid):
             reboot_tmpl % (passw, ip),
             fetchaccessdata_tmpl % (passw, ip))
 
-def create_bunch(prefix, start, number):
-    for i in xrange(start, start+number):
-        label = minion_id(prefix, i)
-        print "Creating %s ..." % label
-        print create_vps(label)
-
-def install_salt(prefix, start, number):
-    server_ips = {d['label']: d['main_ip']
-                  for d in vultr.server_list(None).itervalues()}
-    for i in xrange(start, start+number):
-        label = minion_id(prefix, i)
-        if label not in server_ips:
-            print "No server with label %r" % label
-        elif not server_ips[label]:
-            print "No ip for server %s" % label
-        else:
-            ip = server_ips[label]
-            print "Installing salt in %s (%s) ..." % (label, ip)
-            os.system(bootstrap_tmpl % (ip, label))
-
+def destroy_vps(name):
+    for d in vultr.server_list(None).itervalues():
+        if d['label'] == name:
+            vultr.server_destroy(d['SUBID'])
+            return
+    time.sleep(10)
+    os.system('salt-key -yd ' + name)
