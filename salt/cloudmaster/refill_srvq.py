@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+
 from datetime import datetime
 import multiprocessing
 from Queue import Empty
@@ -19,7 +22,7 @@ def run():
     dc = os.getenv("DC")
     print "Using datacenter", dc
     qname = dc + ":srvreqq"
-    redis_shell = redis.from_url(os.getenv('REDISCLOUD_PRODUCTION_URL'))
+    redis_shell = redis.from_url(os.getenv('REDIS_URL'))
     reqq = redisq.Queue(qname, redis_shell, LAUNCH_TIMEOUT)
     procq = multiprocessing.Queue()
     pending = {}

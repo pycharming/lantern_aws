@@ -1,14 +1,7 @@
-python-digitalocean:
-  pip.installed
-
-vultr:
-  pip.installed
-
-python-hiredis:
-  pkg.installed
-
-python-redis:
-  pkg.installed
+include:
+  - vultr
+  - digitalocean
+  - redis
 
 /home/lantern/check_vpss.py:
   file.managed:
@@ -25,7 +18,7 @@ python-redis:
     - minute: 1
     - user: lantern
     - require:
-        - pip: python-digitalocean
+        - pip: digitalocean
         - pip: vultr
         - pkg: python-redis
         - file: /home/lantern/check_vpss.py
