@@ -48,14 +48,17 @@ def run():
                     print "Killing timed out process and vps..."
                     task = pending.pop(reqid)
                     task['proc'].terminate()
-                    multiprocessing.Process(target=vps_shell(dc).destroy_vps,
-                                            args=(task['name'],)).start()
+                    proc = multiprocessing.Process(target=vps_shell(dc).destroy_vps,
+                                                   args=(task['name'],))
+                    proc.daemon = True
+                    proc.start()
                 name = get_lcs_name(dc, redis_shell)
                 proc = multiprocessing.Process(target=launch_one_server,
                                                args=(procq,
                                                      reqid,
                                                      dc,
                                                      name))
+                proc.daemon = True
                 pending[reqid] = {
                     'name': name,
                     'proc': proc,
