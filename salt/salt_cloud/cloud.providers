@@ -1,5 +1,3 @@
-{% from 'ip.sls' import external_ip %}
-
 do:
     provider: digital_ocean
     # XXX use token when changing to DO API v2.0.
