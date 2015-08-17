@@ -128,6 +128,7 @@ def upload_cfg(redis_shell, dc, access_data):
 def register_vps(redis_shell, dc, name):
     print "Registering VPS", name
     redis_shell.rpush(dc + ':vpss', name)
+    redis_shell.incr(dc + ':vpss:version')
 
 
 if __name__ == '__main__':
