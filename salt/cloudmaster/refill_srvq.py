@@ -14,13 +14,13 @@ import yaml
 import redisq
 
 
-MAXPROCS = os.getenv('MAXPROCS')
+MAXPROCS = int(os.getenv('MAXPROCS'))
 LAUNCH_TIMEOUT = 60 * 60
 
 
 def run():
     dc = os.getenv("DC")
-    print "Using datacenter", dc
+    print "Using datacenter", dc, ", MAXPROCS", repr(MAXPROCS)
     qname = dc + ":srvreqq"
     redis_shell = redis.from_url(os.getenv('REDIS_URL'))
     reqq = redisq.Queue(qname, redis_shell, LAUNCH_TIMEOUT)
