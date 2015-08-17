@@ -14,7 +14,7 @@ import yaml
 import redisq
 
 
-MAXPROCS = 10
+MAXPROCS = os.getenv('MAXPROCS')
 LAUNCH_TIMEOUT = 60 * 60
 
 
@@ -26,6 +26,14 @@ def run():
     reqq = redisq.Queue(qname, redis_shell, LAUNCH_TIMEOUT)
     procq = multiprocessing.Queue()
     pending = {}
+    def kill_task(reqid):
+        print "Killing timed out process and vps..."
+        task = pending.pop(reqid)
+        task['proc'].terminate()
+        proc = multiprocessing.Process(target=vps_shell(dc).destroy_vps,
+                                       args=(task['name'],))
+        proc.daemon = True
+        proc.start()
     while True:
         while not procq.empty():
             try:
@@ -45,13 +53,7 @@ def run():
             if reqid:
                 print "Got request", reqid
                 if reqid in pending:
-                    print "Killing timed out process and vps..."
-                    task = pending.pop(reqid)
-                    task['proc'].terminate()
-                    proc = multiprocessing.Process(target=vps_shell(dc).destroy_vps,
-                                                   args=(task['name'],))
-                    proc.daemon = True
-                    proc.start()
+                    kill_task(reqid)
                 name = get_lcs_name(dc, redis_shell)
                 proc = multiprocessing.Process(target=launch_one_server,
                                                args=(procq,
@@ -62,9 +64,16 @@ def run():
                 pending[reqid] = {
                     'name': name,
                     'proc': proc,
+                    'starttime': time.time(),
                     'remove_req': remover}
                 print "Starting process to launch", name
                 proc.start()
+        else:
+            # Since we're not checking the queue when we've maxed out our
+            # processes, we need to manually check for expired tasks.
+            for reqid, d in pending.items():
+                if time.time() - d['starttime'] > LAUNCH_TIMEOUT:
+                    kill_task(reqid)
         time.sleep(10)
 
 def vps_shell(dc):
