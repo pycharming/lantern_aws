@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+import random
 import socket
 import sys
 import tempfile
@@ -55,6 +56,7 @@ def create_vps(label):
                                enable_private_network="yes")['SUBID']
 
 def wait_for_status_ok(subid):
+    backoff = 1
     while True:
         try:
             d = vultr.server_list(subid)
@@ -64,6 +66,9 @@ def wait_for_status_ok(subid):
                 return d
         except VultrError:
             traceback.print_exc()
+            time.sleep(backoff * (1 + random.random()))
+            if backoff < 60:
+                backoff *= 1.5
         print "Server not started up; waiting..."
         time.sleep(10)
 
