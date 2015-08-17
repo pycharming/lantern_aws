@@ -30,7 +30,7 @@ try:
     local_version = file(prefix + '-version').read()
 except IOError:
     local_version = None
-remote_version = redis_shell.get('cfgbysrv:version')
+remote_version = redis_shell.get('srvcount')
 if local_version != remote_version:
     json.dump([yaml.load(x).values()[0]
                for x in redis_shell.hgetall('cfgbysrv').values()],
