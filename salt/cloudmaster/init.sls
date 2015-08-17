@@ -89,6 +89,7 @@ refill_{{ dc }}_srvq:
 
 {% endfor %}
 
+{% if pillar['in_production'] %}
 refill_srvq-services-registered:
     cmd.run:
         - name: 'initctl reload-configuration'
@@ -103,3 +104,4 @@ refill_srvq-services-registered:
             - pip: digitalocean
             - pip: vultr
             - pkg: python-redis
+{% endif %}
