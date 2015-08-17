@@ -66,7 +66,7 @@ def wait_for_status_ok(subid):
                 return d
         except VultrError:
             traceback.print_exc()
-            time.sleep(backoff * (1 + random.random()))
+            time.sleep(backoff * (1 + random.random(b)))
             if backoff < 60:
                 backoff *= 1.5
         print "Server not started up; waiting..."

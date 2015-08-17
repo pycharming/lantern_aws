@@ -53,6 +53,7 @@ def run():
             if reqid:
                 print "Got request", reqid
                 if reqid in pending:
+                    print "Killing task %s because of queue timeout" % reqid
                     kill_task(reqid)
                 name = get_lcs_name(dc, redis_shell)
                 proc = multiprocessing.Process(target=launch_one_server,
@@ -73,6 +74,7 @@ def run():
             # processes, we need to manually check for expired tasks.
             for reqid, d in pending.items():
                 if time.time() - d['starttime'] > LAUNCH_TIMEOUT:
+                    print "Killing task %s because of local timeout" % reqid
                     kill_task(reqid)
         time.sleep(10)
 
