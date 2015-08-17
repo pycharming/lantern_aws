@@ -1,3 +1,3 @@
 vultr:
   pip.installed:
-    - name: vultr==0.1.1
+    - name: vultr==0.1.2
