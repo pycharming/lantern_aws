@@ -1,4 +1,6 @@
-{% for name in 'myles','aranhoide','ox.to.a.cart','menteslibres','lantern', 'fffw' %}
+{% set admins=['myles', 'aranhoide', 'menteslibres', 'fffw', 'atavism', 'uaalto'] %}
+
+{% for name in admins + ['lantern'] %}
 
 {{ name }}:
     user.present:
@@ -33,7 +35,7 @@
 
 {% endfor %}
 
-{% for admin in 'myles','aranhoide','ox.to.a.cart','menteslibres', 'fffw' %}
+{% for admin in admins %}
 {% for role in admin,'lantern' %}
 {{ admin }}_{{ role }}_ssh:
     ssh_auth.present:
