@@ -183,7 +183,7 @@ vultr:
 "/home/lantern/check_vultr_transfer.py 2>&1 | logger -t check_vultr_transfer":
   cron.present:
     - identifier: check_vultr_transfer
-    - minute: "*/22"
+    - minute: random
     - user: lantern
     - require:
         - file: /home/lantern/check_vultr_transfer.py
