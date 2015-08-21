@@ -175,8 +175,14 @@ vultr:
   cron.absent:
     - user: lantern
 
+# bug: missing 2>&1
 "/home/lantern/check_vultr_transfer.py | logger -t check_vultr_transfer":
+  cron.absent:
+    - user: lantern
+
+"/home/lantern/check_vultr_transfer.py 2>&1 | logger -t check_vultr_transfer":
   cron.present:
+    - identifier: check_vultr_transfer
     - minute: "*/22"
     - user: lantern
     - require:
