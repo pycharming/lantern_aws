@@ -3,8 +3,9 @@ from __future__ import division
 
 from datetime import datetime as dt
 import os
+import time
 
-from vultr.vultr import Vultr
+from vultr.vultr import Vultr, VultrError
 
 import util
 
@@ -35,14 +36,18 @@ significant_usage = 0.25
 retire_threshold = 0.95
 
 def vultr_dict():
-    try:
-        subid = file(vultr_subid_filename).read()
-    except IOError:
-        for d in vultr.server_list(None).itervalues():
-            if d['label'] == instance_id:
-                file(vultr_subid_filename, 'w').write(d['SUBID'])
-                return d
-    return vultr.server_list(subid)
+    while True:
+        try:
+            try:
+                subid = file(vultr_subid_filename).read()
+            except IOError:
+                for d in vultr.server_list(None).itervalues():
+                    if d['label'] == instance_id:
+                        file(vultr_subid_filename, 'w').write(d['SUBID'])
+                        return d
+            return vultr.server_list(subid)
+        except VultrError:
+            time.sleep(10 * random.random() * 20)
 
 def usage_portion(vd):
     allowed = int(vd['allowed_bandwidth_gb'])
