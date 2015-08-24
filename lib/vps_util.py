@@ -65,7 +65,6 @@ def hammer_the_damn_thing_until_it_proxies(name, ssh_tmpl, fetchaccessdata_cmd):
     kill_tmpl = ssh_tmpl % 'kill -9 %s'
     with tempdir(name):
         while True:
-            # Wait a bit to make sure highstate has started.
             print "Rebooting..."
             trycmd(reboot_cmd)
             time.sleep(10)
