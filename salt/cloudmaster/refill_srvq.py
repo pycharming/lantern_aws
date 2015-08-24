@@ -4,7 +4,7 @@
 from datetime import datetime
 import multiprocessing
 from Queue import Empty
-import redis
+from redis_util import redis_shell
 import os
 import time
 import traceback
@@ -22,7 +22,6 @@ def run():
     dc = os.getenv("DC")
     print "Using datacenter", dc, ", MAXPROCS", repr(MAXPROCS)
     qname = dc + ":srvreqq"
-    redis_shell = redis.from_url(os.getenv('REDIS_URL'))
     reqq = redisq.Queue(qname, redis_shell, LAUNCH_TIMEOUT)
     procq = multiprocessing.Queue()
     pending = {}

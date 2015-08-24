@@ -9,6 +9,7 @@ import traceback
 
 from vultr.vultr import Vultr, VultrError
 
+import misc_util as util
 import vps_util
 from vps_util import trycmd
 
@@ -108,8 +109,10 @@ def init_vps(subid):
             ssh_tmpl('%%s') % (passw, ip),
             fetchaccessdata_tmpl % (passw, ip))
 
-def destroy_vps(name):
-    for d in vultr.server_list(None).itervalues():
+def destroy_vps(name,
+                server_cache=util.Cache(timeout=60*60,
+                                        update_fn=lambda: vultr.server_list(None).values())):
+    for d in server_cache.get():
         if d['label'] == name:
             vultr.server_destroy(d['SUBID'])
             return

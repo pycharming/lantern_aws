@@ -9,6 +9,9 @@ import tempfile
 import time
 import yaml
 
+from redis_util import redis_shell
+import misc_util as util
+
 
 pillar_tmpl = """\
 controller: lanternctrl1-2
@@ -102,3 +105,27 @@ def cleanup_keys(do_shell=None, vultr_shell=None):
     for key in subprocess.check_output(['salt-key', '-L']).split():
         if key not in filter_out:
             os.system('salt-key -d ' + key)
+
+def retire_lcs(name,
+               ip,
+               cfgcache=util.Cache(timeout=60*60,
+                                   update_fn=lambda: redis_shell.hgetall('cfgbysrv'))):
+    if name.startswith('fp-jp-'):
+        dc = 'vltok1'
+        import vultr_util as vps_shell
+    elif name.startswith('fp-nl-'):
+        dc = 'doams3'
+        import do_util as vps_shell
+    else:
+        assert False
+    srvs = [srv
+            for srv, cfg in cfgcache.get().iteritems()
+            if yaml.load(cfg).values()[0]['addr'].split(':')[0] == ip]
+    if srvs:
+        redis_shell.hdel('cfgbysrv', *srvs)
+        redis_shell.incr('srvcount')
+    else:
+        "No configs left to delete for %s." % name
+    redis_shell.lrem(dc + ':vpss', name)
+    redis_shell.incr(dc + ':vpss:version')
+    vps_shell.destroy_vps(name)
