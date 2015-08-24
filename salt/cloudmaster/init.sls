@@ -47,7 +47,7 @@ include:
 sshpass:
   pkg.installed
 
-{% set libs=['redisq', 'do_util', 'vultr_util', 'vps_util'] %}
+{% set libs=['redisq', 'do_util', 'vultr_util', 'vps_util', 'redis_util', 'misc_util'] %}
 
 {% for lib in libs %}
 
