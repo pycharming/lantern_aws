@@ -26,6 +26,10 @@ def run():
             vps_util.retire_lcs(name, ip)
             txn = redis_shell.pipeline()
             remover(txn)
+            # Introduce the job with the timestamp already filled in, so it will
+            # only be pulled when it 'expires'. This effectively adds a delay to
+            # give clients some time to move over to their new server before we
+            # actually destroy the old one.
             txn.lpush(destroy_qname, "%s*%s" % (name, int(time.time())))
             txn.execute()
         time.sleep(10)
