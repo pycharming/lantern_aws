@@ -63,7 +63,7 @@ def split_server(msg, retire=False):
             file(flag_filename, 'w').write(str(datetime.datetime.now()))
             send_alarm("Chained fallback " + participle,
                        participle + " because I " + msg)
-            return
+            break
         time.sleep(2 << attempt)
     else:
         send_alarm("Unable to %s chained fallback" % infinitive,
