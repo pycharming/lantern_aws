@@ -102,7 +102,7 @@ sshpass:
             - file: /etc/init/{{ svc }}_vltok1.conf
 {% for lib in libs %}
             - file: /usr/local/lib/pylib/{{ lib }}.py
-{% endfor %} {# lib %}
+{% endfor %} {# lib #}
         - require:
             - pip: digitalocean
             - pip: vultr
