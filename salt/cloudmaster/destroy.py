@@ -20,7 +20,7 @@ def run():
     while True:
         name, remover = q.next_job()
         if name:
-            print "Destroying", name, ip
+            print "Destroying", name
             vps_util.destroy_vps(name)
             remover()
         time.sleep(10)
