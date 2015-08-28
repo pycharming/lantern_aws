@@ -112,10 +112,8 @@ def retire_lcs(name,
                                    update_fn=lambda: redis_shell.hgetall('cfgbysrv'))):
     if name.startswith('fp-jp-'):
         dc = 'vltok1'
-        import vultr_util as vps_shell
     elif name.startswith('fp-nl-'):
         dc = 'doams3'
-        import do_util as vps_shell
     else:
         assert False
     srvs = [srv
@@ -128,4 +126,16 @@ def retire_lcs(name,
         "No configs left to delete for %s." % name
     redis_shell.lrem(dc + ':vpss', name)
     redis_shell.incr(dc + ':vpss:version')
-    vps_shell.destroy_vps(name)
+
+def vps_shell(lcs_name):
+    if lcs_name.startswith('fp-nl'):
+        import do_util
+        return do_util
+    elif lcs_name.startswith('fp-jp'):
+        import vultr_util
+        return vultr_util
+    else:
+        assert False, repr(lcs_name)
+
+def destroy_vps(name):
+    vps_shell(name).destroy_vps(name)

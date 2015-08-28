@@ -60,18 +60,21 @@ sshpass:
 
 {% endfor %}
 
-/usr/bin/refill_srvq.py:
+
+{% for svc in ['refill_srvq', 'retire', 'destroy'] %}
+
+/usr/bin/{{ svc }}.py:
     file.managed:
-        - source: salt://cloudmaster/refill_srvq.py
+        - source: salt://cloudmaster/{{ svc }}.py
         - user: root
         - group: root
         - mode: 755
 
 {% for dc in ['doams3', 'vltok1'] %}
 
-/etc/init/refill_{{ dc }}_srvq.conf:
+/etc/init/{{ svc }}_{{ dc }}.conf:
     file.managed:
-        - source: salt://cloudmaster/refill_srvq.conf
+        - source: salt://cloudmaster/{{ svc }}.conf
         - template: jinja
         - context:
             dc: {{ dc }}
@@ -80,28 +83,30 @@ sshpass:
         - mode: 600
 
 {% if pillar['in_production'] %}
-refill_{{ dc }}_srvq:
+{{ svc }}_{{ dc }}_srvq:
     service.running:
         - enable: yes
         - require:
-              - cmd: refill_srvq-services-registered
+              - cmd: {{ svc }}-services-registered
 {% endif %}
 
-{% endfor %}
+{% endfor %} {# dc #}
 
 {% if pillar['in_production'] %}
-refill_srvq-services-registered:
+{{ svc }}-services-registered:
     cmd.run:
         - name: 'initctl reload-configuration'
         - watch:
-            - file: /usr/bin/refill_srvq.py
-            - file: /etc/init/refill_doams3_srvq.conf
-            - file: /etc/init/refill_vltok1_srvq.conf
+            - file: /usr/bin/{{ svc }}.py
+            - file: /etc/init/{{ svc }}_doams3.conf
+            - file: /etc/init/{{ svc }}_vltok1.conf
 {% for lib in libs %}
             - file: /usr/local/lib/pylib/{{ lib }}.py
-{% endfor %}
+{% endfor %} {# lib %}
         - require:
             - pip: digitalocean
             - pip: vultr
             - pkg: python-redis
 {% endif %}
+
+{% endfor %} {# svc #}

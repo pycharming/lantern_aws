@@ -63,7 +63,7 @@ class Queue:
             if expired:
                 new = self._refresh(new)
             if t is None or expired:
-                def unregister():
+                def unregister(redis_shell=self.redis_shell):
                     print "Unregistering", repr(new)
-                    self.redis_shell.lrem(self.qname, new, 1)
+                    redis_shell.lrem(self.qname, new, 1)
                 return item_id, unregister
