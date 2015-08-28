@@ -83,7 +83,7 @@ sshpass:
         - mode: 600
 
 {% if pillar['in_production'] %}
-{{ svc }}_{{ dc }}_srvq:
+{{ svc }}_{{ dc }}:
     service.running:
         - enable: yes
         - require:
