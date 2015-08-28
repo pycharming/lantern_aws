@@ -4,11 +4,19 @@ import os
 import smtplib
 import time
 
+import redis
 import requests
 
 
 auth_token = "{{ pillar['cfgsrv_token'] }}"
 instance_id = "{{ grains['id'] }}"
+if instance_id.startswith('fp-nl-'):
+    dc = 'doams3'
+elif instance_id.startswith('fp-jp-'):
+    dc = 'vltok1'
+else:
+    assert False, repr(instance_id)
+
 # {% from 'ip.sls' import external_ip %}
 ip = "{{ external_ip(grains) }}"
 split_flag_filename = "server_split"
@@ -60,3 +68,7 @@ def split_server(msg, retire=False):
     else:
         send_alarm("Unable to %s chained fallback" % infinitive,
                    "I tried to %s myself because I %s, but I couldn't." % (infinitive, msg))
+    if retire:
+        r = redis.from_url(os.getenv('REDIS_URL'))
+        r.lpush(dc + ':retireq', '%s|%s' % (instance_id, ip))
+        file(retire_flag_filename, 'w').write(str(datetime.datetime.now()))
