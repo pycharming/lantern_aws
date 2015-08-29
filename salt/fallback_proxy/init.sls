@@ -21,7 +21,6 @@
     ('/home/lantern/', 'check_load.py', 'check_load.py', 'lantern', 700),
     ('/home/lantern/', 'check_traffic.py', 'check_traffic.py', 'lantern', 700),
     ('/home/lantern/', 'kill_lantern.py', 'kill_lantern.py', 'lantern', 700),
-    ('/home/lantern/', 'report_stats.py', 'report_stats.py', 'lantern', 700),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
     ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400),
     ('/home/lantern/', 'fte.props', 'fte.props', 'lantern', 400)] %}
@@ -116,15 +115,9 @@ psutil:
 requests:
   pip.installed
 
-report-stats:
-    cron.present:
-        - name: /home/lantern/report_stats.py
-        - minute: '*/11'
+/home/lantern/report_stats.py:
+    cron.absent:
         - user: lantern
-        - require:
-            - file: /home/lantern/report_stats.py
-            - pip: psutil
-            - service: lantern
 
 
 {% if pillar['in_production'] %}
