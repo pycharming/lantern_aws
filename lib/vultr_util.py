@@ -115,6 +115,6 @@ def destroy_vps(name,
     for d in server_cache.get():
         if d['label'] == name:
             vultr.server_destroy(d['SUBID'])
-            return
+            break
     time.sleep(10)
     os.system('salt-key -yd ' + name)
