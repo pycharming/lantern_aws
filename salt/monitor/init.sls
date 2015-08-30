@@ -16,7 +16,7 @@ collectd:
 collectd.conf:
   file.managed:
     - name: /etc/collectd/collectd.conf
-    - source: salt://monitoring/collectd.conf
+    - source: salt://monitor/collectd.conf
     - template: jinja
     - user: root
     - group: root
