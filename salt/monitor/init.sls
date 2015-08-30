@@ -1,5 +1,3 @@
-{% from 'ip.sls' import external_ip %}
-
 monitor:
   service.running:
     - name: collectd
