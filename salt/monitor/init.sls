@@ -6,15 +6,20 @@ monitor:
     - enable: yes
     - require:
       - pkg: collectd
+    - watch:
+      - file: collectd.conf
 
 collectd:
   pkg.installed:
-    - name: collectd==5.4.1
+    - name: collectd
 
-/etc/collectd/collectd.conf
+collectd.conf:
   file.managed:
+    - name: /etc/collectd/collectd.conf
     - source: salt://monitoring/collectd.conf
     - template: jinja
-    - context:
-        external_ip: {{ external_ip(grains) }}
-
+    - user: root
+    - group: root
+    - mode: 644
+    - require:
+      - pkg: collectd

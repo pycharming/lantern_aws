@@ -10,6 +10,7 @@ base:
         - locales
         - enable_swap
         - timezone
+        - monitor
     '*cloudmaster*':
         - salt_cloud
         - cloudmaster
