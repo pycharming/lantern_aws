@@ -11,7 +11,7 @@ include:
 {% endif %}
 
 {# define cmd: flashlight-installed #}
-{{ install_from_release('flashlight', '0.0.24') }}
+{{ install_from_release('flashlight', '0.0.25') }}
 
 sudo /sbin/restart flashlight 2>&1 | logger -t flashlight_restarter:
     cron.absent:
