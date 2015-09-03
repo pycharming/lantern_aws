@@ -93,7 +93,7 @@ VULTR_APIKEY:
 "/usr/bin/vps_sanity_checks.py 2>&1 | logger -t vps_sanity_checks":
   cron.present:
     - user: lantern
-    - minute: "*/61"
+    - minute: "30"
     - identifier: vps_sanity_checks
     - require:
         - file: /usr/bin/vps_sanity_checks.py
