@@ -24,7 +24,7 @@ return cfg
 
 script = rs.register_script(luasrc)
 
-def fetch(dc):
+def fetch(dc='doams3'):
     cfg = script(keys=[dc + ':srvq',
                        dc + ':bakedin',
                        dc + ':srvreqid',
