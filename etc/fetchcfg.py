@@ -3,6 +3,7 @@
 import os
 import redis
 import sys
+import time
 
 redis_url = os.getenv("REDIS_URL") or os.getenv("REDISCLOUD_PRODUCTION_URL")
 if not redis_url:
@@ -15,8 +16,10 @@ rs = redis.from_url(redis_url)
 # KEYS[2]: '<dc>:bakedin'
 # KEYS[3]: '<dc>:srvreqid'
 # KEYS[4]: '<dc>:srvreqq'
+# ARGV[1]: unix timestamp in seconds
 luasrc = """
-local cfg = redis.call("rpoplpush", KEYS[1], KEYS[2])
+local cfg = redis.call("rpop", KEYS[1])
+redis.call("lpush", KEYS[2], ARGV[1] .. "|" .. cfg)
 local serial = redis.call("incr", KEYS[3])
 redis.call("lpush", KEYS[4], serial)
 return cfg
@@ -28,7 +31,8 @@ def fetch(dc='doams3'):
     cfg = script(keys=[dc + ':srvq',
                        dc + ':bakedin',
                        dc + ':srvreqid',
-                       dc + ':srvreqq'])
+                       dc + ':srvreqq'],
+                 args=[int(time.time())])
     return cfg.split('|', 1)[1]
 
 def tojson(cfg):
