@@ -31,15 +31,30 @@ def fetch(dc='doams3'):
                        dc + ':srvreqq'])
     return cfg.split('|', 1)[1]
 
+def tojson(cfg):
+    import yaml
+    import json
+    return json.dumps([yaml.load(cfg).values()[0]])
+
 
 if __name__ == '__main__':
+    args = sys.argv[:]
+    try:
+        args.remove('--json')
+        use_json = True
+    except ValueError:
+        use_json = False
     dc = None
-    if len(sys.argv) == 1:
+    if len(args) == 1:
         dc = 'doams3'
-    elif len(sys.argv) == 2:
-        dc = sys.argv[1]
+    elif len(args) == 2:
+        dc = args[1]
     if dc not in ['doams3', 'vltok1']:
-        print "Usage: %s [datacenter]" % sys.argv[0]
-        print "Where datacenter must be one of 'doams3' (for Amsterdam) or 'vltok1' (for Tokyo)"
+        print "Usage: %s [--json] [datacenter]" % args[0]
+        print "Where datacenter must be one of 'doams3' (for Amsterdam, default) or 'vltok1' (for Tokyo)"
+        print "and use --json to output a format that can be directly read by genconfig."
         sys.exit(1)
-    print fetch(dc)
+    cfg = fetch(dc)
+    if use_json:
+        cfg = tojson(cfg)
+    print cfg
