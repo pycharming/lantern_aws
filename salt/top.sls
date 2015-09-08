@@ -17,7 +17,6 @@ base:
         - check_vpss
         - checkfallbacks
     'fp-*':
-        - lantern_build_prereqs
         - apt_upgrade
         - fallback_proxy
     'fl-*':
