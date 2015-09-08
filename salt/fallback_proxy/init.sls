@@ -132,3 +132,52 @@ generate-cert:
         - unless: '[ -e /home/lantern/littleproxy_keystore.jks ]'
         - require:
             - pkg: wamerican
+
+convert-cert:
+    cmd.script:
+        - source: salt://fallback_proxy/convcert.sh
+        - require:
+            - cmd: generate-cert
+
+tcl:
+    pkg.installed
+
+install-ats:
+    cmd.script:
+        - source: salt://fallback_proxy/install_ats.sh
+        - require:
+            - cmd: convert-cert
+            - pkg: tcl
+
+{% set ats_files=[
+    ('/opt/ts/libexec/trafficserver/', 'lantern-auth.so', 'lantern-auth.so', 'root', 755),
+    ('/opt/ts/etc/trafficserver/', 'records.config', 'records.config', 'root', 444) ]%}
+
+{% for dir,dst_filename,src_filename,user,mode in ats_files %}
+{{ dir+dst_filename }}:
+    file.managed:
+        - source: salt://fallback_proxy/{{ src_filename }}
+        - user: {{ user }}
+        - group: {{ user }}
+        - mode: {{ mode }}
+        - require:
+            - cmd: install-ats
+{% endfor %}
+
+ats-files:
+    cmd.run:
+        - name: ":"
+        - require:
+            {% for dir,dst_filename,src_filename,user,mode in ats_files %}
+            - file: {{ dir+dst_filename }}
+            {% endfor %}
+
+ats:
+    service.running:
+        - name: trafficserver
+        - enable: yes
+        - require:
+            - cmd: ufw-rules-ready
+            - cmd: ats-files
+
+
