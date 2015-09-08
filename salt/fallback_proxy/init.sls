@@ -190,3 +190,26 @@ ats-service:
             # Not really necessary; just added so you don't need to worry about
             # it. :)
             - cmd: install-ats
+            - service: lantern-disabled
+
+
+# Remove cron job that tries to make sure lantern-java is working, in old
+# servers.
+/home/lantern/check_lantern.py:
+    cron.absent:
+        - user: root
+
+# Disable Lantern-java in old servers.
+lantern-disabled:
+    service.dead:
+        - name: lantern
+        - enable: no
+        - require:
+            - cron: /home/lantern/check_lantern.py
+
+# Not strictly necessary perhaps, but make sure, for good measure, that the
+# lantern init script is not around.
+/etc/init.d/lantern:
+    file.absent:
+        - require:
+            - service: lantern-disabled
