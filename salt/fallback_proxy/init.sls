@@ -5,13 +5,27 @@
 {% set traffic_check_period_minutes=60 %}
 {% from 'ip.sls' import external_ip %}
 
+fp-dirs:
+  file.directory:
+    - names:
+        - /opt/ts/libexec/trafficserver
+        - /opt/ts/etc/trafficserver
+    - user: lantern
+    - group: lantern
+    - mode: 755
+    - makedirs: yes
+
 # To filter through jinja.
 {% set template_files=[
     ('/home/lantern/', 'util.py', 'util.py', 'lantern', 400),
     ('/home/lantern/', 'check_load.py', 'check_load.py', 'lantern', 700),
     ('/home/lantern/', 'check_traffic.py', 'check_traffic.py', 'lantern', 700),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
-    ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400)] %}
+    ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400),
+    ('/opt/ts/libexec/trafficserver/', 'lantern-auth.so', 'lantern-auth.so', 'lantern', 700),
+    ('/opt/ts/etc/trafficserver/', 'records.config', 'records.config', 'lantern', 400),
+    ('/opt/ts/etc/trafficserver/', 'plugin.config', 'plugin.config', 'lantern', 400),
+    ('/opt/ts/etc/trafficserver/', 'ssl_multicert.config', 'ssl_multicert.config', 'lantern', 400) ]%}
 
 include:
     - proxy_ufw_rules
@@ -29,6 +43,8 @@ include:
         - user: {{ user }}
         - group: {{ user }}
         - mode: {{ mode }}
+        - require:
+            - file: fp-dirs
 {% endfor %}
 
 fallback-proxy-dirs-and-files:
@@ -140,34 +156,8 @@ install-ats:
     cmd.script:
         - source: salt://fallback_proxy/install_ats.sh
         - creates: /opt/ts/bin/traffic_cop
-
-{% set ats_files=[
-    ('/opt/ts/libexec/trafficserver/', 'lantern-auth.so', 'lantern-auth.so', 'lantern', 700),
-    ('/opt/ts/etc/trafficserver/', 'records.config', 'records.config', 'lantern', 400),
-    ('/opt/ts/etc/trafficserver/', 'plugin.config', 'plugin.config', 'lantern', 400),
-    ('/opt/ts/etc/trafficserver/', 'ssl_multicert.config', 'ssl_multicert.config', 'lantern', 400) ]%}
-
-{% for dir,dst_filename,src_filename,user,mode in ats_files %}
-{{ dir+dst_filename }}:
-    file.managed:
-        - source: salt://fallback_proxy/{{ src_filename }}
-        - template: jinja
-        - context:
-            auth_token: {{ auth_token }}
-        - user: {{ user }}
-        - group: {{ user }}
-        - mode: {{ mode }}
         - require:
-            - cmd: install-ats
-{% endfor %}
-
-ats-files:
-    cmd.run:
-        - name: ":"
-        - require:
-            {% for dir,dst_filename,src_filename,user,mode in ats_files %}
-            - file: {{ dir+dst_filename }}
-            {% endfor %}
+            - cmd: fallback-proxy-dirs-and-files
 
 convert-cert:
     cmd.script:
