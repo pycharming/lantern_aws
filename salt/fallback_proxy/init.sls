@@ -179,16 +179,14 @@ convert-cert:
         - require:
             - cmd: generate-cert
 
-ats:
+ats-service:
     service.running:
         - name: trafficserver
         - enable: yes
-        - user: lantern
-        - group: lantern
+        - reload: yes
         - watch:
             - cmd: ats-files
+            - cmd: convert-cert
         - require:
             - pkg: tcl
             - cmd: ufw-rules-ready
-            - cmd: ats-files
-            - cmd: convert-cert
