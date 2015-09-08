@@ -124,6 +124,9 @@ REDIS_URL:
 wamerican:
     pkg.installed
 
+tcl:
+    pkg.installed
+
 generate-cert:
     cmd.script:
         - source: salt://fallback_proxy/gencert.py
@@ -133,30 +136,24 @@ generate-cert:
         - require:
             - pkg: wamerican
 
-convert-cert:
-    cmd.script:
-        - source: salt://fallback_proxy/convcert.sh
-        - require:
-            - cmd: generate-cert
-
-tcl:
-    pkg.installed
-
 install-ats:
     cmd.script:
         - source: salt://fallback_proxy/install_ats.sh
-        - require:
-            - cmd: convert-cert
-            - pkg: tcl
+        - creates: /opt/ts/bin/traffic_cop
 
 {% set ats_files=[
-    ('/opt/ts/libexec/trafficserver/', 'lantern-auth.so', 'lantern-auth.so', 'root', 755),
-    ('/opt/ts/etc/trafficserver/', 'records.config', 'records.config', 'root', 444) ]%}
+    ('/opt/ts/libexec/trafficserver/', 'lantern-auth.so', 'lantern-auth.so', 'lantern', 700),
+    ('/opt/ts/etc/trafficserver/', 'records.config', 'records.config', 'lantern', 400),
+    ('/opt/ts/etc/trafficserver/', 'plugin.config', 'plugin.config', 'lantern', 400),
+    ('/opt/ts/etc/trafficserver/', 'ssl_multicert.config', 'ssl_multicert.config', 'lantern', 400) ]%}
 
 {% for dir,dst_filename,src_filename,user,mode in ats_files %}
 {{ dir+dst_filename }}:
     file.managed:
         - source: salt://fallback_proxy/{{ src_filename }}
+        - template: jinja
+        - context:
+            auth_token: {{ auth_token }}
         - user: {{ user }}
         - group: {{ user }}
         - mode: {{ mode }}
@@ -172,12 +169,26 @@ ats-files:
             - file: {{ dir+dst_filename }}
             {% endfor %}
 
+convert-cert:
+    cmd.script:
+        - source: salt://fallback_proxy/convcert.sh
+        - unless: '[ -e /opt/ts/etc/trafficserver/key.pem ]'
+        - user: lantern
+        - group: lantern
+        - mode: 400
+        - require:
+            - cmd: generate-cert
+
 ats:
     service.running:
         - name: trafficserver
         - enable: yes
+        - user: lantern
+        - group: lantern
+        - watch:
+            - cmd: ats-files
         - require:
+            - pkg: tcl
             - cmd: ufw-rules-ready
             - cmd: ats-files
-
-
+            - cmd: convert-cert
