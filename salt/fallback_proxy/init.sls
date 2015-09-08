@@ -49,6 +49,9 @@ include:
         - mode: {{ mode }}
         - require:
             - file: fp-dirs
+            # Installing ATS will overwrite some of these files and doesn't
+            # depend on any of them, so we do it before.
+            - cmd: install-ats
 {% endfor %}
 
 fallback-proxy-dirs-and-files:
@@ -160,6 +163,8 @@ install-ats:
     cmd.script:
         - source: salt://fallback_proxy/install_ats.sh
         - creates: /opt/ts/bin/traffic_cop
+        - requires:
+            - file: fp-dirs
 
 convert-cert:
     cmd.script:
@@ -182,3 +187,6 @@ ats-service:
         - require:
             - pkg: tcl
             - cmd: ufw-rules-ready
+            # Not really necessary; just added so you don't need to worry about
+            # it. :)
+            - cmd: install-ats
