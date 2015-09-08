@@ -148,7 +148,7 @@ generate-cert:
         - source: salt://fallback_proxy/gencert.py
         - template: jinja
         # Don't clobber the keystore of old fallbacks.
-        - unless: '[ -e /home/lantern/littleproxy_keystore.jks ]'
+        - creates: /home/lantern/littleproxy_keystore.jks
         - require:
             - pkg: wamerican
 
@@ -162,7 +162,7 @@ install-ats:
 convert-cert:
     cmd.script:
         - source: salt://fallback_proxy/convcert.sh
-        - unless: '[ -e /opt/ts/etc/trafficserver/key.pem ]'
+        - creates: /opt/ts/etc/trafficserver/key.pem
         - user: lantern
         - group: lantern
         - mode: 400
