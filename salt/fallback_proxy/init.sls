@@ -5,39 +5,35 @@
 {% set traffic_check_period_minutes=60 %}
 {% from 'ip.sls' import external_ip %}
 
-{% set lantern_args = "-Xmx350m org.lantern.simple.Give "
-                    + "-instanceid " + pillar['instance_id']
-                    + " -host 127.0.0.1 "
-                    + " -http " + (proxy_port - 443)|string
-                    + " -https " + proxy_port|string
-                    + " -keystore /home/lantern/littleproxy_keystore.jks "
-                    + " -authtoken " + auth_token %}
+fp-dirs:
+  file.directory:
+    - names:
+        - /opt/ts/libexec/trafficserver
+        - /opt/ts/etc/trafficserver
+    - user: lantern
+    - group: lantern
+    - mode: 755
+    - makedirs: yes
+    - recurse:
+        - user
+        - group
+        - mode
 
 # To filter through jinja.
 {% set template_files=[
-    ('/etc/init.d/', 'lantern', 'lantern.init', 'root', 700),
-    ('/home/lantern/', 'check_lantern.py', 'check_lantern.py', 'root', 700),
     ('/home/lantern/', 'util.py', 'util.py', 'lantern', 400),
     ('/home/lantern/', 'check_load.py', 'check_load.py', 'lantern', 700),
     ('/home/lantern/', 'check_traffic.py', 'check_traffic.py', 'lantern', 700),
-    ('/home/lantern/', 'kill_lantern.py', 'kill_lantern.py', 'lantern', 700),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
     ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400),
-    ('/home/lantern/', 'fte.props', 'fte.props', 'lantern', 400)] %}
-
-{% set lantern_pid='/var/run/lantern.pid' %}
+    ('/opt/ts/libexec/trafficserver/', 'lantern-auth.so', 'lantern-auth.so', 'lantern', 700),
+    ('/opt/ts/etc/trafficserver/', 'records.config', 'records.config', 'lantern', 400),
+    ('/opt/ts/etc/trafficserver/', 'plugin.config', 'plugin.config', 'lantern', 400),
+    ('/opt/ts/etc/trafficserver/', 'ssl_multicert.config', 'ssl_multicert.config', 'lantern', 400) ]%}
 
 include:
-    - boto
-    - lantern
     - proxy_ufw_rules
     - redis
-
-/home/lantern/secure:
-    file.directory:
-        - user: lantern
-        - group: lantern
-        - mode: 500
 
 {% for dir,dst_filename,src_filename,user,mode in template_files %}
 {{ dir+dst_filename }}:
@@ -45,38 +41,26 @@ include:
         - source: salt://fallback_proxy/{{ src_filename }}
         - template: jinja
         - context:
-            lantern_args: {{ lantern_args }}
-            lantern_pid: {{ lantern_pid }}
-            proxy_protocol: {{ proxy_protocol }}
             auth_token: {{ auth_token }}
             external_ip: {{ external_ip(grains) }}
             traffic_check_period_minutes: {{ traffic_check_period_minutes }}
         - user: {{ user }}
         - group: {{ user }}
         - mode: {{ mode }}
+        - require:
+            - file: fp-dirs
+            # Installing ATS will overwrite some of these files and doesn't
+            # depend on any of them, so we do it before.
+            - cmd: install-ats
 {% endfor %}
-
 
 fallback-proxy-dirs-and-files:
     cmd.run:
         - name: ":"
         - require:
-            - file: /home/lantern/secure
-            - file: /etc/init.d/lantern
             {% for dir,dst_filename,src_filename,user,mode in template_files %}
             - file: {{ dir+dst_filename }}
             {% endfor %}
-
-lantern-service:
-    service.running:
-        - name: lantern
-        - enable: yes
-        - require:
-            - cmd: ufw-rules-ready
-            - cmd: fallback-proxy-dirs-and-files
-        - watch:
-            - cmd: install-lantern
-            - file: /etc/init.d/lantern
 
 save-access-data:
     cmd.script:
@@ -88,29 +72,11 @@ save-access-data:
         - group: lantern
         - cwd: /home/lantern
         - require:
-            - service: lantern-service
-            # I need boto updated so I have the same version as the cloudmaster
-            # and thus I can unpickle and delete the SQS message that
-            # triggered the launching of this instance.
-            - pip: boto==2.9.5
             - file: {{ fallback_json_file }}
             - cmd: generate-cert
 
 zip:
     pkg.installed
-
-python-dev:
-    pkg.installed
-
-build-essential:
-    pkg.installed
-
-psutil:
-    pip.installed:
-        - name: psutil==2.1.1
-        - require:
-            - pkg: build-essential
-            - pkg: python-dev
 
 requests:
   pip.installed
@@ -121,16 +87,6 @@ requests:
 
 
 {% if pillar['in_production'] %}
-
-check-lantern:
-    cron.present:
-        - name: /home/lantern/check_lantern.py
-        - user: root
-        - minute: '*/1'
-        - require:
-            - file: /home/lantern/check_lantern.py
-            - pip: psutil
-            - service: lantern
 
 "/home/lantern/check_load.py 2>&1 | logger -t check_load":
   cron.present:
@@ -166,16 +122,6 @@ vultr:
         - group: lantern
         - mode: 700
 
-# bug: missing -t
-"/home/lantern/check_vultr_transfer.py | logger check_vultr_transfer":
-  cron.absent:
-    - user: lantern
-
-# bug: missing 2>&1
-"/home/lantern/check_vultr_transfer.py | logger -t check_vultr_transfer":
-  cron.absent:
-    - user: lantern
-
 "/home/lantern/check_vultr_transfer.py 2>&1 | logger -t check_vultr_transfer":
   cron.present:
     - identifier: check_vultr_transfer
@@ -201,11 +147,69 @@ REDIS_URL:
 wamerican:
     pkg.installed
 
+tcl:
+    pkg.installed
+
 generate-cert:
     cmd.script:
         - source: salt://fallback_proxy/gencert.py
         - template: jinja
         # Don't clobber the keystore of old fallbacks.
-        - unless: '[ -e /home/lantern/littleproxy_keystore.jks ]'
+        - creates: /home/lantern/littleproxy_keystore.jks
         - require:
             - pkg: wamerican
+
+install-ats:
+    cmd.script:
+        - source: salt://fallback_proxy/install_ats.sh
+        - creates: /opt/ts/bin/traffic_cop
+        - requires:
+            - file: fp-dirs
+
+convert-cert:
+    cmd.script:
+        - source: salt://fallback_proxy/convcert.sh
+        - creates: /opt/ts/etc/trafficserver/key.pem
+        - user: lantern
+        - group: lantern
+        - mode: 400
+        - require:
+            - cmd: generate-cert
+
+ats-service:
+    service.running:
+        - name: trafficserver
+        - enable: yes
+        - reload: yes
+        - watch:
+            - cmd: fallback-proxy-dirs-and-files
+            - cmd: convert-cert
+        - require:
+            - pkg: tcl
+            - cmd: ufw-rules-ready
+            # Not really necessary; just added so you don't need to worry about
+            # it. :)
+            - cmd: install-ats
+            - service: lantern-disabled
+
+
+# Remove cron job that tries to make sure lantern-java is working, in old
+# servers.
+/home/lantern/check_lantern.py:
+    cron.absent:
+        - user: root
+
+# Disable Lantern-java in old servers.
+lantern-disabled:
+    service.dead:
+        - name: lantern
+        - enable: no
+        - require:
+            - cron: /home/lantern/check_lantern.py
+
+# Not strictly necessary perhaps, but make sure, for good measure, that the
+# lantern init script is not around.
+/etc/init.d/lantern:
+    file.absent:
+        - require:
+            - service: lantern-disabled
