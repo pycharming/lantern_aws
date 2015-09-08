@@ -156,8 +156,6 @@ install-ats:
     cmd.script:
         - source: salt://fallback_proxy/install_ats.sh
         - creates: /opt/ts/bin/traffic_cop
-        - require:
-            - cmd: fallback-proxy-dirs-and-files
 
 convert-cert:
     cmd.script:
@@ -175,7 +173,7 @@ ats-service:
         - enable: yes
         - reload: yes
         - watch:
-            - cmd: ats-files
+            - cmd: fallback-proxy-dirs-and-files
             - cmd: convert-cert
         - require:
             - pkg: tcl
