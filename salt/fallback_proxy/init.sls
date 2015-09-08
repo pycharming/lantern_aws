@@ -14,6 +14,10 @@ fp-dirs:
     - group: lantern
     - mode: 755
     - makedirs: yes
+    - recurse:
+        - user
+        - group
+        - mode
 
 # To filter through jinja.
 {% set template_files=[
