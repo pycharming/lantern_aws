@@ -23,15 +23,16 @@ def create_vps(name):
     return d['name'], d['ip_address']
 
 
-def init_vps((name, ip), wait_for_hs=True):
+def init_vps(name_and_ip, wait_for_hs=True):
+    name, ip = name_and_ip
     if wait_for_hs:
         while not vps_util.highstate_pid(name):
-            print "Highstate not running yet..."
+            print("Highstate not running yet...")
             time.sleep(10)
     while vps_util.highstate_pid(name):
-        print "Highstate still running..."
+        print("Highstate still running...")
         time.sleep(10)
-    print "Highstate done!"
+    print("Highstate done!")
     return vps_util.hammer_the_damn_thing_until_it_proxies(
         name,
         ssh_tmpl % ip,

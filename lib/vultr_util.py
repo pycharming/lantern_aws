@@ -40,7 +40,7 @@ def ip_prefix(ip):
 
 def ip_prefixes():
     return set(ip_prefix(d['main_ip'])
-               for d in vultr.server_list(None).itervalues()
+               for d in vultr.server_list(None).values()
                if d['label'].startswith('fl-jp-'))
 
 def minion_id(prefix, n):
@@ -70,7 +70,7 @@ def wait_for_status_ok(subid):
             time.sleep(backoff * (1 + random.random()))
             if backoff < 60:
                 backoff *= 1.5
-        print "Server not started up; waiting..."
+        print("Server not started up; waiting...")
         time.sleep(10)
 
 def init_vps(subid):
@@ -78,30 +78,30 @@ def init_vps(subid):
     # completing setup. Trying to initialize them at this early stage seems to
     # cause trouble.
     wait_for_status_ok(subid)
-    print "Status OK for the first time.  I don't buy it.  Lemme wait again..."
+    print("Status OK for the first time.  I don't buy it.  Lemme wait again...")
     time.sleep(10)
     while True:
         d = wait_for_status_ok(subid)
-        print "Status OK again; bootstrapping..."
+        print("Status OK again; bootstrapping...")
         ip = d['main_ip']
         name = d['label']
         passw = d['default_password']
         if os.system(bootstrap_tmpl % (passw, ip, name)):
-            print "Error trying to bootstrap; retrying..."
+            print("Error trying to bootstrap; retrying...")
         else:
             break
         time.sleep(10)
-    print "Generating and copying keys..."
+    print("Generating and copying keys...")
     with vps_util.tempdir(subid):
         trycmd('salt-key --gen-keys=%s' % name)
         for suffix in ['.pem', '.pub']:
             os.rename(name + suffix, 'minion' + suffix)
         trycmd(scpkeys_tmpl % (passw, ip))
         os.rename('minion.pub', os.path.join('/etc/salt/pki/master/minions', name))
-        print "Starting salt-minion..."
+        print("Starting salt-minion...")
         trycmd(start_tmpl % (passw, ip))
         vps_util.save_pillar(name)
-        print "Calling highstate..."
+        print("Calling highstate...")
         time.sleep(10)
         trycmd("salt -t 1800 %s state.highstate" % name)
         return vps_util.hammer_the_damn_thing_until_it_proxies(
