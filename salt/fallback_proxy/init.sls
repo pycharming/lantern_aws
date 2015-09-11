@@ -180,7 +180,6 @@ ats-service:
     service.running:
         - name: trafficserver
         - enable: yes
-        - reload: yes
         - watch:
             - cmd: fallback-proxy-dirs-and-files
             - cmd: convert-cert
