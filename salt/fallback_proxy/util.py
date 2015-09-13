@@ -73,7 +73,7 @@ def split_server(msg, retire=False):
             if resp.status_code == 200:
                 flag_as_done(split_flag_filename)
                 send_alarm("Chained fallback " + participle,
-                        participle + " because I " + msg)
+                           participle + " because I " + msg)
                 break
             time.sleep(2 << attempt)
         else:
