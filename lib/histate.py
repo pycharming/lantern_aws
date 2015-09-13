@@ -1,3 +1,5 @@
+# Note this requires python3!
+
 import multiprocessing
 import subprocess
 import traceback
@@ -6,6 +8,7 @@ from redis_util import redis_shell
 import vps_util
 import vultr_util as vu
 import do_util as do
+
 
 class vps:
 
@@ -84,7 +87,8 @@ def rehi(pair):
 def run():
     reg_vpss = get_registered_vpss()
     rest = [x for x in get_actual_vpss() if x.is_chained() and x.name in reg_vpss]
-    with multiprocessing.Pool(50) as pool:
-        status = pool.map(check_highstate, rest)
-    pairs = [(v, s) for v, s in zip(rest, status) if "CAMELLIA" not in s]
-    return [x[0] for x in pairs], [x[1] for x in pairs]
+    return rest
+#    with multiprocessing.Pool(50) as pool:
+#        status = pool.map(check_highstate, rest)
+#    pairs = [(v, s) for v, s in zip(rest, status) if "CAMELLIA" not in s]
+#    return [x[0] for x in pairs], [x[1] for x in pairs]
