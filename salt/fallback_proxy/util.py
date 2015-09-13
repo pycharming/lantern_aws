@@ -58,32 +58,27 @@ def split_server(msg, retire=False):
         participle = infinitive = 'split'
     if os.path.exists(flag_filename):
         return
-    for attempt in xrange(7):
-        resp = requests.post("https://config.getiantem.org/split-server",
-                             headers={"X-Lantern-Auth-Token": auth_token},
-                             data=data)
-        if resp.status_code == 200:
-            flag_as_done(flag_filename)
-            send_alarm("Chained fallback " + participle,
-                       participle + " because I " + msg)
-            break
-        time.sleep(2 << attempt)
+    r = redis.from_url(os.getenv('REDIS_URL'))
+    srvid = r.hget('srvbysrvip', ip)
+    if not srvid or not r.zrank(dc + ':slices', srvid):
+        # This server is not open so it can't be split. We only check this
+        # after having tried because this is rarely needed.
+        print "I was not open, so I won't try to split myself."
+        flag_as_done(split_flag_filename)
     else:
-        r = redis.from_url(os.getenv('REDIS_URL'))
-        srvs = r.zrangebyscore(dc + ':slices', '-inf', '+inf')
-        for srv in srvs:
-            cfg = r.hget('cfgbysrv', srv)
-            cfgip = cfg.split('|')[0]
-            if cfgip == ip:
-                send_alarm("Unable to %s chained fallback" % infinitive,
-                           "I tried to %s myself because I %s, but I couldn't." % (infinitive, msg))
+        for attempt in xrange(7):
+            resp = requests.post("https://config.getiantem.org/split-server",
+                                headers={"X-Lantern-Auth-Token": auth_token},
+                                data=data)
+            if resp.status_code == 200:
+                flag_as_done(split_flag_filename)
+                send_alarm("Chained fallback " + participle,
+                        participle + " because I " + msg)
                 break
+            time.sleep(2 << attempt)
         else:
-            # This server is not open so it can't be split. We only check this
-            # after having tried because this check is expensive and rarely
-            # needed.
-            flag_as_done(flag_filename)
+            send_alarm("Unable to %s chained fallback" % infinitive,
+                        "I tried to %s myself because I %s, but I couldn't." % (infinitive, msg))
     if retire:
-        r = redis.from_url(os.getenv('REDIS_URL'))
         r.lpush(dc + ':retireq', '%s|%s' % (instance_id, ip))
-        flag_as_done(flag_filename)
+        flag_as_done(retire_flag_filename)
