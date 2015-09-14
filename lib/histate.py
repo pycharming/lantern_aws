@@ -1,6 +1,7 @@
 # Note this requires python3!
 
-import multiprocessing
+import multiprocessing as mp
+from pprint import pprint as pp
 import subprocess
 import traceback
 
@@ -86,9 +87,4 @@ def rehi(pair):
 
 def run():
     reg_vpss = get_registered_vpss()
-    rest = [x for x in get_actual_vpss() if x.is_chained() and x.name in reg_vpss]
-    return rest
-#    with multiprocessing.Pool(50) as pool:
-#        status = pool.map(check_highstate, rest)
-#    pairs = [(v, s) for v, s in zip(rest, status) if "CAMELLIA" not in s]
-#    return [x[0] for x in pairs], [x[1] for x in pairs]
+    return [x for x in get_actual_vpss() if x.is_chained() and x.name in reg_vpss]
