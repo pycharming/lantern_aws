@@ -1,8 +1,7 @@
-{% from 'ip.sls' import external_ip %}
+{% from 'ip.sls' import internal_ip %}
 
 sync_after_install: all
 delete_sshkeys: True
 minion:
-  # XXX: make this the internal IP when we deploy per-dc masters.
-  master: {{ external_ip(grains) }}
+  master: {{ internal_ip(grains) }}
   startup_states: highstate

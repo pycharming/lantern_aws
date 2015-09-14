@@ -6,8 +6,10 @@ import here
 # Values for production deployment.
 salt_version = 'v2015.5.5'
 production_cloudmasters = []
-cloudmaster_name = 'cm-doams3'
-cloudmaster_address = "188.166.35.238"
+#cloudmaster_name = 'cm-doams3'
+#cloudmaster_address = '188.166.35.238'
+cloudmaster_name = 'cm-vltok1'
+cloudmaster_address = '45.32.14.144'
 
 # To override values locally, put them in config_overrides.py (not version controlled)
 try:
