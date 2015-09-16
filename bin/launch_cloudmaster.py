@@ -68,8 +68,6 @@ def launch_cloudmaster():
     update.upload_cloudmaster_minion_config()
     print "Uploading salt configuration..."
     update.rsync_salt()
-    print "Uploading secrets..."
-    update.upload_secrets()
     print "Copying bootstrap file..."
     os.system("scp -i %s %s root@%s:"
               % (config.key_path,

@@ -1,4 +1,7 @@
+# Note this requires python3!
+
 import multiprocessing as mp
+from pprint import pprint as pp
 import subprocess
 import traceback
 
@@ -6,6 +9,7 @@ from redis_util import redis_shell
 import vps_util
 import vultr_util as vu
 import do_util as do
+
 
 class vps:
 
@@ -87,5 +91,4 @@ def restart_salt(vps):
 
 def run():
     reg_vpss = get_registered_vpss()
-    rest = [x for x in get_actual_vpss() if x.is_chained() and x.name in reg_vpss]
-    return rest
+    return [x for x in get_actual_vpss() if x.is_chained() and x.name in reg_vpss]
