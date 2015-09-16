@@ -1,4 +1,4 @@
-import multiprocessing
+import multiprocessing as mp
 import subprocess
 import traceback
 
@@ -81,10 +81,11 @@ def rehi(pair):
     else:
         return "No PID."
 
+def restart_salt(vps):
+    print("Restarting salt at", vps, "...")
+    return vps.ssh("service salt-minion restart")
+
 def run():
     reg_vpss = get_registered_vpss()
     rest = [x for x in get_actual_vpss() if x.is_chained() and x.name in reg_vpss]
-    with multiprocessing.Pool(50) as pool:
-        status = pool.map(check_highstate, rest)
-    pairs = [(v, s) for v, s in zip(rest, status) if "CAMELLIA" not in s]
-    return [x[0] for x in pairs], [x[1] for x in pairs]
+    return rest
