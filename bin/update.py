@@ -148,6 +148,8 @@ def upload_pillars():
     cfl_id, cfl_key = util.read_cfl_credential()
     dsp_id, dsp_key = util.read_dnsimple_credential()
     cfgsrv_token, cfgsrv_redis_url = util.read_cfgsrv_credential()
+    if not util.in_production():
+        cfgsrv_redis_url = "redis://%s:6379" % util.get_cloudmaster_address()
     util.ssh_cloudmaster((
             'echo "branch: check-all-fallbacks" > $(hostname).sls '
             ' && echo "private_networking: %s" >> $(hostname).sls '
