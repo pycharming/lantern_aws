@@ -55,6 +55,7 @@ sshpass:
     file.managed:
         - order: 1
         - source: salt://cloudmaster/{{ lib }}.py
+        - template: jinja
         - user: root
         - group: root
         - mode: 644
