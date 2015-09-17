@@ -115,6 +115,8 @@ VULTR_APIKEY:
         - group: root
         - mode: 755
 
+{% if pillar['in_production'] %}
+
 {% for dc in ['doams3', 'vltok1'] %}
 
 /etc/init/{{ svc }}_{{ dc }}.conf:
@@ -127,17 +129,14 @@ VULTR_APIKEY:
         - group: root
         - mode: 600
 
-{% if pillar['in_production'] %}
 {{ svc }}_{{ dc }}:
     service.running:
         - enable: yes
         - require:
               - cmd: {{ svc }}-services-registered
-{% endif %}
 
 {% endfor %} {# dc #}
 
-{% if pillar['in_production'] %}
 {{ svc }}-services-registered:
     cmd.run:
         - name: 'initctl reload-configuration'
