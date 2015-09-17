@@ -103,8 +103,6 @@ VULTR_APIKEY:
         - cron: DO_TOKEN
         - cron: VULTR_APIKEY
 
-{% endif %}
-
 {% for svc in ['refill_srvq', 'retire', 'destroy'] %}
 
 /usr/bin/{{ svc }}.py:
@@ -126,17 +124,14 @@ VULTR_APIKEY:
         - group: root
         - mode: 600
 
-{% if pillar['in_production'] %}
 {{ svc }}_{{ dc }}:
     service.running:
         - enable: yes
         - require:
               - cmd: {{ svc }}-services-registered
-{% endif %}
 
 {% endfor %} {# dc #}
 
-{% if pillar['in_production'] %}
 {{ svc }}-services-registered:
     cmd.run:
         - name: 'initctl reload-configuration'
@@ -151,7 +146,6 @@ VULTR_APIKEY:
             - pip: digitalocean
             - pip: vultr
             - pkg: python-redis
-{% endif %}
 
 {% endfor %} {# svc #}
 
