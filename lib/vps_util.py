@@ -42,8 +42,8 @@ def random_auth_token():
                    for _ in xrange(auth_token_length))
 
 def save_pillar(name):
-    file("/srv/pillar/%s.sls" % name, 'w').write(
-        pillar_tmpl % (random_auth_token(), name))
+    with file("/srv/pillar/%s.sls" % name, 'w') as f:
+        f.write(pillar_tmpl % (random_auth_token(), name))
 
 def trycmd(cmd, tries=sys.maxsize):
     for x in xrange(tries):

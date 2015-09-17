@@ -135,6 +135,10 @@ iface eth1 inet static
             mtu 1450
 """
 
+def restart_salt(vps):
+    print("Restarting salt at", vps, "...")
+    return vps.ssh("service salt-minion restart")
+
 def run():
     reg_vpss = get_registered_vpss()
     return [x for x in get_actual_vpss() if x.is_chained() and x.name in reg_vpss]

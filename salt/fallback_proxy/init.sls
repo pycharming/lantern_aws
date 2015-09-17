@@ -28,6 +28,7 @@ fp-dirs:
     ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400),
     ('/opt/ts/libexec/trafficserver/', 'lantern-auth.so', 'lantern-auth.so', 'lantern', 700),
     ('/opt/ts/etc/trafficserver/', 'records.config', 'records.config', 'lantern', 400),
+    ('/opt/ts/etc/trafficserver/', 'remap.config', 'remap.config', 'lantern', 400),
     ('/opt/ts/etc/trafficserver/', 'plugin.config', 'plugin.config', 'lantern', 400),
     ('/opt/ts/etc/trafficserver/', 'ssl_multicert.config', 'ssl_multicert.config', 'lantern', 400) ]%}
 
