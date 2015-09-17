@@ -10,7 +10,8 @@ from redis_util import redis_shell
 def srvs_in_cfgbysrv(dc, cfgbysrv):
     return ["Server %s in %s's slice table but no config for it." % (srv, dc)
             for srv in redis_shell.zrangebyscore(dc + ':slices', '-inf', '+inf')
-            if srv not in cfgbysrv]
+            if not srv.startswith('<empty')
+               and srv not in cfgbysrv]
 
 def configs_start_with_newline(cfgbysrv):
     """At some point we've found configurations that don't start with a newline.
