@@ -103,6 +103,8 @@ VULTR_APIKEY:
         - cron: DO_TOKEN
         - cron: VULTR_APIKEY
 
+{% endif %}
+
 {% for svc in ['refill_srvq', 'retire', 'destroy'] %}
 
 /usr/bin/{{ svc }}.py:
