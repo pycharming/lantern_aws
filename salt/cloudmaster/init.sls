@@ -7,7 +7,7 @@ include:
 
 /etc/ufw/applications.d/salt:
     file.managed:
-        - source: salt://cloudmaster/ufw-rules
+        - source: salt://cloudmaster/ufw-rules-salt
         - user: root
         - group: root
         - mode: 644
@@ -154,3 +154,50 @@ VULTR_APIKEY:
 {% endif %}
 
 {% endfor %} {# svc #}
+
+{# Redis DB hosted in Cloudmaster only for testing purposes #}
+{% if not pillar['in_production'] %}
+/etc/ufw/applications.d/redis-testing:
+    file.managed:
+        - source: salt://cloudmaster/ufw-rules-redis-testing
+        - user: root
+        - group: root
+        - mode: 644
+
+'ufw app update Redis ; ufw allow redis':
+    cmd.run:
+        - require:
+            - file: /etc/ufw/applications.d/redis-testing
+            - pkg: redis-server
+
+redis-server:
+    pkg.installed:
+        - name: redis-server
+    service.running:
+        - enable: True
+        - require:
+            - pkg: redis-server
+            - file: /var/log/redis
+        - watch:
+            - file: /etc/redis/redis.conf
+
+/var/log/redis:
+    file.directory:
+        - user: redis
+        - group: adm
+        - mode: 2750
+
+/etc/redis/redis.conf:
+    file.managed:
+        - source: salt://cloudmaster/redis-testing.conf.jinja
+        - template: jinja
+        - defaults:
+          bind: 0.0.0.0
+          port: 6379
+          maxmemory: 0
+          loglevel: notice
+          databases: 1
+        - require:
+            - pkg: redis-server
+
+{% endif %}

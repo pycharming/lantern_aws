@@ -1,0 +1,4 @@
+[Redis]
+title=redis-testing
+description=Redis DB for testing purposes
+ports=6379/tcp
