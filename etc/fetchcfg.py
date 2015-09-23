@@ -19,6 +19,9 @@ rs = redis.from_url(redis_url)
 # ARGV[1]: unix timestamp in seconds
 luasrc = """
 local cfg = redis.call("rpop", KEYS[1])
+if not cfg then
+    return "<no-servers-in-srvq>"
+end
 redis.call("lpush", KEYS[2], ARGV[1] .. "|" .. cfg)
 local serial = redis.call("incr", KEYS[3])
 redis.call("lpush", KEYS[4], serial)
