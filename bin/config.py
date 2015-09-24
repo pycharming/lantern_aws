@@ -5,7 +5,7 @@ import here
 
 # Values for production deployment.
 salt_version = 'v2015.5.5'
-production_cloudmasters = []
+production_cloudmasters = ['cm-doams3', 'cm-vltok1']
 datacenter = 'doams3'
 #datacenter = 'vltok1'
 cloudmaster_name = 'cm-' + datacenter
