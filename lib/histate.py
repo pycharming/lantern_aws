@@ -91,6 +91,10 @@ def turn_off_salt_minion(vps):
     # check vs 'salt-minion stop/waiting\n'
     return vps.ssh("service salt-minion stop")
 
+def check_salt_minion_off(vps):
+    print("Checking minion process in %s..." % vps)
+    return vps.ssh("service salt-minion status")
+
 def remove_salt(vps):
     print("Removing salt from %s..." % vps)
     # check vs ''

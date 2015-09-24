@@ -22,12 +22,11 @@ def create_vps(name):
     d = yaml.load(out[out.rfind(name + ":"):].replace("----------", "").replace("|_", "-")).values()[0]
     return d['name'], d['networks']['v4'][1]['ip_address']
 
-def init_vps(name_and_ip, wait_for_hs=True):
+def init_vps(name_and_ip):
     name, ip = name_and_ip
-    if wait_for_hs:
-        while not vps_util.highstate_pid(name):
-            print("Highstate not running yet...")
-            time.sleep(10)
+    if not vps_util.highstate_pid(name):
+        print("Highstate not running yet; waiting for a bit just in case...")
+        time.sleep(10)
     while vps_util.highstate_pid(name):
         print("Highstate still running...")
         time.sleep(10)
