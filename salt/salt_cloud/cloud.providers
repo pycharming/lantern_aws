@@ -1,52 +1,31 @@
-do:
-    provider: digital_ocean
-    # XXX use token when changing to DO API v2.0.
-    client_key: {{ pillar['do_id'] }}
-    api_key: {{ pillar['do_key'] }}
-    location: {{ grains['do_region'] }}
-    # Play it safe; not all regions support this.
-    private_networking: {{ pillar.get('private_networking', 'no') }}
-    ssh_key_file: /etc/salt/cloudmaster.id_rsa
-    # XXX: in v2.0, the name will be ssh_key_names, in plural.
-    ssh_key_name: cloudmaster
-
 do_sg:
     provider: digital_ocean
-    # XXX use token when changing to DO API v2.0.
-    client_key: {{ pillar['do_id'] }}
-    api_key: {{ pillar['do_key'] }}
+    personal_access_token: {{ pillar['do_token'] }}
     location: 'Singapore 1'
     private_networking: yes
     ssh_key_file: /etc/salt/cloudmaster.id_rsa
-    # XXX: in v2.0, the name will be ssh_key_names, in plural.
-    ssh_key_name: cloudmaster
+    ssh_key_names: cloudmaster
 
 do_nl:
     provider: digital_ocean
-    client_key: {{ pillar['do_id'] }}
-    api_key: {{ pillar['do_key'] }}
+    personal_access_token: {{ pillar['do_token'] }}
     location: 'Amsterdam 3'
     private_networking: yes
     ssh_key_file: /etc/salt/cloudmaster.id_rsa
-    # XXX: in v2.0, the name will be ssh_key_names, in plural.
-    ssh_key_name: cloudmaster
+    ssh_key_names: cloudmaster
 
 do_nyc3:
     provider: digital_ocean
-    client_key: {{ pillar['do_id'] }}
-    api_key: {{ pillar['do_key'] }}
+    personal_access_token: {{ pillar['do_token'] }}
     location: 'New York 3'
     private_networking: yes
     ssh_key_file: /etc/salt/cloudmaster.id_rsa
-    # XXX: in v2.0, the name will be ssh_key_names, in plural.
-    ssh_key_name: cloudmaster
+    ssh_key_names: cloudmaster
 
 do_sfo:
     provider: digital_ocean
-    client_key: {{ pillar['do_id'] }}
-    api_key: {{ pillar['do_key'] }}
+    personal_access_token: {{ pillar['do_token'] }}
     location: 'San Francisco 1'
     private_networking: no
     ssh_key_file: /etc/salt/cloudmaster.id_rsa
-    # XXX: in v2.0, the name will be ssh_key_names, in plural.
-    ssh_key_name: cloudmaster
+    ssh_key_names: cloudmaster

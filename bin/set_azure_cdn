@@ -1,3 +1,0 @@
-#!/bin/bash
-
-./ssh_cloudmaster.py "echo 'cdn: $2' >> /srv/pillar/$1.sls && salt $1 state.highstate" | tee hslog
