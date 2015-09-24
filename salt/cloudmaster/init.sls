@@ -96,33 +96,28 @@ VULTR_APIKEY:
 
 {% if pillar['in_production'] %}
 
-{% for dc in ['doams3', 'vltok1'] %}
 
-/etc/init/{{ svc }}_{{ dc }}.conf:
+/etc/init/{{ svc }}.conf:
     file.managed:
         - source: salt://cloudmaster/{{ svc }}.conf
         - template: jinja
-        - context:
-            dc: {{ dc }}
         - user: root
         - group: root
         - mode: 600
 
-{{ svc }}_{{ dc }}:
+{{ svc }}:
     service.running:
         - enable: yes
         - require:
               - cmd: {{ svc }}-services-registered
 
-{% endfor %} {# dc #}
 
 {{ svc }}-services-registered:
     cmd.run:
         - name: 'initctl reload-configuration'
         - watch:
             - file: /usr/bin/{{ svc }}.py
-            - file: /etc/init/{{ svc }}_doams3.conf
-            - file: /etc/init/{{ svc }}_vltok1.conf
+            - file: /etc/init/{{ svc }}.conf
 {% for lib in libs %}
             - file: /usr/local/lib/pylib/{{ lib }}.py
 {% endfor %} {# lib #}

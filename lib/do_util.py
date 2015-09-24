@@ -18,10 +18,9 @@ do = digitalocean.Manager(token=do_token)
 def create_vps(name):
     vps_util.save_pillar(name)
     out = subprocess.check_output(["salt-cloud", "-p", "do_nl_1GB", name])
-    # Uberhack; It'll get better with newer salt-cloud versions.
-    d = yaml.load(out[out.rfind(name + ":"):].replace("----------", "")).values()[0]
-    return d['name'], d['ip_address']
-
+    # Uberhack: XXX update with salt version...
+    d = yaml.load(out[out.rfind(name + ":"):].replace("----------", "").replace("|_", "-")).values()[0]
+    return d['name'], d['networks']['v4'][1]['ip_address']
 
 def init_vps(name_and_ip, wait_for_hs=True):
     name, ip = name_and_ip
