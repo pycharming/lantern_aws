@@ -7,6 +7,7 @@ base-packages:
             - python-pycurl
             - git
             - mailutils
+            - debconf-utils
         - reload_modules: yes
 
 /usr/local/lib/pylib:
