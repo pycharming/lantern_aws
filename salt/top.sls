@@ -9,6 +9,7 @@ base:
         - locales
         - enable_swap
         - timezone
+        - monitor
     'cm-*':
         - salt_cloud
         - cloudmaster
