@@ -7,5 +7,5 @@ example/*.txt
 example/*.p12
 .log
 bin/config_overrides.py
-bin/hslog
-
+hslog
+.ropeproject

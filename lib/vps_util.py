@@ -21,7 +21,7 @@ instance_id: %s
 proxy_protocol: tcp
 """
 
-auth_token_alphabet = string.letters + string.digits
+auth_token_alphabet = string.ascii_letters + string.digits
 auth_token_length = 64
 
 highstate_re = re.compile(r'The function "state.highstate" is running as PID (\d+)')
@@ -42,14 +42,14 @@ def random_auth_token():
                    for _ in xrange(auth_token_length))
 
 def save_pillar(name):
-    file("/srv/pillar/%s.sls" % name, 'w').write(
-        pillar_tmpl % (random_auth_token(), name))
+    with file("/srv/pillar/%s.sls" % name, 'w') as f:
+        f.write(pillar_tmpl % (random_auth_token(), name))
 
-def trycmd(cmd, tries=sys.maxint):
+def trycmd(cmd, tries=sys.maxsize):
     for x in xrange(tries):
         if not os.system(cmd):
             return True
-        print "Command failed; retrying: %s" % cmd
+        print("Command failed; retrying: %s" % cmd)
         time.sleep(10)
     return False
 
@@ -68,10 +68,10 @@ def hammer_the_damn_thing_until_it_proxies(name, ssh_tmpl, fetchaccessdata_cmd):
     kill_tmpl = ssh_tmpl % 'kill -9 %s'
     with tempdir(name):
         while True:
-            print "Rebooting..."
+            print("Rebooting...")
             trycmd(reboot_cmd)
             time.sleep(10)
-            print "Fetching access data..."
+            print("Fetching access data...")
             if trycmd(fetchaccessdata_cmd, 5):
                 access_data = file('access_data.json').read()
                 file('fallbacks.json', 'w').write("[" + access_data + "]")
@@ -80,12 +80,12 @@ def hammer_the_damn_thing_until_it_proxies(name, ssh_tmpl, fetchaccessdata_cmd):
                                                    '-fallbacks', 'fallbacks.json',
                                                    '-connections', '1'])
                     if "[failed fallback check]" in out:
-                        print "Fallback check failed; retrying..."
+                        print("Fallback check failed; retrying...")
                     else:
-                        print "VPS up!"
+                        print("VPS up!")
                         return yaml.load(access_data)
                     time.sleep(10)
-            print "Minion seems to be misconfigured.  Let's try reapplying salt state..."
+            print("Minion seems to be misconfigured.  Let's try reapplying salt state...")
             pid = highstate_pid(name)
             if pid:
                 trycmd(kill_tmpl % pid, 5)
@@ -99,7 +99,7 @@ def cleanup_keys(do_shell=None, vultr_shell=None):
         import vultr_util
         vultr_shell = vultr_util.vultr
     vpss = (set(d.name for d in do_shell.get_all_droplets())
-            | set(d['label'] for d in vultr_shell.server_list(None).itervalues()))
+            | set(d['label'] for d in vultr_shell.server_list(None).values()))
     ignore = set(["Accepted", "Unaccepted", "Rejected", "Keys:"])
     filter_out = vpss | ignore
     for key in subprocess.check_output(['salt-key', '-L']).split():
@@ -117,7 +117,7 @@ def retire_lcs(name,
     else:
         assert False
     srvs = [srv
-            for srv, cfg in cfgcache.get().iteritems()
+            for srv, cfg in cfgcache.get().items()
             if yaml.load(cfg).values()[0]['addr'].split(':')[0] == ip]
     if srvs:
         redis_shell.hdel('cfgbysrv', *srvs)
