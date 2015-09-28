@@ -90,6 +90,8 @@ def upload_pillars():
     _, _, do_token = util.read_do_credential()
     vultr_apikey = util.read_vultr_credential()
     cfgsrv_token, cfgsrv_redis_url = util.read_cfgsrv_credential()
+    if not util.in_production():
+        cfgsrv_redis_url = "redis://%s:6379" % config.cloudmaster_address
     util.ssh_cloudmaster((
             'echo "salt_version: %s" > salt.sls '
             # Hack so every instance will read specific pillars from a file
