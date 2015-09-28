@@ -1,6 +1,14 @@
+"hostname {{ grains['id'] }}":
+  cmd.run:
+    - order: 1
+    - unless: "[ $(hostname) = {{ grains['id'] }} ]"
+    - user: root
+    - group: root
+
 /etc/hosts:
-    file.append:
-        - text: "127.0.1.1\t{{ grains['id'] }}\t{{ grains['id'] }}"
+  file.append:
+    - order: 1
+    - text: "127.0.1.1\t{{ grains['id'] }}\t{{ grains['id'] }}"
 
 base-packages:
     pkg.installed:
