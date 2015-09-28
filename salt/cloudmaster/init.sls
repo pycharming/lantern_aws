@@ -53,7 +53,6 @@ sshpass:
 
 {% if pillar['in_production'] %}
 
-
 /etc/init/{{ svc }}.conf:
     file.managed:
         - source: salt://cloudmaster/{{ svc }}.conf
@@ -83,10 +82,13 @@ sshpass:
             - pip: vultr
             - pkg: python-redis
 
+{% endif %}
+
 {% endfor %} {# svc #}
 
 {# Redis DB hosted in Cloudmaster only for testing purposes #}
 {% if not pillar['in_production'] %}
+
 /etc/ufw/applications.d/redis-testing:
     file.managed:
         - source: salt://cloudmaster/ufw-rules-redis-testing
