@@ -2,6 +2,7 @@
 
 import multiprocessing as mp
 from pprint import pprint as pp
+from imp import reload
 import subprocess
 import traceback
 
@@ -85,6 +86,59 @@ def rehi(pair):
     else:
         return "No PID."
 
+def turn_off_salt_minion(vps):
+    print("Turning off %s..." % vps)
+    # check vs 'salt-minion stop/waiting\n'
+    return vps.ssh("service salt-minion stop")
+
+def check_salt_minion_off(vps):
+    print("Checking minion process in %s..." % vps)
+    return vps.ssh("service salt-minion status")
+
+def remove_salt(vps):
+    print("Removing salt from %s..." % vps)
+    # check vs ''
+    return vps.ssh("rm -rf /etc/salt /usr/bin/salt /usr/bin/salt-call /usr/bin/salt-minion /usr/lib/python2.7/dist-packages/salt /usr/lib/python2.7/dist-packages/salt-2014.7.0.egg-info")
+
+def download_bootstrap(vps):
+    print("Downloading bootstrap into %s..." % vps)
+    # check that it has "184k"
+    return vps.ssh("rm bootstrap-salt.sh ; curl -L https://raw.githubusercontent.com/saltstack/salt-bootstrap/902da734465798edb3aa6a68445ada358a69b0ef/bootstrap-salt.sh -o bootstrap-salt.sh")
+
+def install_salt(vps):
+    print("Installing salt on %s..." % vps)
+    # XXX: 10.99.0.119 for Vultr
+    # check that it ends with "*  INFO: Salt installed!\n"
+    return vps.ssh("sh ./bootstrap-salt.sh -A 10.133.46.205 -i %s git v2015.5.5" % vps.name)
+
+ipno = 1
+
+def configure_vultr_private_network(vps):
+    global ipno
+    print("Configuring private networking for %s..." % vps)
+    ipno += 1
+    lo = ipno % 255
+    hi = ipno // 255
+    if lo == 255:
+        lo = 2
+        hi += 1
+        ipno += 2
+    return vps.ssh(" -u aranhoide echo "" > tmp "
+                   + "".join(" && echo '%s' >> tmp " % line for line in vultr_private_net_cfg_tmpl.split("\n")) % (hi, lo)
+                   + " && cat /etc/network/interfaces tmp > tmp2 && sudo mv tmp2 /etc/network/interfaces && echo Done. ")
+
+def already_configured(vps):
+    print("Checking whether private networking is already confiured for %s..." % vps)
+    return vps.ssh("grep 'auto eth1' /etc/network/interfaces")
+
+vultr_private_net_cfg_tmpl = """
+auto eth1
+iface eth1 inet static
+    address 10.99.%s.%s
+    netmask 255.255.0.0
+            mtu 1450
+"""
+
 def restart_salt(vps):
     print("Restarting salt at", vps, "...")
     return vps.ssh("service salt-minion restart")
@@ -92,3 +146,4 @@ def restart_salt(vps):
 def run():
     reg_vpss = get_registered_vpss()
     return [x for x in get_actual_vpss() if x.is_chained() and x.name in reg_vpss]
+

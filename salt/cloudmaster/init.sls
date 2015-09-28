@@ -1,6 +1,4 @@
 include:
-    - salt_cloud
-    - lockfile
     - digitalocean
     - vultr
     - redis
@@ -14,32 +12,12 @@ include:
 
 'ufw app update Salt ; ufw allow salt':
     cmd.run:
-        - require:
+        - watch:
             - file: /etc/ufw/applications.d/salt
-
-/home/lantern/cloudmaster.py:
-    file.managed:
-        - source: salt://cloudmaster/cloudmaster.py
-        - template: jinja
-        - user: root
-        - group: root
-        - mode: 700
-    cron.present:
-        - user: root
-        - minute: "*/1"
-        - require:
-            - pip: lockfile
 
 /usr/bin/regenerate-fallbacks-list:
     file.managed:
         - source: salt://cloudmaster/regenerate_fallbacks_list.py
-        - user: root
-        - group: root
-        - mode: 700
-
-/usr/bin/accept-minions:
-    file.managed:
-        - source: salt://cloudmaster/accept_minions.py
         - user: root
         - group: root
         - mode: 700
@@ -53,8 +31,9 @@ sshpass:
 
 /usr/local/lib/pylib/{{ lib }}.py:
     file.managed:
-        - order: 1
+        - order: 2
         - source: salt://cloudmaster/{{ lib }}.py
+        - template: jinja
         - user: root
         - group: root
         - mode: 644
@@ -62,48 +41,6 @@ sshpass:
 
 {% endfor %}
 
-REDIS_URL:
-  cron.env_present:
-    - user: lantern
-    - value: {{ pillar['cfgsrv_redis_url'] }}
-
-PYTHONPATH:
-  cron.env_present:
-    - user: lantern
-    - value: /usr/local/lib/pylib
-
-DO_TOKEN:
-  cron.env_present:
-    - user: lantern
-    - value: {{ pillar['do_token'] }}
-
-VULTR_APIKEY:
-  cron.env_present:
-    - user: lantern
-    - value: {{ pillar['vultr_apikey'] }}
-
-/usr/bin/vps_sanity_checks.py:
-  file.managed:
-    - source: salt://cloudmaster/vps_sanity_checks.py
-    - user: root
-    - group: root
-    - mode: 755
-
-{% if pillar['in_production'] %}
-
-"/usr/bin/vps_sanity_checks.py 2>&1 | logger -t vps_sanity_checks":
-  cron.present:
-    - user: lantern
-    - minute: "30"
-    - identifier: vps_sanity_checks
-    - require:
-        - file: /usr/bin/vps_sanity_checks.py
-        - cron: REDIS_URL
-        - cron: PYTHONPATH
-        - cron: DO_TOKEN
-        - cron: VULTR_APIKEY
-
-{% endif %}
 
 {% for svc in ['refill_srvq', 'retire', 'destroy'] %}
 
@@ -114,33 +51,30 @@ VULTR_APIKEY:
         - group: root
         - mode: 755
 
-{% for dc in ['doams3', 'vltok1'] %}
+{% if pillar['in_production'] %}
 
-/etc/init/{{ svc }}_{{ dc }}.conf:
+
+/etc/init/{{ svc }}.conf:
     file.managed:
         - source: salt://cloudmaster/{{ svc }}.conf
         - template: jinja
-        - context:
-            dc: {{ dc }}
         - user: root
         - group: root
         - mode: 600
 
-{{ svc }}_{{ dc }}:
+{{ svc }}:
     service.running:
         - enable: yes
         - require:
               - cmd: {{ svc }}-services-registered
 
-{% endfor %} {# dc #}
 
 {{ svc }}-services-registered:
     cmd.run:
         - name: 'initctl reload-configuration'
         - watch:
             - file: /usr/bin/{{ svc }}.py
-            - file: /etc/init/{{ svc }}_doams3.conf
-            - file: /etc/init/{{ svc }}_vltok1.conf
+            - file: /etc/init/{{ svc }}.conf
 {% for lib in libs %}
             - file: /usr/local/lib/pylib/{{ lib }}.py
 {% endfor %} {# lib #}

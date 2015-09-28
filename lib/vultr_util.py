@@ -24,7 +24,8 @@ ubuntu14_04_64bit = u'160'
 def ssh_tmpl(ssh_cmd):
     return "sshpass -p %s ssh -o StrictHostKeyChecking=no root@%s " + ("'%s'" % ssh_cmd)
 
-bootstrap_tmpl = ssh_tmpl("curl -L https://raw.githubusercontent.com/saltstack/salt-bootstrap/902da734465798edb3aa6a68445ada358a69b0ef/bootstrap-salt.sh | sh -s -- -X -A 128.199.93.248 -i %s git v2014.7.0")
+#{% from 'ip.sls' import external_ip %}
+bootstrap_tmpl = ssh_tmpl("curl -L https://raw.githubusercontent.com/saltstack/salt-bootstrap/902da734465798edb3aa6a68445ada358a69b0ef/bootstrap-salt.sh | sh -s -- -X -A {{ external_ip(grains) }} -i %s git {{ pillar['salt_version'] }}")
 
 scpkeys_tmpl = "sshpass -p %s scp -p -C -o StrictHostKeyChecking=no minion.pem minion.pub root@%s:/etc/salt/pki/minion/"
 

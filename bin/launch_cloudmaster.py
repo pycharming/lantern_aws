@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+#XXX: this doesn't work for digital ocean, if at all; adapt so Vultr
+# cloudmasters can be launched too.
+
 import os
 import time
 import sys

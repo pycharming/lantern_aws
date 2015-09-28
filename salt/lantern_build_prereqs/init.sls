@@ -1,10 +1,6 @@
 java-ppa:
-# XXX: This seems to have broken in Salt v2014.7.0
-#  pkgrepo.managed:
-#    - ppa: webupd8team/java
-    cmd.run:
-        - name: "add-apt-repository -y ppa:webupd8team/java && apt-get -qy update"
-        - unless: "[ -e /etc/apt/sources.list.d/webupd8team-java-precise.list ]"
+  pkgrepo.managed:
+    - ppa: webupd8team/java
 
 java-home:
     file.append:
@@ -23,8 +19,7 @@ java:
             - oracle-java7-installer
             - oracle-java7-set-default
         - require:
-            #- pkgrepo: java-ppa
-            - cmd: java-ppa
+            - pkgrepo: java-ppa
             - file: java-home
             - cmd: accept-oracle-terms
     cmd.run:
@@ -34,6 +29,7 @@ java:
         - require:
             - pkg: java
 
+#XXX: is this still necessary?
 {% set maven_version='3.1.1' %}
 maven:
     cmd.script:
