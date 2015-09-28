@@ -1,3 +1,7 @@
+/etc/hosts:
+    file.append:
+        - text: "127.0.1.1\t{{ grains['id'] }}\t{{ grains['id'] }}"
+
 base-packages:
     pkg.installed:
         - order: 1
