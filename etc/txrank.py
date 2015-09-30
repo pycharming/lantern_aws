@@ -1,5 +1,21 @@
 #!/usr/bin/env python
 
+"""
+For full functionality, you need:
+
+- The following Python modules (pip names):
+  - influxdb
+  - redis
+  - python-digitalocean
+  - vultr
+
+- The following environment variables:
+  - PYTHONPATH (including ../lib)
+  - REDIS_URL (https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/config_server.yaml#L2)
+  - DO_TOKEN (https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/do_credential#L11)
+  - VULTR_APIKEY ('api-key' at https://github.com/getlantern/too-many-secrets/blob/master/vultr.md)
+"""
+
 import sys
 
 try:
