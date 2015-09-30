@@ -11,11 +11,13 @@ For full functionality, you need:
 
 - The following environment variables:
   - PYTHONPATH (including ../lib)
+  - INFLUX_PASSWORD (https://github.com/getlantern/too-many-secrets/blob/master/monitoring/influxdb-server.txt#L8)
   - REDIS_URL (https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/config_server.yaml#L2)
   - DO_TOKEN (https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/do_credential#L11)
   - VULTR_APIKEY ('api-key' at https://github.com/getlantern/too-many-secrets/blob/master/vultr.md)
 """
 
+import os
 import sys
 
 try:
@@ -23,6 +25,12 @@ try:
 except ImportError:
     print "You need the python-influxdb package installed.  Try:"
     print "   pip install influxdb"
+    sys.exit(1)
+
+
+influx_passw = os.getenv("INFLUX_PASSWORD")
+if not influx_passw:
+    print "Set the env var INFLUX_PASSWORD to the password for the test user in the influx database."
     sys.exit(1)
 
 
@@ -45,7 +53,7 @@ def queued_names():
 
 def collect_pairs():
     query = "SELECT DERIVATIVE(last(value)) AS bytes FROM \"collectd\".\"default\".\"interface_rx\" WHERE type='if_octets' AND instance='eth0' AND time > now() - 1d GROUP BY time(1h), host FILL(none)"
-    client = InfluxDBClient('influx.getlantern.org', 8080, 'test', 'test', 'collectd', True)
+    client = InfluxDBClient('influx.getlantern.org', 8080, 'test', influx_passw, 'collectd', True)
     result = client.query(query)
     return list(sorted((sum(x['bytes'] for x in item[1]), item[0][1]['host'])
                        for item in result.items()))
