@@ -115,7 +115,8 @@ if __name__ == '__main__':
         print "   - baked-in: this server was pulled from the queue to bake as chained default"
         print "   - destroyed: this server has been destroyed (in the last 24h)"
         print "   - ???: this is managed by a test cloudmaster, or it's being retired at this"
-        print "          very moment, or we have an inconsistency"
+        print "          very moment, or it's a default chained server (fp-nl-2015032*), or we"
+        print "          have an inconsistency"
         sys.exit(1)
     args = sys.argv[1:]
     if len(args) == 0:
