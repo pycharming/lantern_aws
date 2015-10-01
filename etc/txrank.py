@@ -112,7 +112,8 @@ if __name__ == '__main__':
         print "A 'Status' column will be printed, with the possible values:"
         print "   - open: this server is currently taking users"
         print "   - full: this server is not taking users anymore"
-        print "   - ???: this is a queued server or we have an inconsistency"
+        print "   - baked-in: this server was pulled from the queue to bake as chained default"
+        print "   - ???: this is managed by a test cloudmaster or we have an inconsistency"
         sys.exit(1)
     args = sys.argv[1:]
     if len(args) == 0:
