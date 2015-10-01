@@ -64,6 +64,7 @@ def collect_pairs():
     query = "SELECT DERIVATIVE(last(value)) AS bytes FROM \"collectd\".\"default\".\"interface_rx\" WHERE type='if_octets' AND instance='eth0' AND time > now() - 1d GROUP BY time(1h), host FILL(none)"
     client = InfluxDBClient('influx.getlantern.org', 8080, 'test', influx_passw, 'collectd', True)
     result = client.query(query)
+    print "Got %s influxdb items" % len(result.items())
     return list(sorted((sum(x['bytes'] for x in item[1]), item[0][1]['host'])
                        for item in result.items()))
 
