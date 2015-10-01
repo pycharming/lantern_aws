@@ -7,6 +7,7 @@ import sys
 import redis
 import yaml
 
+from misc_util import memoized
 try:
     import vultr_util as vu
 except ImportError:
@@ -15,9 +16,8 @@ except ImportError:
     print
     raise
 import do_fps as do
-import util
 
-@util.memoized
+@memoized
 def r():
     url = os.getenv("REDISCLOUD_PRODUCTION_URL")
     if not url:
@@ -139,12 +139,3 @@ def remove_fp(dc, ip):
     print r().lrem(dc + ':vpss', names_by_ip(dc)[ip], 0)
     r().incr(dc + ':vpss:version')
 
-def srv_cfg_by_ip():
-    ret = {}
-    for srv, cfg in r().hgetall('cfgbysrv').iteritems():
-        ip = yaml.load(cfg).values()[0]['addr'].split(':')[0]
-        if ip in ret:
-            ret[ip][1].append(srv)
-        else:
-            ret[ip] = cfg, [srv]
-    return ret

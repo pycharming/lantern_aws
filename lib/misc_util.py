@@ -1,3 +1,4 @@
+from functools import wraps
 import time
 
 
@@ -12,3 +13,14 @@ class Cache:
             self.contents = self.update_fn()
             self.last_update_time = time.time()
         return self.contents
+
+def memoized(f):
+    d = {}
+    @wraps(f)
+    def deco(*args):
+        try:
+            return d[args]
+        except KeyError:
+            ret = d[args] = f(*args)
+            return ret
+    return deco

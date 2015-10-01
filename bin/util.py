@@ -3,27 +3,16 @@ import re
 import stat
 import sys
 import time
-from functools import wraps
 
 import yaml
 
 import config
 import here
+from misc_util import memoized
 
 
 def in_production():
     return config.cloudmaster_name in config.production_cloudmasters
-
-def memoized(f):
-    d = {}
-    @wraps(f)
-    def deco(*args):
-        try:
-            return d[args]
-        except KeyError:
-            ret = d[args] = f(*args)
-            return ret
-    return deco
 
 @memoized
 def read_do_credential():

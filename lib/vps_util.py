@@ -139,3 +139,13 @@ def vps_shell(lcs_name):
 
 def destroy_vps(name):
     vps_shell(name).destroy_vps(name)
+
+def srv_cfg_by_ip():
+    ret = {}
+    for srv, cfg in redis_shell.hgetall('cfgbysrv').iteritems():
+        ip = yaml.load(cfg).values()[0]['addr'].split(':')[0]
+        if ip in ret:
+            ret[ip][1].append(srv)
+        else:
+            ret[ip] = cfg, [srv]
+    return ret
