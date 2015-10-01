@@ -113,7 +113,9 @@ if __name__ == '__main__':
         print "   - open: this server is currently taking users"
         print "   - full: this server is not taking users anymore"
         print "   - baked-in: this server was pulled from the queue to bake as chained default"
-        print "   - ???: this is managed by a test cloudmaster or we have an inconsistency"
+        print "   - destroyed: this server has been destroyed (in the last 24h)"
+        print "   - ???: this is managed by a test cloudmaster, or it's being retired at this"
+        print "          very moment, or we have an inconsistency"
         sys.exit(1)
     args = sys.argv[1:]
     if len(args) == 0:
