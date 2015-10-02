@@ -10,10 +10,12 @@ base:
         - enable_swap
         - timezone
         - monitor
+    'cm-doams3':
+        - vps_sanity_checks
+        - check_vpss
     'cm-*':
         - salt_cloud
         - cloudmaster
-        - check_vpss
         - checkfallbacks
     'fp-*':
         - lantern_build_prereqs
