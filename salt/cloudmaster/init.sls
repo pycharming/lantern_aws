@@ -22,6 +22,14 @@ include:
         - group: root
         - mode: 700
 
+/usr/bin/wvars:
+  file.managed:
+    - source: salt://cloudmaster/wvars
+    - template: jinja
+    - user: root
+    - group: root
+    - mode: 700
+
 sshpass:
   pkg.installed
 
