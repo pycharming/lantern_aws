@@ -10,6 +10,7 @@ base:
         - enable_swap
         - timezone
         - monitor
+        - reboot
     'cm-doams3':
         - vps_sanity_checks
         - check_vpss
