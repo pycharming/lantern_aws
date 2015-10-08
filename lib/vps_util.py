@@ -119,13 +119,22 @@ def retire_lcs(name,
     srvs = [srv
             for srv, cfg in cfgcache.get().items()
             if yaml.load(cfg).values()[0]['addr'].split(':')[0] == ip]
+    txn = redis_shell.pipeline()
     if srvs:
-        redis_shell.hdel('cfgbysrv', *srvs)
-        redis_shell.incr('srvcount')
+        scores = [redis_shell.zscore(dc + ':slices', srv) for srv in srvs]
+        pairs = {"<empty:%s>" % score: score
+                 for score in scores
+                 if score}
+        if pairs:
+            txn.zadd(dc + ":slices", **pairs)
+            txn.zrem(dc + ":slices", *srvs)
+        txn.hdel('cfgbysrv', *srvs)
+        txn.incr('srvcount')
     else:
-        "No configs left to delete for %s." % name
-    redis_shell.lrem(dc + ':vpss', name)
-    redis_shell.incr(dc + ':vpss:version')
+        print "No configs left to delete for %s." % name
+    txn.lrem(dc + ':vpss', name)
+    txn.incr(dc + ':vpss:version')
+    txn.execute()
 
 def vps_shell(lcs_name):
     if lcs_name.startswith('fp-nl'):
