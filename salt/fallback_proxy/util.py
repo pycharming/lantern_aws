@@ -2,7 +2,9 @@ import datetime
 from email.mime.text import MIMEText
 import os
 import smtplib
+import subprocess
 import time
+import traceback
 
 import redis
 import requests
@@ -67,14 +69,22 @@ def split_server(msg, retire=False):
         flag_as_done(split_flag_filename)
     else:
         for attempt in xrange(7):
-            resp = requests.post("https://config.getiantem.org/split-server",
-                                headers={"X-Lantern-Auth-Token": auth_token},
-                                data=data)
-            if resp.status_code == 200:
-                flag_as_done(split_flag_filename)
-                send_alarm("Chained fallback " + participle,
-                           participle + " because I " + msg)
-                break
+            try:
+                resp = subprocess.check_output(['curl',
+                                                '-i',
+                                                '-X', 'POST',
+                                                '-H', 'X-Lantern-Auth-Token: ' + auth_token,
+                                                'https://config.getiantem.org/split-server'])
+                if "Server successfully split" in resp:
+                    flag_as_done(split_flag_filename)
+                    send_alarm("Chained fallback " + participle,
+                            participle + " because I " + msg)
+                    break
+                else:
+                    print "Bad response:"
+                    print resp
+            except:
+                traceback.print_exc()
             time.sleep(2 << attempt)
         else:
             send_alarm("Unable to %s chained fallback" % infinitive,
