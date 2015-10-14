@@ -17,7 +17,7 @@ from vps_util import trycmd
 api_key = os.getenv("VULTR_APIKEY")
 tokyo_dcid = u'25'
 planid_768mb = u'31'
-planid_1gb = u'106'
+planid_1gb = u'111'
 ubuntu14_04_64bit = u'160'
 
 # XXX: feed cloudmaster's internal IP when we launch one in Tokyo.
