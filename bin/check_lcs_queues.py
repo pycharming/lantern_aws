@@ -143,7 +143,33 @@ def remove_fp(dc, ip):
 
 
 def today(dc):
-    """Print the number of servers launched today."""
+    """The number of servers launched today."""
     todaystr = vps_util.todaystr()
     return sum(1 for x in r().lrange(dc + ':vpss', 0, -1)
                if ('-%s-' % todaystr) in x)
+
+def reqq(dc):
+    return r().lrange(dc + ':srvreqq', 0, -1)
+
+def slices(dc):
+    """The list of slices in a dc."""
+    return r().zrangebyscore(dc + ':slices', '-inf', '+inf')
+
+def ddslices(dc):
+    """Deduplicate the slices table, effectively removing splits.
+
+    This may make sense in a crisis where the datacenter server queue is
+    low, or after having recycled many servers (these will be split as
+    soon as they're full again, causing more fragmentation in general
+    than in the same slice had been assigned to a fresh server.)"""
+    s = slices(dc)
+    toremove = [slice
+                for slice, next in zip(s, s[1:])
+                if slice.startswith('<empty') and next.startswith('<empty')]
+    r().zrem(dc + ':slices', *toremove)
+    return toremove
+
+def openings(dc):
+    """The number of openings in the slice table for this dc."""
+    return sum(1 for x in slices(dc)
+               if x.startswith('<empty'))
