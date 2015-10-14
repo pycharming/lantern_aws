@@ -166,7 +166,8 @@ def ddslices(dc):
     toremove = [slice
                 for slice, next in zip(s, s[1:])
                 if slice.startswith('<empty') and next.startswith('<empty')]
-    r().zrem(dc + ':slices', *toremove)
+    if toremove:
+        r().zrem(dc + ':slices', *toremove)
     return toremove
 
 def openings(dc):
