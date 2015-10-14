@@ -1,5 +1,6 @@
 """Check LCServer queues in the config server, vs the list of live servers."""
 
+from datetime import datetime
 import os
 import subprocess
 import sys
@@ -10,6 +11,7 @@ import yaml
 from misc_util import memoized
 try:
     import vultr_util as vu
+    import vps_util
 except ImportError:
     print
     print "*** vultr_util module not found.  Please add [...]/lantern_aws/lib to your PYTHONPATH"
@@ -139,3 +141,9 @@ def remove_fp(dc, ip):
     print r().lrem(dc + ':vpss', names_by_ip(dc)[ip], 0)
     r().incr(dc + ':vpss:version')
 
+
+def today(dc):
+    """Print the number of servers launched today."""
+    todaystr = vps_util.todaystr()
+    return sum(1 for x in r().lrange(dc + ':vpss', 0, -1)
+               if ('-%s-' % todaystr) in x)

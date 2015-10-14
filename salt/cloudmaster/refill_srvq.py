@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 
-from datetime import datetime
 import multiprocessing
 from Queue import Empty
 from redis_util import redis_shell
@@ -86,17 +85,14 @@ def vps_shell(dc):
         return do_util
 
 def get_lcs_name(dc, redis_shell):
-
+    import vps_util
     if dc.startswith('vltok'):
         country = 'jp'
     elif dc.startswith('doams'):
         country = 'nl'
     else:
         assert False
-
-    now = datetime.utcnow()
-    date = "%d%02d%02d" % (now.year, now.month, now.day)
-
+    date = vps_util.todaystr()
     if redis_shell.get(dc + ':lcsserial:date') == date:
         serial = redis_shell.incr(dc + ':lcsserial')
     else:

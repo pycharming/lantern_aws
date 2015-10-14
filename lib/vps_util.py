@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from datetime import datetime
 import os
 import random
 import re
@@ -158,3 +159,7 @@ def srv_cfg_by_ip():
         else:
             ret[ip] = cfg, [srv]
     return ret
+
+def todaystr():
+    now = datetime.utcnow()
+    return "%d%02d%02d" % (now.year, now.month, now.day)
