@@ -40,7 +40,7 @@ def run():
                 task = pending.get(result['reqid'])
                 if task and task['name'] == result['name']:
                     del pending[result['reqid']]
-                    upload_cfg(redis_shell, dc, result['access_data'])
+                    upload_cfg(redis_shell, dc, result['name'], result['access_data'])
                     register_vps(redis_shell, dc, task['name'])
                     task['remove_req']()
             except Empty:
@@ -110,7 +110,7 @@ def launch_one_server(q, reqid, dc, name):
            'name': name,
            'access_data': vs.init_vps(vs.create_vps(name))})
 
-def upload_cfg(redis_shell, dc, access_data):
+def upload_cfg(redis_shell, dc, name, access_data):
     ip = access_data['addr'].split(':')[0]
     # DRY: flashlight/genconfig/cloud.yaml.tmpl
     access_data.update(pipeline=True,
@@ -118,7 +118,9 @@ def upload_cfg(redis_shell, dc, access_data):
                        qos=10,
                        weight=1000000)
     redis_shell.rpush(dc + ":srvq",
-                      "%s|\n    %s" % (ip, yaml.dump({'fallback-' + ip: access_data})))
+                      "%s|%s|\n    %s" % (ip,
+                                          name,
+                                          yaml.dump({'fallback-' + ip: access_data})))
 
 def register_vps(redis_shell, dc, name):
     print "Registering VPS", name
