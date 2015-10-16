@@ -2,6 +2,7 @@
 
 from datetime import datetime
 import os
+import re
 import subprocess
 import sys
 
@@ -174,3 +175,11 @@ def openings(dc):
     """The number of openings in the slice table for this dc."""
     return sum(1 for x in slices(dc)
                if x.startswith('<empty'))
+
+reip = re.compile(r"(\d+\.\d+\.\d+\.\d+):443")
+def allips(txt):
+    return reip.findall(txt)
+
+def reboot(ip):
+    import os
+    os.system('ssh -o StrictHostKeyChecking=no %s "sudo reboot"' % ip)
