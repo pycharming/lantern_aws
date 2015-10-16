@@ -52,7 +52,7 @@ def minion_id(prefix, n):
 
 def create_vps(label):
     return vultr.server_create(tokyo_dcid,
-                               planid_1gb,
+                               planid_768mb,
                                ubuntu14_04_64bit,
                                label=label,
                                enable_private_network="yes")['SUBID']
