@@ -149,6 +149,12 @@ def vps_shell(lcs_name):
 
 def destroy_vps(name):
     vps_shell(name).destroy_vps(name)
+    srv = redis_shell.hget('srvbyname', name)
+    if srv:
+        txn = redis_shell.pipeline()
+        txn.hdel('srvbyname', name)
+        txn.hdel('namebysrv', srv)
+        txn.execute()
 
 def srv_cfg_by_ip():
     ret = {}
