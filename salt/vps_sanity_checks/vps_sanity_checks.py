@@ -18,7 +18,7 @@ def srvs_in_cfgbysrv(dc, cfgbysrv):
               and srv not in cfgbysrv]
     for srv, score in issues[:]:
         # Double-check to avoid race conditions.
-        if redis_shell.hexists(key, srv):
+        if redis_shell.hexists('cfgbysrv', srv):
             issues.remove((srv, score))
         else:
             # Might as well fix it while we're at it!
