@@ -11,7 +11,7 @@ For full functionality, you need:
 
 - The following environment variables:
   - PYTHONPATH (including ../lib)
-  - INFLUX_PASSWORD (https://github.com/getlantern/too-many-secrets/blob/master/monitoring/influxdb-server.txt#L8)
+  - INFLUX_PASSWORD (https://github.com/getlantern/too-many-secrets/blob/master/monitoring/credentials.txt#L8)
   - REDIS_URL (https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/config_server.yaml#L2)
   - DO_TOKEN (https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/do_credential#L11)
   - VULTR_APIKEY ('api-key' at https://github.com/getlantern/too-many-secrets/blob/master/vultr.md)
