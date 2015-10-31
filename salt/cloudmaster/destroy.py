@@ -9,7 +9,7 @@ import redisq
 import vps_util
 
 
-TIMEOUT = 60 * 60
+TIMEOUT = 4 * 60 * 60
 
 
 def run():
