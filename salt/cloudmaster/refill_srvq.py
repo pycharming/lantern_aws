@@ -91,7 +91,8 @@ def get_lcs_name(dc, redis_shell):
     elif dc.startswith('doams'):
         country = 'nl'
     else:
-        assert False
+        # Useful for test setups.
+        country = os.environ['FALLBACK_COUNTRY_CODE']
     date = vps_util.todaystr()
     if redis_shell.get(dc + ':lcsserial:date') == date:
         serial = redis_shell.incr(dc + ':lcsserial')

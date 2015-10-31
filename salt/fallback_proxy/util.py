@@ -24,6 +24,7 @@ ip = "{{ external_ip(grains) }}"
 split_flag_filename = "server_split"
 retire_flag_filename = "server_retired"
 
+redis_shell = redis.from_url(os.getenv('REDIS_URL'))
 
 def send_mail(from_, to, subject, body):
     msg = MIMEText(body)
@@ -43,7 +44,7 @@ def send_alarm(subject, body):
                                                         body))
 
 def flag_as_done(flag_filename):
-    file(flag_filename, 'w').write(str(datetime.datetime.now()))
+    file(flag_filename, 'w').write(str(datetime.datetime.utcnow()))
 
 def split_server(msg, retire=False):
     if retire:
@@ -60,9 +61,8 @@ def split_server(msg, retire=False):
         participle = infinitive = 'split'
     if os.path.exists(flag_filename):
         return
-    r = redis.from_url(os.getenv('REDIS_URL'))
-    srvid = r.hget('srvbysrvip', ip)
-    if not srvid or not r.zrank(dc + ':slices', srvid):
+    srvid = redis_shell.hget('srvbysrvip', ip)
+    if not srvid or not redis_shell.zrank(dc + ':slices', srvid):
         # This server is not open so it can't be split. We only check this
         # after having tried because this is rarely needed.
         print "I was not open, so I won't try to split myself."
@@ -90,5 +90,5 @@ def split_server(msg, retire=False):
             send_alarm("Unable to %s chained fallback" % infinitive,
                         "I tried to %s myself because I %s, but I couldn't." % (infinitive, msg))
     if retire:
-        r.lpush(dc + ':retireq', '%s|%s' % (instance_id, ip))
+        redis_shell.lpush(dc + ':retireq', '%s|%s' % (instance_id, ip))
         flag_as_done(retire_flag_filename)
