@@ -30,7 +30,12 @@ fp-dirs:
     ('/opt/ts/etc/trafficserver/', 'records.config', 'records.config', 'lantern', 400),
     ('/opt/ts/etc/trafficserver/', 'remap.config', 'remap.config', 'lantern', 400),
     ('/opt/ts/etc/trafficserver/', 'plugin.config', 'plugin.config', 'lantern', 400),
-    ('/opt/ts/etc/trafficserver/', 'ssl_multicert.config', 'ssl_multicert.config', 'lantern', 400) ]%}
+    ('/opt/ts/etc/trafficserver/', 'ssl_multicert.config', 'ssl_multicert.config', 'lantern', 400) ] %}
+
+# To copy verbatim.
+{% set nontemplate_files=[
+    ('/usr/local/bin/', 'badvpn-udpgw', 'badvpn-udpgw', 'root', 755),
+    ('/etc/init.d/', 'badvpn-udpgw', 'udpgw-init', 'root', 755)] %}
 
 include:
     - proxy_ufw_rules
@@ -55,11 +60,29 @@ include:
             - cmd: install-ats
 {% endfor %}
 
+{% for dir,dst_filename,src_filename,user,mode in nontemplate_files %}
+{{ dir+dst_filename }}:
+    file.managed:
+        - source: salt://fallback_proxy/{{ src_filename }}
+        - user: {{ user }}
+        - group: {{ user }}
+        - mode: {{ mode }}
+        - require:
+            - file: fp-dirs
+            # Installing ATS will overwrite some of these files and doesn't
+            # depend on any of them, so we do it before.
+            - cmd: install-ats
+{% endfor %}
+
+
 fallback-proxy-dirs-and-files:
     cmd.run:
         - name: ":"
         - require:
             {% for dir,dst_filename,src_filename,user,mode in template_files %}
+            - file: {{ dir+dst_filename }}
+            {% endfor %}
+            {% for dir,dst_filename,src_filename,user,mode in nontemplate_files %}
             - file: {{ dir+dst_filename }}
             {% endfor %}
 
@@ -191,7 +214,13 @@ ats-service:
             # it. :)
             - cmd: install-ats
             - service: lantern-disabled
+            - service: badvpn-udpgw
 
+badvpn-udpgw:
+  service.running:
+    - enable: yes
+    - watch:
+        - cmd: fallback-proxy-dirs-and-files
 
 # Remove cron job that tries to make sure lantern-java is working, in old
 # servers.
