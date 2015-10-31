@@ -11,7 +11,7 @@ For full functionality, you need:
 
 - The following environment variables:
   - PYTHONPATH (including ../lib)
-  - INFLUX_PASSWORD (https://github.com/getlantern/too-many-secrets/blob/master/monitoring/influxdb-server.txt#L8)
+  - INFLUX_PASSWORD (https://github.com/getlantern/too-many-secrets/blob/master/monitoring/credentials.txt#L8)
   - REDIS_URL (https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/config_server.yaml#L2)
   - DO_TOKEN (https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/do_credential#L11)
   - VULTR_APIKEY ('api-key' at https://github.com/getlantern/too-many-secrets/blob/master/vultr.md)
@@ -33,12 +33,18 @@ from redis_util import redis_shell
 import vps_util
 import vultr_util
 
+envvars = ["INFLUX_PASSWORD", "REDIS_URL", "DO_TOKEN", "VULTR_APIKEY"]
+locs = ["https://github.com/getlantern/too-many-secrets/blob/master/monitoring/credentials.txt#L8", "https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/config_server.yaml#L2", "https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/do_credential#L11", "https://github.com/getlantern/too-many-secrets/blob/master/vultr.md"]
+
+# Just make sure we have all the environment variables we need.
+for i in range(len(envvars)):
+    env = envvars[i]
+    cur = os.getenv(env)
+    if not cur:
+        print "Set the environment variable {} to {}".format(env, locs[i])
+        sys.exit(1)
 
 influx_passw = os.getenv("INFLUX_PASSWORD")
-if not influx_passw:
-    print "Set the env var INFLUX_PASSWORD to the password for the test user in the influx database."
-    sys.exit(1)
-
 
 @memoized
 def name_by_ip():
