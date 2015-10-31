@@ -30,6 +30,11 @@ _, _, la15m = os.getloadavg()
 
 print "Starting with load average %s..." % la15m
 
+if la15m > report_threshold:
+    print "report threshold surpassed; notifying..."
+    util.send_alarm('Chained fallback high load',
+                    "load average %s" % la15m)
+
 # We don't want to retire servers in the surge that made us split them, because
 # we want to give splitting a chance to ease load on the server. So we check
 # whether at least one day has elapsed since we split the server before we
@@ -39,11 +44,6 @@ print "Starting with load average %s..." % la15m
 # traffic checks too, and this reasoning doesn't apply to that case: once a
 # server has consumed too much traffic there's no point in waiting before
 # retiring it.
-if la15m > report_threshold:
-    print "report threshold surpassed; notifying..."
-    util.send_alarm('Chained fallback high load',
-                    "load average %s" % la15m)
-
 try:
     s = file(util.split_flag_filename).read()
     t0 = datetime.strptime(s, '%Y-%m-%d %H:%M:%S.%f')
