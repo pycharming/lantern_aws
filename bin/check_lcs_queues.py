@@ -18,7 +18,13 @@ except ImportError:
     print "*** vultr_util module not found.  Please add [...]/lantern_aws/lib to your PYTHONPATH"
     print
     raise
-import do_fps as do
+import digitalocean
+
+@memoized
+def do_vpss():
+    do_token = os.environ['DO_TOKEN']
+    mgr = digitalocean.Manager(token=do_token)
+    return mgr.get_all_droplets()
 
 @memoized
 def r():
@@ -46,7 +52,7 @@ def existing_ips(dc, name_prefix=""):
                    if d['label'].startswith(name_prefix))
     elif dc.startswith("do"):
         return set(d.ip_address
-                   for d in do.droplets_by_name.itervalues()
+                   for d in do_vpss()
                    if d.name.startswith(name_prefix))
     else:
         assert False
@@ -71,8 +77,8 @@ def names_by_ip(dc):
         return {d['main_ip']: d['label']
                 for d in vu.vultr.server_list(None).itervalues()}
     elif dc.startswith('do'):
-        return {d.ip_address: name
-                for name, d in do.droplets_by_name.iteritems()}
+        return {d.ip_address: d.name
+                for d in do_vpss()}
 
 def print_queued_server_ids(dc):
     d = names_by_ip(dc)
@@ -105,8 +111,8 @@ def load_avg(ip):
 def underused_do_vpss():
     dips = discard_ips('doams3')
     vv = [x
-          for name, x in do.droplets_by_name.iteritems()
-          if name.startswith('fp-nl-')
+          for x in do_vpss()
+          if x.name.startswith('fp-nl-')
           and x.ip_address not in dips]
     d = {x: load_avg(x.ip_address) for x in vv}
     vv.sort(key=d.get)
