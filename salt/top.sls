@@ -11,6 +11,8 @@ base:
         - timezone
         - monitor
         - reboot
+        - pylib
+        - dcenv
     'cm-doams3':
         - vps_sanity_checks
         - check_vpss
