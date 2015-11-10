@@ -4,6 +4,7 @@ from __future__ import division
 from datetime import datetime as dt
 import os
 import time
+import traceback
 
 from vultr_util import vultr, VultrError
 
@@ -30,7 +31,7 @@ significant_usage = 0.25
 retire_threshold = 0.95
 
 def vultr_dict():
-    while True:
+    for _ in xrange(10):
         try:
             try:
                 subid = file(vultr_subid_filename).read()
@@ -41,7 +42,11 @@ def vultr_dict():
                         return d
             return vultr.server_list(subid)
         except VultrError:
+            traceback.print_exc()
             time.sleep(10 * random.random() * 20)
+    else:
+        print "Too many failures trying to fetch Vultr list; giving up!"
+        sys.exit(1)
 
 def usage_portion(vd):
     allowed = int(vd['allowed_bandwidth_gb'])
