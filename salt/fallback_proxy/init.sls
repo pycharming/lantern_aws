@@ -206,6 +206,8 @@ proxy-service:
             - service: ats-disabled
             - service: lantern-disabled
             - service: badvpn-udpgw
+        - watch:
+            - file: /etc/init.d/http-proxy
 
 badvpn-udpgw:
   service.running:
@@ -241,8 +243,10 @@ lantern-disabled:
         - require:
             - service: lantern-disabled
 
-/etc/init.d/http-server:
-    file.absent
+/etc/init.d/http-proxy:
+    file.absent:
+        - require:
+            - file: /etc/init/http-proxy.conf
 
 /etc/init.d/trafficserver:
     file.absent:
