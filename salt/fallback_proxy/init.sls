@@ -20,7 +20,7 @@ fp-dirs:
 
 # To filter through jinja.
 {% set template_files=[
-    ('/etc/init.d/', 'http-proxy', 'http-proxy.init', 'root', 700),
+    ('/etc/init/', 'http-proxy.conf', 'http-proxy.conf', 'root', 644),
     ('/home/lantern/', 'util.py', 'util.py', 'lantern', 400),
     ('/home/lantern/', 'check_load.py', 'check_load.py', 'lantern', 700),
     ('/home/lantern/', 'check_traffic.py', 'check_traffic.py', 'lantern', 700),
@@ -181,7 +181,6 @@ install-http-proxy:
         - creates: /home/lantern/http-proxy
         - user: lantern
         - group: lantern
-        - mode: 700
 
 convert-cert:
     cmd.script:
@@ -203,8 +202,6 @@ proxy-service:
         - require:
             - pkg: tcl
             - cmd: ufw-rules-ready
-            # Not really necessary; just added so you don't need to worry about
-            # it. :)
             - cmd: install-http-proxy
             - service: ats-disabled
             - service: lantern-disabled
