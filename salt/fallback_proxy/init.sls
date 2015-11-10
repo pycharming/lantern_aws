@@ -89,7 +89,7 @@ save-access-data:
         - cwd: /home/lantern
         - require:
             - file: {{ fallback_json_file }}
-            - cmd: generate-cert
+            - cmd: convert-cert
 
 zip:
     pkg.installed
