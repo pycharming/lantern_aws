@@ -37,16 +37,6 @@ def configs_start_with_newline(cfgbysrv):
             for srv, cfg in cfgbysrv.iteritems()
             if not cfg.startswith("\n")]
 
-def all_fps_have_pillar():
-    #XXX temporarily disable this until we port all servers to the new cloudmasters.
-    return []
-    pillars = os.listdir('/srv/pillar')
-    return ["Fallback %s doesn't have an associated pillar" % name
-            for dc in ['vltok1', 'doams3']
-            for name in redis_shell.lrange(dc + ':vpss', 0, -1)
-            if (name.startswith('fp-nl-') or name.startswith('fp-jp-'))
-               and name + '.sls' not in pillars]
-
 def report(errors):
     if not errors:
         print "No errors."
@@ -60,8 +50,7 @@ def run_all_checks():
     cfgbysrv = redis_shell.hgetall('cfgbysrv')
     report(configs_start_with_newline(cfgbysrv)
            + srvs_in_cfgbysrv('vltok1', cfgbysrv)
-           + srvs_in_cfgbysrv('doams3', cfgbysrv)
-           + all_fps_have_pillar())
+           + srvs_in_cfgbysrv('doams3', cfgbysrv))
 
 
 if __name__ == '__main__':
