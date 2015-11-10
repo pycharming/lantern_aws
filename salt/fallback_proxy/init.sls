@@ -32,8 +32,6 @@ fp-dirs:
     ('/usr/local/bin/', 'badvpn-udpgw', 'badvpn-udpgw', 'root', 755),
     ('/etc/init.d/', 'badvpn-udpgw', 'udpgw-init', 'root', 755)] %}
 
-{% set http_proxy_pid='/var/run/http_proxy.pid' %}
-
 include:
     - proxy_ufw_rules
     - redis
@@ -44,7 +42,6 @@ include:
         - source: salt://fallback_proxy/{{ src_filename }}
         - template: jinja
         - context:
-            http_proxy_pid: {{ http_proxy_pid }}
             auth_token: {{ auth_token }}
             external_ip: {{ external_ip(grains) }}
             traffic_check_period_minutes: {{ traffic_check_period_minutes }}
