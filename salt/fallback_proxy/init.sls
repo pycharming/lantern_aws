@@ -40,6 +40,9 @@ fp-dirs:
 include:
     - proxy_ufw_rules
     - redis
+{% if pillar['datacenter'].startswith('vl') %}
+    - vultr
+{% endif %}
 
 {% for dir,dst_filename,src_filename,user,mode in template_files %}
 {{ dir+dst_filename }}:
@@ -131,11 +134,7 @@ requests:
 #        - file: /home/lantern/check_traffic.py
 #        - pip: psutil
 
-{% if grains['id'].startswith('fp-jp-') %}
-
-vultr:
-  pip.installed:
-    - name: vultr==0.1.2
+{% if pillar['datacenter'].startswith('vl') %}
 
 /home/lantern/check_vultr_transfer.py:
     file.managed:

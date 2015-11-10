@@ -12,12 +12,7 @@ import requests
 
 auth_token = "{{ pillar['cfgsrv_token'] }}"
 instance_id = "{{ grains['id'] }}"
-if instance_id.startswith('fp-nl-'):
-    dc = 'doams3'
-elif instance_id.startswith('fp-jp-'):
-    dc = 'vltok1'
-else:
-    assert False, repr(instance_id)
+dc = "{{ pillar['datacenter'] }}"
 
 # {% from 'ip.sls' import external_ip %}
 ip = "{{ external_ip(grains) }}"
