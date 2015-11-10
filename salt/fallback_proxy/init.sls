@@ -232,9 +232,19 @@ lantern-disabled:
         - require:
             - cron: /home/lantern/check_lantern.py
 
-# Not strictly necessary perhaps, but make sure, for good measure, that the
-# lantern init script is not around.
+
+# Not strictly necessary perhaps, but make sure, for good measure, that old
+# lantern init scripts are not around.
+
 /etc/init.d/lantern:
     file.absent:
         - require:
             - service: lantern-disabled
+
+/etc/init.d/http-server:
+    file.absent
+
+/etc/init.d/trafficserver:
+    file.absent:
+        - require:
+            - service: ats-disabled
