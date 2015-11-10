@@ -169,3 +169,15 @@ def srv_cfg_by_ip():
 def todaystr():
     now = datetime.utcnow()
     return "%d%02d%02d" % (now.year, now.month, now.day)
+
+def dcbyname(name):
+
+    # Legacy.
+    if name.startswith('fp-nl-'):
+        name = name.replace('nl', 'doams3', 1)
+    elif name.startswith('fp-jp-'):
+        name = name.replace('jp', 'vltok1', 1)
+
+    ret = name[3:9]
+    assert ret in ['doams3', 'vltok1', 'dosgp1']
+    return ret
