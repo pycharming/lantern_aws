@@ -8,8 +8,7 @@
 fp-dirs:
   file.directory:
     - names:
-        - /opt/ts/libexec/trafficserver
-        - /opt/ts/etc/trafficserver
+        - /var/log/http-proxy
     - user: lantern
     - group: lantern
     - mode: 755
@@ -21,16 +20,12 @@ fp-dirs:
 
 # To filter through jinja.
 {% set template_files=[
+    ('/etc/init/', 'http-proxy.conf', 'http-proxy.conf', 'root', 644),
     ('/home/lantern/', 'util.py', 'util.py', 'lantern', 400),
     ('/home/lantern/', 'check_load.py', 'check_load.py', 'lantern', 700),
     ('/home/lantern/', 'check_traffic.py', 'check_traffic.py', 'lantern', 700),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
-    ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400),
-    ('/opt/ts/libexec/trafficserver/', 'lantern-auth.so', 'lantern-auth.so', 'lantern', 700),
-    ('/opt/ts/etc/trafficserver/', 'records.config', 'records.config', 'lantern', 400),
-    ('/opt/ts/etc/trafficserver/', 'remap.config', 'remap.config', 'lantern', 400),
-    ('/opt/ts/etc/trafficserver/', 'plugin.config', 'plugin.config', 'lantern', 400),
-    ('/opt/ts/etc/trafficserver/', 'ssl_multicert.config', 'ssl_multicert.config', 'lantern', 400) ] %}
+    ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400)] %}
 
 # To copy verbatim.
 {% set nontemplate_files=[
@@ -55,9 +50,6 @@ include:
         - mode: {{ mode }}
         - require:
             - file: fp-dirs
-            # Installing ATS will overwrite some of these files and doesn't
-            # depend on any of them, so we do it before.
-            - cmd: install-ats
 {% endfor %}
 
 {% for dir,dst_filename,src_filename,user,mode in nontemplate_files %}
@@ -69,9 +61,6 @@ include:
         - mode: {{ mode }}
         - require:
             - file: fp-dirs
-            # Installing ATS will overwrite some of these files and doesn't
-            # depend on any of them, so we do it before.
-            - cmd: install-ats
 {% endfor %}
 
 
@@ -97,7 +86,7 @@ save-access-data:
         - cwd: /home/lantern
         - require:
             - file: {{ fallback_json_file }}
-            - cmd: generate-cert
+            - cmd: convert-cert
 
 zip:
     pkg.installed
@@ -183,26 +172,26 @@ generate-cert:
         - require:
             - pkg: wamerican
 
-install-ats:
+install-http-proxy:
     cmd.script:
-        - source: salt://fallback_proxy/install_ats.sh
-        - creates: /opt/ts/bin/traffic_cop
-        - requires:
-            - file: fp-dirs
+        - source: salt://fallback_proxy/install_http_proxy.sh
+        - creates: /home/lantern/http-proxy
+        - user: lantern
+        - group: lantern
 
 convert-cert:
     cmd.script:
         - source: salt://fallback_proxy/convcert.sh
-        - creates: /opt/ts/etc/trafficserver/key.pem
+        - creates: /home/lantern/key.pem
         - user: lantern
         - group: lantern
         - mode: 400
         - require:
             - cmd: generate-cert
 
-ats-service:
+proxy-service:
     service.running:
-        - name: trafficserver
+        - name: http-proxy
         - enable: yes
         - watch:
             - cmd: fallback-proxy-dirs-and-files
@@ -210,11 +199,12 @@ ats-service:
         - require:
             - pkg: tcl
             - cmd: ufw-rules-ready
-            # Not really necessary; just added so you don't need to worry about
-            # it. :)
-            - cmd: install-ats
+            - cmd: install-http-proxy
+            - service: ats-disabled
             - service: lantern-disabled
             - service: badvpn-udpgw
+        - watch:
+            - file: /etc/init.d/http-proxy
 
 badvpn-udpgw:
   service.running:
@@ -228,6 +218,11 @@ badvpn-udpgw:
     cron.absent:
         - user: root
 
+ats-disabled:
+    service.dead:
+        - name: trafficserver
+        - enable: no
+
 # Disable Lantern-java in old servers.
 lantern-disabled:
     service.dead:
@@ -236,9 +231,21 @@ lantern-disabled:
         - require:
             - cron: /home/lantern/check_lantern.py
 
-# Not strictly necessary perhaps, but make sure, for good measure, that the
-# lantern init script is not around.
+
+# Not strictly necessary perhaps, but make sure, for good measure, that old
+# lantern init scripts are not around.
+
 /etc/init.d/lantern:
     file.absent:
         - require:
             - service: lantern-disabled
+
+/etc/init.d/http-proxy:
+    file.absent:
+        - require:
+            - file: /etc/init/http-proxy.conf
+
+/etc/init.d/trafficserver:
+    file.absent:
+        - require:
+            - service: ats-disabled
