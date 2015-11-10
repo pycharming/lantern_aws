@@ -8,8 +8,7 @@
 fp-dirs:
   file.directory:
     - names:
-        - /opt/ts/libexec/trafficserver
-        - /opt/ts/etc/trafficserver
+        - /var/log/http-proxy
     - user: lantern
     - group: lantern
     - mode: 755
@@ -26,12 +25,14 @@ fp-dirs:
     ('/home/lantern/', 'check_load.py', 'check_load.py', 'lantern', 700),
     ('/home/lantern/', 'check_traffic.py', 'check_traffic.py', 'lantern', 700),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
-    ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400),
+    ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400)] %}
 
 # To copy verbatim.
 {% set nontemplate_files=[
     ('/usr/local/bin/', 'badvpn-udpgw', 'badvpn-udpgw', 'root', 755),
     ('/etc/init.d/', 'badvpn-udpgw', 'udpgw-init', 'root', 755)] %}
+
+{% set http_proxy_pid='/var/run/http_proxy.pid' %}
 
 include:
     - proxy_ufw_rules
@@ -43,6 +44,7 @@ include:
         - source: salt://fallback_proxy/{{ src_filename }}
         - template: jinja
         - context:
+            http_proxy_pid: {{ http_proxy_pid }}
             auth_token: {{ auth_token }}
             external_ip: {{ external_ip(grains) }}
             traffic_check_period_minutes: {{ traffic_check_period_minutes }}
@@ -176,12 +178,15 @@ generate-cert:
 install-http-proxy:
     cmd.script:
         - source: salt://fallback_proxy/install_http_proxy.sh
-        - creates: /http-proxy
+        - creates: /home/lantern/http-proxy
+        - user: lantern
+        - group: lantern
+        - mode: 700
 
 convert-cert:
     cmd.script:
         - source: salt://fallback_proxy/convcert.sh
-        - creates: /key.pem
+        - creates: /home/lantern/key.pem
         - user: lantern
         - group: lantern
         - mode: 400
@@ -216,6 +221,11 @@ badvpn-udpgw:
 /home/lantern/check_lantern.py:
     cron.absent:
         - user: root
+
+ats-disabled:
+    service.dead:
+        - name: trafficserver
+        - enable: no
 
 # Disable Lantern-java in old servers.
 lantern-disabled:

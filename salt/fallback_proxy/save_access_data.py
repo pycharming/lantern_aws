@@ -25,11 +25,7 @@ def save_access_data():
     d_out = {'addr': '%s:%s' % (d_in['ip'], d_in['port']),
              'authtoken': d_in['auth_token'],
              'cert': subprocess.check_output(
-                 ["keytool", "-exportcert",
-                  "-alias", "fallback",
-                  "-storepass", "Be Your Own Lantern",
-                  "-rfc",
-                  "-keystore", "/home/lantern/littleproxy_keystore.jks"])}
+                 ["cat", "/home/lantern/cert.pem"])}
     if PT_TYPE is not None:
         d_out['pt'] = {{ pillar.get('pt_props')|python }}
         d_out['pt']['type'] = PT_TYPE
