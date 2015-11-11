@@ -154,11 +154,11 @@ def vps_shell(provider_etc):
 
 def destroy_vps(name):
     vps_shell(dc_by_name(name)).destroy_vps(name)
-    srv = redis_shell.hget('srvbyname', name)
+    srv = redis_shell.hget('name->srv', name)
     if srv:
         txn = redis_shell.pipeline()
-        txn.hdel('srvbyname', name)
-        txn.hdel('namebysrv', srv)
+        txn.hdel('name->srv', name)
+        txn.hdel('srv->name', srv)
         txn.execute()
 
 def srv_cfg_by_ip():
