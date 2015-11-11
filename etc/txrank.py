@@ -80,10 +80,14 @@ def byip():
     return vps_util.srv_cfg_by_ip()
 
 @memoized
+def regions():
+    return redis_shell.smembers('user-regions')
+
+@memoized
 def bakedin():
     return set(x.split('|')[1]
-               for dc in ['doams3', 'vltok1']
-               for x in redis_shell.lrange(dc + ':bakedin', 0, -1))
+               for region in regions()
+               for x in redis_shell.lrange(region + ':bakedin', 0, -1))
 
 def srv_cfg_by_name(name):
     return byip().get(ip_by_name()[name], [])
