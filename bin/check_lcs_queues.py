@@ -37,11 +37,6 @@ def ip_by_srv():
     return {v: k
             for k, v in r().hgetall("srvbysrvip").iteritems()}
 
-def srv_by_dc(dc):
-    return list(sorted(k
-                       for k, v in r().hgetall("dcbysrv").iteritems()
-                       if v == dc))
-
 def open_servers(dc):
     return sorted(r().zrangebyscore(dc + ':slices', '-inf', '+inf'))
 
