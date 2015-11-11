@@ -175,7 +175,6 @@ generate-cert:
 install-http-proxy:
     cmd.script:
         - source: salt://fallback_proxy/install_http_proxy.sh
-        - creates: /home/lantern/http-proxy
         - user: lantern
         - group: lantern
 
