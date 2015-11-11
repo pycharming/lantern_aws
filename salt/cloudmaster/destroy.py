@@ -13,9 +13,7 @@ TIMEOUT = 4 * 60 * 60
 
 
 def run():
-    dc = os.getenv("DC")
-    print "Using datacenter", dc
-    qname = dc + ":destroyq"
+    qname = vps_util.cmid() + ":destroyq"
     q = redisq.Queue(qname, redis_shell, TIMEOUT)
     while True:
         name, remover = q.next_job()

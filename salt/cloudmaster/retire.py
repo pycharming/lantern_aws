@@ -13,10 +13,10 @@ TIMEOUT = 5 * 60
 
 
 def run():
-    dc = os.getenv("DC")
-    print "Using datacenter", dc
-    qname = dc + ":retireq"
-    destroy_qname = dc + ":destroyq"
+    cmid = vps_util.cmid()
+    print "Cloudmaster ID", cmid
+    qname = cmid + ":retireq"
+    destroy_qname = cmid + ":destroyq"
     q = redisq.Queue(qname, redis_shell, TIMEOUT)
     while True:
         task, remover = q.next_job()
