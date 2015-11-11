@@ -195,10 +195,10 @@ proxy-service:
         - watch:
             - cmd: fallback-proxy-dirs-and-files
             - cmd: convert-cert
+            - cmd: install-http-proxy
         - require:
             - pkg: tcl
             - cmd: ufw-rules-ready
-            - cmd: install-http-proxy
             - service: ats-disabled
             - service: lantern-disabled
             - service: badvpn-udpgw
