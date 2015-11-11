@@ -12,7 +12,7 @@ base:
         - monitor
         - reboot
         - pylib
-        - dcenv
+        - env
     'cm-doams3':
         - vps_sanity_checks
         - check_vpss
