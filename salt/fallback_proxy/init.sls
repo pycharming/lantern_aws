@@ -196,14 +196,13 @@ proxy-service:
             - cmd: fallback-proxy-dirs-and-files
             - cmd: convert-cert
             - cmd: install-http-proxy
+            - file: /etc/init.d/http-proxy
         - require:
             - pkg: tcl
             - cmd: ufw-rules-ready
             - service: ats-disabled
             - service: lantern-disabled
             - service: badvpn-udpgw
-        - watch:
-            - file: /etc/init.d/http-proxy
 
 badvpn-udpgw:
   service.running:
