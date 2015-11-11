@@ -186,3 +186,7 @@ def dc_by_name(name):
     ret = name[3:9]
     assert ret in ['doams3', 'vltok1', 'dosgp1']
     return ret
+
+def cmid():
+    "cloudmaster id"
+    return os.getenv('CM')[3:]  # remove the "cm-" prefix

@@ -16,7 +16,6 @@ import vps_util
 
 DC = os.getenv("DC")
 REGION = vps_util.user_region_by_dc(DC)
-CMID = os.getenv('CM')[3:]  # remove the "cm-" prefix
 MAXPROCS = int(os.getenv('MAXPROCS'))
 LAUNCH_TIMEOUT = 60 * 60
 
@@ -81,16 +80,17 @@ def run():
         time.sleep(10)
 
 def get_lcs_name(dc, redis_shell):
+    cmid = vps_util.cmid()
     date = vps_util.todaystr()
-    if redis_shell.get(CMID + ':lcsserial:date') == date:
-        serial = redis_shell.incr(CMID + ':lcsserial')
+    if redis_shell.get(cmid + ':lcsserial:date') == date:
+        serial = redis_shell.incr(cmid + ':lcsserial')
     else:
         pipe = redis_shell.pipeline()
-        pipe.set(CMID + ':lcsserial:date', date)
-        pipe.set(CMID + ':lcsserial', 1)
+        pipe.set(cmid + ':lcsserial:date', date)
+        pipe.set(cmid + ':lcsserial', 1)
         pipe.execute()
         serial = 1
-    return 'fp-%s-%s-%03d' % (CMID, date, serial)
+    return 'fp-%s-%s-%03d' % (cmid, date, serial)
 
 def launch_one_server(q, reqid, dc, name):
     vs = vps_shell(dc)
