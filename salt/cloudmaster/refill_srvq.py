@@ -11,6 +11,7 @@ import traceback
 import yaml
 
 import redisq
+import vps_util
 
 
 MAXPROCS = int(os.getenv('MAXPROCS'))
@@ -28,7 +29,7 @@ def run():
         print "Killing timed out process and vps..."
         task = pending.pop(reqid)
         task['proc'].terminate()
-        proc = multiprocessing.Process(target=vps_shell(dc).destroy_vps,
+        proc = multiprocessing.Process(target=vps_util.vps_shell(dc).destroy_vps,
                                        args=(task['name'],))
         proc.daemon = True
         proc.start()
@@ -75,14 +76,6 @@ def run():
                     print "Killing task %s because of local timeout" % reqid
                     kill_task(reqid)
         time.sleep(10)
-
-def vps_shell(dc):
-    if dc.startswith('vl'):
-        import vultr_util
-        return vultr_util
-    elif dc.startswith('do'):
-        import do_util
-        return do_util
 
 def get_lcs_name(dc, redis_shell):
     import vps_util

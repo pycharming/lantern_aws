@@ -137,18 +137,23 @@ def retire_lcs(name,
     txn.incr(dc + ':vpss:version')
     txn.execute()
 
-def vps_shell(lcs_name):
-    if lcs_name.startswith('fp-nl'):
+def vps_shell(provider_etc):
+    """
+    provider_etc is any string that starts with the provider ID.
+
+    By convention, datacenter and cloudmaster IDs meet this condition.
+    """
+    if provider_etc.startswith('do'):
         import do_util
         return do_util
-    elif lcs_name.startswith('fp-jp'):
+    elif provider_etc.startswith('vl'):
         import vultr_util
         return vultr_util
     else:
-        assert False, repr(lcs_name)
+        assert False, repr(provider_etc)
 
 def destroy_vps(name):
-    vps_shell(name).destroy_vps(name)
+    vps_shell(dc_by_name(name)).destroy_vps(name)
     srv = redis_shell.hget('srvbyname', name)
     if srv:
         txn = redis_shell.pipeline()
@@ -170,7 +175,7 @@ def todaystr():
     now = datetime.utcnow()
     return "%d%02d%02d" % (now.year, now.month, now.day)
 
-def dcbyname(name):
+def dc_by_name(name):
 
     # Legacy.
     if name.startswith('fp-nl-'):
