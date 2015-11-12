@@ -190,3 +190,13 @@ def dc_by_name(name):
 def cmid():
     "cloudmaster id"
     return os.getenv('CM')[3:]  # remove the "cm-" prefix
+
+class vps:
+
+    def __init__(self, name, ip, etc):
+        self.name = name
+        self.ip = ip
+        self.etc = etc
+
+    def __repr__(self):
+        return "<%s (%s)>" % (self.name, self.ip)

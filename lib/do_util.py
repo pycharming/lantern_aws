@@ -39,3 +39,9 @@ def init_vps(name_and_ip):
 def destroy_vps(name):
     os.system('salt-cloud -yd ' + name)
     os.system('salt-key -yd' + name)
+
+def droplet2vps(d):
+    return vps_util.vps(d.name, d.ip_address, d)
+
+def all_vpss():
+    return map(droplet2vps, do.get_all_droplets())
