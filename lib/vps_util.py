@@ -107,6 +107,16 @@ def cleanup_keys(do_shell=None, vultr_shell=None):
         if key not in filter_out:
             os.system('salt-key -d ' + key)
 
+def srv_cfg_by_ip():
+    ret = {}
+    for srv, cfg in redis_shell.hgetall('cfgbysrv').iteritems():
+        ip = yaml.load(cfg).values()[0]['addr'].split(':')[0]
+        if ip in ret:
+            ret[ip][1].append(srv)
+        else:
+            ret[ip] = cfg, [srv]
+    return ret
+
 def retire_lcs(name,
                ip,
                byip=util.Cache(timeout=60*60,
@@ -153,16 +163,6 @@ def destroy_vps(name):
         txn.hdel('srvbyname', name)
         txn.hdel('namebysrv', srv)
         txn.execute()
-
-def srv_cfg_by_ip():
-    ret = {}
-    for srv, cfg in redis_shell.hgetall('cfgbysrv').iteritems():
-        ip = yaml.load(cfg).values()[0]['addr'].split(':')[0]
-        if ip in ret:
-            ret[ip][1].append(srv)
-        else:
-            ret[ip] = cfg, [srv]
-    return ret
 
 def todaystr():
     now = datetime.utcnow()
