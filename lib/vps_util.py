@@ -109,17 +109,15 @@ def cleanup_keys(do_shell=None, vultr_shell=None):
 
 def retire_lcs(name,
                ip,
-               cfgcache=util.Cache(timeout=60*60,
-                                   update_fn=lambda: redis_shell.hgetall('cfgbysrv'))):
+               byip=util.Cache(timeout=60*60,
+                               update_fn=srv_cfg_by_ip)):
     if name.startswith('fp-jp-'):
         dc = 'vltok1'
     elif name.startswith('fp-nl-'):
         dc = 'doams3'
     else:
         assert False
-    srvs = [srv
-            for srv, cfg in cfgcache.get().items()
-            if yaml.load(cfg).values()[0]['addr'].split(':')[0] == ip]
+    srvs = byip.get(ip, (None, []))[1]
     txn = redis_shell.pipeline()
     if srvs:
         scores = [redis_shell.zscore(dc + ':slices', srv) for srv in srvs]
