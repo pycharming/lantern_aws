@@ -127,7 +127,7 @@ def retire_lcs(name,
         dc = 'doams3'
     else:
         assert False
-    srvs = byip.get(ip, (None, []))[1]
+    srvs = byip.get().get(ip, (None, []))[1]
     txn = redis_shell.pipeline()
     if srvs:
         scores = [redis_shell.zscore(dc + ':slices', srv) for srv in srvs]
