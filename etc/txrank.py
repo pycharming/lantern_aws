@@ -104,9 +104,9 @@ def fp_status(name):
     cfgs = srv_cfg_by_name(name)
     if not cfgs:
         return "???"
-    dc = {'nl': 'doams3', 'jp': 'vltok1'}[name[3:5]]
+    region = vps_util.region_by_name(name)
     for cfg in cfgs[1]:
-        if redis_shell.zscore(dc + ':slices', cfg):
+        if redis_shell.zscore(region + ':slices', cfg):
             return "open"
     else:
         return "full"

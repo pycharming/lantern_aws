@@ -121,28 +121,24 @@ def retire_lcs(name,
                ip,
                byip=util.Cache(timeout=60*60,
                                update_fn=srv_cfg_by_ip)):
-    if name.startswith('fp-jp-'):
-        dc = 'vltok1'
-    elif name.startswith('fp-nl-'):
-        dc = 'doams3'
-    else:
-        assert False
+    cm = cm_by_name(name)
+    region = region_by_name(name)
     srvs = byip.get().get(ip, (None, []))[1]
     txn = redis_shell.pipeline()
     if srvs:
-        scores = [redis_shell.zscore(dc + ':slices', srv) for srv in srvs]
+        scores = [redis_shell.zscore(region + ':slices', srv) for srv in srvs]
         pairs = {"<empty:%s>" % score: score
                  for score in scores
                  if score}
         if pairs:
-            txn.zadd(dc + ":slices", **pairs)
-            txn.zrem(dc + ":slices", *srvs)
+            txn.zadd(region + ":slices", **pairs)
+            txn.zrem(region + ":slices", *srvs)
         txn.hdel('cfgbysrv', *srvs)
         txn.incr('srvcount')
     else:
         print "No configs left to delete for %s." % name
-    txn.lrem(dc + ':vpss', name)
-    txn.incr(dc + ':vpss:version')
+    txn.lrem(cm + ':vpss', name)
+    txn.incr(cm + ':vpss:version')
     txn.execute()
 
 def vps_shell(provider_etc):
@@ -174,6 +170,11 @@ def todaystr():
     return "%d%02d%02d" % (now.year, now.month, now.day)
 
 def dc_by_name(name):
+    ret = cm_by_name(name)[:6]
+    assert ret in ['doams3', 'vltok1', 'dosgp1']
+    return ret
+
+def cm_by_name(name):
 
     # Legacy.
     if name.startswith('fp-nl-'):
@@ -181,9 +182,12 @@ def dc_by_name(name):
     elif name.startswith('fp-jp-'):
         name = name.replace('jp', 'vltok1', 1)
 
-    ret = name[3:9]
-    assert ret in ['doams3', 'vltok1', 'dosgp1']
-    return ret
+    return name.split('-')[1]
+
+def region_by_name(name):
+    return {'doams3': 'etc',
+            'dosgp1': 'sea',
+            'vltok1': 'sea'}[dc_by_name(name)]
 
 def cmid():
     "cloudmaster id"

@@ -7,8 +7,8 @@ import mail_util
 from redis_util import redis_shell
 
 
-def srvs_in_cfgbysrv(dc, cfgbysrv):
-    key = dc + ':slices'
+def srvs_in_cfgbysrv(region, cfgbysrv):
+    key = region + ':slices'
     issues = [(srv, score)
               for srv, score in redis_shell.zrangebyscore(key,
                                                           '-inf',
@@ -26,7 +26,7 @@ def srvs_in_cfgbysrv(dc, cfgbysrv):
             txn.zrem(key, srv)
             txn.zadd(key, '<empty:%s>' % score, score)
             txn.execute()
-    return ["Server %s in %s's slice table but no config for it." % (srv, dc)
+    return ["Server %s in %s's slice table but no config for it." % (srv, region)
             for srv, _ in issues]
 
 def configs_start_with_newline(cfgbysrv):
@@ -48,9 +48,10 @@ def report(errors):
 
 def run_all_checks():
     cfgbysrv = redis_shell.hgetall('cfgbysrv')
-    report(configs_start_with_newline(cfgbysrv)
-           + srvs_in_cfgbysrv('vltok1', cfgbysrv)
-           + srvs_in_cfgbysrv('doams3', cfgbysrv))
+    errors = configs_start_with_newline(cfgbysrv)
+    for region in redis_shell.smembers('user-regions'):
+        errors.extend(srvs_in_cfgbysrv(region, cfgbysrv))
+    report(errors)
 
 
 if __name__ == '__main__':
