@@ -56,7 +56,7 @@ def split_server(msg, retire=False):
         participle = infinitive = 'split'
     if os.path.exists(flag_filename):
         return
-    srvid = redis_shell.hget('srvbysrvip', ip)
+    srvid = redis_shell.hget('srvip->srv', ip)
     if not srvid or not redis_shell.zrank(
             vps_util.region_by_name(instance_id) + ':slices',
             srvid):

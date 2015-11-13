@@ -35,7 +35,7 @@ def r():
 
 def ip_by_srv():
     return {v: k
-            for k, v in r().hgetall("srvbysrvip").iteritems()}
+            for k, v in r().hgetall("srvip->srv").iteritems()}
 
 def open_servers(region):
     return sorted(r().zrangebyscore(region + ':slices', '-inf', '+inf'))
@@ -81,7 +81,7 @@ def unused_servers(cmid):
              if vps.name.startswith('fp-%s-' % cmid))
     ret = set()
     for v in vv:
-        id_ = r().hget("srvbysrvip", v.ip)
+        id_ = r().hget("srvip->srv", v.ip)
         if not id_ or not r().hget("srv->cfg", id_):
             ret.add(v)
     return ret
