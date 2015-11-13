@@ -181,7 +181,6 @@ install-http-proxy:
 convert-cert:
     cmd.script:
         - source: salt://fallback_proxy/convcert.sh
-        - creates: /home/lantern/cert.pem
         - user: lantern
         - group: lantern
         - mode: 400
