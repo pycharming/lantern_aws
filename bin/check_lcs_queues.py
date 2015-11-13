@@ -51,11 +51,11 @@ def names_by_ip(dc):
         return {d.ip_address: d.name
                 for d in do_vpss()}
 
-def print_queued_server_ids(dc):
-    d = names_by_ip(dc)
-    key = dc + ':srvq'
+def print_queued_server_ids(region):
+    d = names_by_ip(region)
+    key = region + ':srvq'
     queued_cfgs = r().lrange(key, 0, -1)
-    for i, ip in enumerate(reversed(queued_ips(dc))):
+    for i, ip in enumerate(reversed(queued_ips(region))):
         print i+1, d.get(ip)
 pq = print_queued_server_ids  # shortcut since I use this a lot.
 

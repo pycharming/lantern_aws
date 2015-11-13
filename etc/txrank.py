@@ -63,8 +63,8 @@ def ip_by_name():
 def queued_names():
     nbyip = name_by_ip()
     return set(nbyip.get(cfg.split('|')[0])
-               for dc in ['doams3', 'vltok1']
-               for cfg in redis_shell.lrange('%s:srvq' % dc, 0, -1))
+               for region in regions()
+               for cfg in redis_shell.lrange('%s:srvq' % region, 0, -1))
 
 def collect_pairs():
     query = "SELECT DERIVATIVE(last(value)) AS bytes FROM \"collectd\".\"default\".\"interface_rx\" WHERE type='if_octets' AND instance='eth0' AND time > now() - 1d GROUP BY time(1h), host FILL(none)"

@@ -13,6 +13,7 @@ import vps_util
 
 auth_token = "{{ pillar['cfgsrv_token'] }}"
 instance_id = "{{ grains['id'] }}"
+region = vps_util.region_by_name(instance_id)
 
 # {% from 'ip.sls' import external_ip %}
 ip = "{{ external_ip(grains) }}"
@@ -57,9 +58,8 @@ def split_server(msg, retire=False):
     if os.path.exists(flag_filename):
         return
     srvid = redis_shell.hget('srvip->srv', ip)
-    if not srvid or not redis_shell.zrank(
-            vps_util.region_by_name(instance_id) + ':slices',
-            srvid):
+    if not srvid or not redis_shell.zrank(region + ':slices',
+                                          srvid):
         # This server is not open so it can't be split. We only check this
         # after having tried because this is rarely needed.
         print "I was not open, so I won't try to split myself."
