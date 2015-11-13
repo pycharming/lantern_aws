@@ -78,6 +78,7 @@ def rsync(src, dst):
 def upload_master_config():
     util.ssh_cloudmaster(r"""(echo "timeout: 60" """
                          + r""" && echo "keep_jobs: 2" """
+                         + r""" && echo "worker_threads: 20" """
                          + r""" ) > /root/master""")
     move_root_file('/root/master', '/etc/salt/master')
 
