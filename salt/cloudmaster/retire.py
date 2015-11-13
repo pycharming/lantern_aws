@@ -32,7 +32,8 @@ def run():
             # actually destroy the old one.
             txn.lpush(destroy_qname, "%s*%s" % (name, int(time.time())))
             txn.execute()
-        time.sleep(10)
+        else:
+            time.sleep(10)
 
 
 if __name__ == '__main__':

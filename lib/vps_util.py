@@ -107,19 +107,27 @@ def cleanup_keys(do_shell=None, vultr_shell=None):
         if key not in filter_out:
             os.system('salt-key -d ' + key)
 
+def srv_cfg_by_ip():
+    ret = {}
+    for srv, cfg in redis_shell.hgetall('cfgbysrv').iteritems():
+        ip = yaml.load(cfg).values()[0]['addr'].split(':')[0]
+        if ip in ret:
+            ret[ip][1].append(srv)
+        else:
+            ret[ip] = cfg, [srv]
+    return ret
+
 def retire_lcs(name,
                ip,
-               cfgcache=util.Cache(timeout=60*60,
-                                   update_fn=lambda: redis_shell.hgetall('cfgbysrv'))):
+               byip=util.Cache(timeout=60*60,
+                               update_fn=srv_cfg_by_ip)):
     if name.startswith('fp-jp-'):
         dc = 'vltok1'
     elif name.startswith('fp-nl-'):
         dc = 'doams3'
     else:
         assert False
-    srvs = [srv
-            for srv, cfg in cfgcache.get().items()
-            if yaml.load(cfg).values()[0]['addr'].split(':')[0] == ip]
+    srvs = byip.get().get(ip, (None, []))[1]
     txn = redis_shell.pipeline()
     if srvs:
         scores = [redis_shell.zscore(dc + ':slices', srv) for srv in srvs]
@@ -160,16 +168,6 @@ def destroy_vps(name):
         txn.hdel('name->srv', name)
         txn.hdel('srv->name', srv)
         txn.execute()
-
-def srv_cfg_by_ip():
-    ret = {}
-    for srv, cfg in redis_shell.hgetall('cfgbysrv').iteritems():
-        ip = yaml.load(cfg).values()[0]['addr'].split(':')[0]
-        if ip in ret:
-            ret[ip][1].append(srv)
-        else:
-            ret[ip] = cfg, [srv]
-    return ret
 
 def todaystr():
     now = datetime.utcnow()
