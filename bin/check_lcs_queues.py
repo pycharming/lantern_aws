@@ -82,16 +82,16 @@ def unused_servers(cmid):
     ret = set()
     for v in vv:
         id_ = r().hget("srvbysrvip", v.ip)
-        if not id_ or not r().hget("cfgbysrv", id_):
+        if not id_ or not r().hget("srv->cfg", id_):
             ret.add(v)
     return ret
 
 def remove_fp(dc, ip):
-    for cfg in r().hgetall('cfgbysrv').itervalues():
+    for cfg in r().hgetall('srv->cfg').itervalues():
         if cfg.split('|')[0] == ip:
             print "deleting one config..."
-            r().lrem('cfgbysrv', cfg, 0)
-            r().incr('cfgbysrv:version')
+            r().lrem('srv->cfg', cfg, 0)
+            r().incr('srv->cfg:version')
     print r().lrem(dc + ':vpss', names_by_ip(dc)[ip], 0)
     r().incr(dc + ':vpss:version')
 

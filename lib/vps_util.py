@@ -109,7 +109,7 @@ def cleanup_keys(do_shell=None, vultr_shell=None):
 
 def srv_cfg_by_ip():
     ret = {}
-    for srv, cfg in redis_shell.hgetall('cfgbysrv').iteritems():
+    for srv, cfg in redis_shell.hgetall('srv->cfg').iteritems():
         ip = yaml.load(cfg).values()[0]['addr'].split(':')[0]
         if ip in ret:
             ret[ip][1].append(srv)
@@ -133,7 +133,7 @@ def retire_lcs(name,
         if pairs:
             txn.zadd(region + ":slices", **pairs)
             txn.zrem(region + ":slices", *srvs)
-        txn.hdel('cfgbysrv', *srvs)
+        txn.hdel('srv->cfg', *srvs)
         txn.incr('srvcount')
     else:
         print "No configs left to delete for %s." % name

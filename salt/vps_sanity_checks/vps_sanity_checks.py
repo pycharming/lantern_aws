@@ -18,7 +18,7 @@ def srvs_in_cfgbysrv(region, cfgbysrv):
               and srv not in cfgbysrv]
     for srv, score in issues[:]:
         # Double-check to avoid race conditions.
-        if redis_shell.hexists('cfgbysrv', srv):
+        if redis_shell.hexists('srv->cfg', srv):
             issues.remove((srv, score))
         else:
             # Might as well fix it while we're at it!
@@ -47,7 +47,7 @@ def report(errors):
     mail_util.send_alarm("Sanity checks failed!", "\n".join(errors))
 
 def run_all_checks():
-    cfgbysrv = redis_shell.hgetall('cfgbysrv')
+    cfgbysrv = redis_shell.hgetall('srv->cfg')
     errors = configs_start_with_newline(cfgbysrv)
     for region in redis_shell.smembers('user-regions'):
         errors.extend(srvs_in_cfgbysrv(region, cfgbysrv))
