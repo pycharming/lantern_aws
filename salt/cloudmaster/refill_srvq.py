@@ -23,7 +23,7 @@ LAUNCH_TIMEOUT = 60 * 60
 def run():
     dc = os.getenv("DC")
     print "Using datacenter", dc, ", MAXPROCS", repr(MAXPROCS)
-    qname = dc + ":srvreqq"
+    qname = REGION + ":srvreqq"
     reqq = redisq.Queue(qname, redis_shell, LAUNCH_TIMEOUT)
     procq = multiprocessing.Queue()
     pending = {}

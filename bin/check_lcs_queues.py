@@ -102,8 +102,8 @@ def today(dc):
     return sum(1 for x in r().lrange(dc + ':vpss', 0, -1)
                if ('-%s-' % todaystr) in x)
 
-def reqq(dc):
-    return r().lrange(dc + ':srvreqq', 0, -1)
+def reqq(region):
+    return r().lrange(region + ':srvreqq', 0, -1)
 
 def slices(region):
     """The list of slices in a region."""
