@@ -181,7 +181,6 @@ install-http-proxy:
 convert-cert:
     cmd.script:
         - source: salt://fallback_proxy/convcert.sh
-        - creates: /home/lantern/key.pem
         - user: lantern
         - group: lantern
         - mode: 400
@@ -196,7 +195,6 @@ proxy-service:
             - cmd: fallback-proxy-dirs-and-files
             - cmd: convert-cert
             - cmd: install-http-proxy
-            - file: /etc/init.d/http-proxy
         - require:
             - pkg: tcl
             - cmd: ufw-rules-ready
