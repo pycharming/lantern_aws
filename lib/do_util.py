@@ -3,8 +3,10 @@ import subprocess
 import time
 
 import digitalocean
+import requests
 import yaml
 
+import misc_util
 import vps_util
 
 
@@ -36,6 +38,17 @@ def init_vps(name_and_ip):
         ssh_tmpl % ip,
         fetchaccessdata_tmpl % ip)
 
+def droplets_by_name():
+    return {d.name: d
+            for d in do.get_all_droplets()}
+
+dbn_cache=misc_util.Cache(timeout=60*60, update_fn=droplets_by_name)
+
 def destroy_vps(name):
-    os.system('salt-cloud -yd ' + name)
+    did = dbn_cache.get()[name]
+    # We use the DO API directly and not salt-cloud here because the latter
+    # takes forever and generates lots of API requests, which may make us run
+    # out of our per-hour quota in busy times.
+    requests.delete('https://api.digitalocean.com/v2/droplets/' + did,
+                    headers={"Authorization": "Bearer " + do_token})
     os.system('salt-key -yd' + name)
