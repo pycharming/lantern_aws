@@ -214,6 +214,7 @@ ats-service:
             # it. :)
             - cmd: install-ats
             - service: lantern-disabled
+            - service: http-proxy-disabled
             - service: badvpn-udpgw
 
 badvpn-udpgw:
@@ -242,3 +243,16 @@ lantern-disabled:
     file.absent:
         - require:
             - service: lantern-disabled
+
+# Disable http-proxy
+http-proxy-disabled:
+    service.dead:
+        - name: http-proxy
+        - enable: no
+
+# Not strictly necessary perhaps, but make sure, for good measure, that the
+# lantern init script is not around.
+/etc/init/http-proxy.conf:
+    file.absent:
+        - require:
+            - service: http-proxy-disabled
