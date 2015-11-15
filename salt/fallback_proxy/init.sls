@@ -186,7 +186,7 @@ generate-cert:
 install-ats:
     cmd.script:
         - source: salt://fallback_proxy/install_ats.sh
-        - creates: /opt/ts/bin/traffic_cop
+        - creates: /etc/init.d/trafficserver
         - requires:
             - file: fp-dirs
 
