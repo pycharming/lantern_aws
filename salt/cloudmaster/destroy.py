@@ -13,7 +13,7 @@ TIMEOUT = 4 * 60 * 60
 
 
 def run():
-    qname = vps_util.cmid() + ":destroyq"
+    qname = vps_util.my_cm() + ":destroyq"
     q = redisq.Queue(qname, redis_shell, TIMEOUT)
     while True:
         name, remover = q.next_job()

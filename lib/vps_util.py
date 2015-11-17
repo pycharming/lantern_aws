@@ -169,10 +169,11 @@ def todaystr():
     now = datetime.utcnow()
     return "%d%02d%02d" % (now.year, now.month, now.day)
 
-def dc_by_name(name):
-    ret = cm_by_name(name)[:6]
-    assert ret in ['doams3', 'vltok1', 'dosgp1']
-    return ret
+def my_cm():
+    """
+    The name of the cloudmaster managing me, excluding the 'cm-' prefix.
+    """
+    return os.getenv('CM')[3:]  # remove the "cm-" prefix
 
 def cm_by_name(name):
 
@@ -185,13 +186,23 @@ def cm_by_name(name):
     return name.split('-')[1]
 
 def region_by_name(name):
+    return region_by_dc(dc_by_name(name))
+
+def my_region():
+    return region_by_dc(dc_by_cm(my_cm()))
+
+def dc_by_cm(cm):
+    ret = cm[:6]
+    assert ret in ['doams3', 'vltok1', 'dosgp1']
+    return ret
+
+def region_by_dc(dc):
     return {'doams3': 'etc',
             'dosgp1': 'sea',
-            'vltok1': 'sea'}[dc_by_name(name)]
+            'vltok1': 'sea'}[dc]
 
-def cmid():
-    "cloudmaster id"
-    return os.getenv('CM')[3:]  # remove the "cm-" prefix
+def dc_by_name(name):
+    return dc_by_cm(cm_by_name(name))
 
 class vps:
 

@@ -75,10 +75,10 @@ def save_access_data(ip_list, filename="../../lantern/src/github.com/getlantern/
 def vpss(provider_etc):
     return vps_util.vps_shell(provider_etc).all_vpss()
 
-def unused_servers(cmid):
+def unused_servers(cm):
     vv = set(vps
-             for vps in vpss(cmid)
-             if vps.name.startswith('fp-%s-' % cmid))
+             for vps in vpss(cm)
+             if vps.name.startswith('fp-%s-' % cm))
     ret = set()
     for v in vv:
         id_ = r().hget("srvip->srv", v.ip)
@@ -86,20 +86,10 @@ def unused_servers(cmid):
             ret.add(v)
     return ret
 
-def remove_fp(dc, ip):
-    for cfg in r().hgetall('srv->cfg').itervalues():
-        if cfg.split('|')[0] == ip:
-            print "deleting one config..."
-            r().lrem('srv->cfg', cfg, 0)
-            r().incr('srv->cfg:version')
-    print r().lrem(dc + ':vpss', names_by_ip(dc)[ip], 0)
-    r().incr(dc + ':vpss:version')
-
-
-def today(dc):
+def today(cm):
     """The number of servers launched today."""
     todaystr = vps_util.todaystr()
-    return sum(1 for x in r().lrange(dc + ':vpss', 0, -1)
+    return sum(1 for x in r().lrange(cm + ':vpss', 0, -1)
                if ('-%s-' % todaystr) in x)
 
 def reqq(region):
