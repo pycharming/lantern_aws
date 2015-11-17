@@ -14,7 +14,7 @@ rs = redis.from_url(redis_url)
 
 # KEYS[1]: '<region>:srvq'
 # KEYS[2]: '<region>:bakedin'
-# KEYS[3]: '<region>:srvreqid'
+# KEYS[3]: 'srvcount'
 # KEYS[4]: '<region>:srvreqq'
 # ARGV[1]: unix timestamp in seconds
 luasrc = """
@@ -33,7 +33,7 @@ script = rs.register_script(luasrc)
 def fetch(region):
     cfg = script(keys=[region + ':srvq',
                        region + ':bakedin',
-                       region + ':srvreqid',
+                       'srvcount'
                        region + ':srvreqq'],
                  args=[int(time.time())])
     return cfg.split('|', 1)[1]
