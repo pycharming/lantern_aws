@@ -90,7 +90,7 @@ def hammer_the_damn_thing_until_it_proxies(name, ssh_tmpl, fetchaccessdata_cmd):
             pid = highstate_pid(name)
             if pid:
                 trycmd(kill_tmpl % pid, 5)
-            trycmd("salt -t 1800 %s state.highstate" % name)
+            trycmd("salt -t 1200 %s state.highstate" % name)
 
 def cleanup_keys(do_shell=None, vultr_shell=None):
     if do_shell is None:
