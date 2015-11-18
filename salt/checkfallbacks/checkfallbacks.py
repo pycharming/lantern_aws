@@ -33,7 +33,7 @@ except IOError:
 remote_version = redis_shell.get('srvcount')
 if local_version != remote_version:
     json.dump([yaml.load(x).values()[0]
-               for x in redis_shell.hgetall('cfgbysrv').values()],
+               for x in redis_shell.hgetall('srv->cfg').values()],
               file(prefix + '.json', 'w'))
     file(prefix + '-version', 'w').write(remote_version)
 

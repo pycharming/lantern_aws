@@ -63,8 +63,8 @@ def ip_by_name():
 def queued_names():
     nbyip = name_by_ip()
     return set(nbyip.get(cfg.split('|')[0])
-               for dc in ['doams3', 'vltok1']
-               for cfg in redis_shell.lrange('%s:srvq' % dc, 0, -1))
+               for region in regions()
+               for cfg in redis_shell.lrange('%s:srvq' % region, 0, -1))
 
 def collect_pairs():
     query = "SELECT DERIVATIVE(last(value)) AS bytes FROM \"collectd\".\"default\".\"interface_rx\" WHERE type='if_octets' AND instance='eth0' AND time > now() - 1d GROUP BY time(1h), host FILL(none)"
@@ -80,10 +80,14 @@ def byip():
     return vps_util.srv_cfg_by_ip()
 
 @memoized
+def regions():
+    return redis_shell.smembers('user-regions')
+
+@memoized
 def bakedin():
     return set(x.split('|')[1]
-               for dc in ['doams3', 'vltok1']
-               for x in redis_shell.lrange(dc + ':bakedin', 0, -1))
+               for region in regions()
+               for x in redis_shell.lrange(region + ':bakedin', 0, -1))
 
 def srv_cfg_by_name(name):
     return byip().get(ip_by_name()[name], [])
@@ -100,9 +104,9 @@ def fp_status(name):
     cfgs = srv_cfg_by_name(name)
     if not cfgs:
         return "???"
-    dc = {'nl': 'doams3', 'jp': 'vltok1'}[name[3:5]]
+    region = vps_util.region_by_name(name)
     for cfg in cfgs[1]:
-        if redis_shell.zscore(dc + ':slices', cfg):
+        if redis_shell.zscore(region + ':slices', cfg):
             return "open"
     else:
         return "full"

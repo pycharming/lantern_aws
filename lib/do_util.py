@@ -52,3 +52,9 @@ def destroy_vps(name):
     requests.delete('https://api.digitalocean.com/v2/droplets/%s' % droplet.id,
                     headers={"Authorization": "Bearer " + do_token})
     os.system('salt-key -yd' + name)
+
+def droplet2vps(d):
+    return vps_util.vps(d.name, d.ip_address, d)
+
+def all_vpss():
+    return map(droplet2vps, do.get_all_droplets())

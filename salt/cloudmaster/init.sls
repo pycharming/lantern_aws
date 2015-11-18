@@ -15,40 +15,8 @@ include:
         - watch:
             - file: /etc/ufw/applications.d/salt
 
-/usr/bin/regenerate-fallbacks-list:
-    file.managed:
-        - source: salt://cloudmaster/regenerate_fallbacks_list.py
-        - user: root
-        - group: root
-        - mode: 700
-
-/usr/bin/wvars:
-  file.managed:
-    - source: salt://cloudmaster/wvars
-    - template: jinja
-    - user: root
-    - group: root
-    - mode: 700
-
 sshpass:
   pkg.installed
-
-{% set libs=['redisq', 'do_util', 'vultr_util', 'vps_util', 'redis_util', 'misc_util', 'mail_util'] %}
-
-{% for lib in libs %}
-
-/usr/local/lib/pylib/{{ lib }}.py:
-    file.managed:
-        - order: 2
-        - source: salt://cloudmaster/{{ lib }}.py
-        - template: jinja
-        - user: root
-        - group: root
-        - mode: 644
-        - makedirs: True
-
-{% endfor %}
-
 
 {% for svc in ['refill_srvq', 'retire', 'destroy'] %}
 
@@ -82,9 +50,6 @@ sshpass:
         - watch:
             - file: /usr/bin/{{ svc }}.py
             - file: /etc/init/{{ svc }}.conf
-{% for lib in libs %}
-            - file: /usr/local/lib/pylib/{{ lib }}.py
-{% endfor %} {# lib #}
         - require:
             - pip: digitalocean
             - pip: vultr

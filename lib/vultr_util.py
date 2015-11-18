@@ -119,3 +119,9 @@ def destroy_vps(name,
             break
     time.sleep(10)
     os.system('salt-key -yd ' + name)
+
+def dict2vps(d):
+    return vps_util.vps(d['label'], d['main_ip'], d)
+
+def all_vpss():
+    return map(dict2vps, vultr.server_list(None).itervalues())

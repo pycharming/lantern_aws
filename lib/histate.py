@@ -63,6 +63,7 @@ def toascii(b):
 
 def get_registered_vpss():
     return set(map(toascii, (redis_shell.lrange('doams3:vpss', 0, -1)
+                             + redis_shell.lrange('dosgp1:vpss', 0, -1)
                              + redis_shell.lrange('vltok1:vpss', 0, -1))))
 
 def get_actual_vpss():

@@ -12,10 +12,10 @@ if not redis_url:
     sys.exit(1)
 rs = redis.from_url(redis_url)
 
-# KEYS[1]: '<dc>:srvq'
-# KEYS[2]: '<dc>:bakedin'
-# KEYS[3]: '<dc>:srvreqid'
-# KEYS[4]: '<dc>:srvreqq'
+# KEYS[1]: '<region>:srvq'
+# KEYS[2]: '<region>:bakedin'
+# KEYS[3]: 'srvcount'
+# KEYS[4]: '<region>:srvreqq'
 # ARGV[1]: unix timestamp in seconds
 luasrc = """
 local cfg = redis.call("rpop", KEYS[1])
@@ -30,11 +30,11 @@ return cfg
 
 script = rs.register_script(luasrc)
 
-def fetch(dc='doams3'):
-    cfg = script(keys=[dc + ':srvq',
-                       dc + ':bakedin',
-                       dc + ':srvreqid',
-                       dc + ':srvreqq'],
+def fetch(region):
+    cfg = script(keys=[region + ':srvq',
+                       region + ':bakedin',
+                       'srvcount'
+                       region + ':srvreqq'],
                  args=[int(time.time())])
     return cfg.split('|', 1)[1]
 
@@ -51,17 +51,17 @@ if __name__ == '__main__':
         use_json = True
     except ValueError:
         use_json = False
-    dc = None
+    region = None
     if len(args) == 1:
-        dc = 'doams3'
+        region = rs.get('default-user-region')
     elif len(args) == 2:
-        dc = args[1]
-    if dc not in ['doams3', 'vltok1']:
+        region = args[1]
+    if not rs.sismember('user-regions', region):
         print "Usage: %s [--json] [datacenter]" % args[0]
         print "Where datacenter must be one of 'doams3' (for Amsterdam, default) or 'vltok1' (for Tokyo)"
         print "and use --json to output a format that can be directly read by genconfig."
         sys.exit(1)
-    cfg = fetch(dc)
+    cfg = fetch(region)
     if use_json:
         cfg = tojson(cfg)
     print cfg

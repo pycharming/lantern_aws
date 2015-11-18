@@ -9,15 +9,11 @@ import traceback
 import redis
 import requests
 
+import vps_util
 
 auth_token = "{{ pillar['cfgsrv_token'] }}"
 instance_id = "{{ grains['id'] }}"
-if instance_id.startswith('fp-nl-'):
-    dc = 'doams3'
-elif instance_id.startswith('fp-jp-'):
-    dc = 'vltok1'
-else:
-    assert False, repr(instance_id)
+region = vps_util.region_by_name(instance_id)
 
 # {% from 'ip.sls' import external_ip %}
 ip = "{{ external_ip(grains) }}"
@@ -61,8 +57,9 @@ def split_server(msg, retire=False):
         participle = infinitive = 'split'
     if os.path.exists(flag_filename):
         return
-    srvid = redis_shell.hget('srvbysrvip', ip)
-    if not srvid or not redis_shell.zrank(dc + ':slices', srvid):
+    srvid = redis_shell.hget('srvip->srv', ip)
+    if not srvid or not redis_shell.zrank(region + ':slices',
+                                          srvid):
         # This server is not open so it can't be split. We only check this
         # after having tried because this is rarely needed.
         print "I was not open, so I won't try to split myself."
@@ -90,5 +87,5 @@ def split_server(msg, retire=False):
             send_alarm("Unable to %s chained fallback" % infinitive,
                         "I tried to %s myself because I %s, but I couldn't." % (infinitive, msg))
     if retire:
-        redis_shell.lpush(dc + ':retireq', '%s|%s' % (instance_id, ip))
+        redis_shell.lpush(vps_util.my_cm() + ':retireq', '%s|%s' % (instance_id, ip))
         flag_as_done(retire_flag_filename)

@@ -90,7 +90,7 @@ def hammer_the_damn_thing_until_it_proxies(name, ssh_tmpl, fetchaccessdata_cmd):
             pid = highstate_pid(name)
             if pid:
                 trycmd(kill_tmpl % pid, 5)
-            trycmd("salt -t 1800 %s state.highstate" % name)
+            trycmd("salt -t 1200 %s state.highstate" % name)
 
 def cleanup_keys(do_shell=None, vultr_shell=None):
     if do_shell is None:
@@ -109,7 +109,7 @@ def cleanup_keys(do_shell=None, vultr_shell=None):
 
 def srv_cfg_by_ip():
     ret = {}
-    for srv, cfg in redis_shell.hgetall('cfgbysrv').iteritems():
+    for srv, cfg in redis_shell.hgetall('srv->cfg').iteritems():
         ip = yaml.load(cfg).values()[0]['addr'].split(':')[0]
         if ip in ret:
             ret[ip][1].append(srv)
@@ -121,49 +121,95 @@ def retire_lcs(name,
                ip,
                byip=util.Cache(timeout=60*60,
                                update_fn=srv_cfg_by_ip)):
-    if name.startswith('fp-jp-'):
-        dc = 'vltok1'
-    elif name.startswith('fp-nl-'):
-        dc = 'doams3'
-    else:
-        assert False
+    cm = cm_by_name(name)
+    region = region_by_name(name)
     srvs = byip.get().get(ip, (None, []))[1]
     txn = redis_shell.pipeline()
     if srvs:
-        scores = [redis_shell.zscore(dc + ':slices', srv) for srv in srvs]
-        pairs = {"<empty:%s>" % score: score
+        scores = [redis_shell.zscore(region + ':slices', srv) for srv in srvs]
+        pairs = {"<empty:%s>" % int(score): score
                  for score in scores
                  if score}
         if pairs:
-            txn.zadd(dc + ":slices", **pairs)
-            txn.zrem(dc + ":slices", *srvs)
-        txn.hdel('cfgbysrv', *srvs)
+            txn.zadd(region + ":slices", **pairs)
+            txn.zrem(region + ":slices", *srvs)
+        txn.hdel('srv->cfg', *srvs)
         txn.incr('srvcount')
     else:
         print "No configs left to delete for %s." % name
-    txn.lrem(dc + ':vpss', name)
-    txn.incr(dc + ':vpss:version')
+    txn.lrem(cm + ':vpss', name)
+    txn.incr(cm + ':vpss:version')
     txn.execute()
 
-def vps_shell(lcs_name):
-    if lcs_name.startswith('fp-nl'):
+def vps_shell(provider_etc):
+    """
+    provider_etc is any string that starts with the provider ID.
+
+    By convention, datacenter and cloudmaster IDs meet this condition.
+    """
+    if provider_etc.startswith('do'):
         import do_util
         return do_util
-    elif lcs_name.startswith('fp-jp'):
+    elif provider_etc.startswith('vl'):
         import vultr_util
         return vultr_util
     else:
-        assert False, repr(lcs_name)
+        assert False, repr(provider_etc)
 
 def destroy_vps(name):
-    vps_shell(name).destroy_vps(name)
-    srv = redis_shell.hget('srvbyname', name)
+    vps_shell(dc_by_name(name)).destroy_vps(name)
+    srv = redis_shell.hget('name->srv', name)
     if srv:
         txn = redis_shell.pipeline()
-        txn.hdel('srvbyname', name)
-        txn.hdel('namebysrv', srv)
+        txn.hdel('name->srv', name)
+        txn.hdel('srv->name', srv)
         txn.execute()
 
 def todaystr():
     now = datetime.utcnow()
     return "%d%02d%02d" % (now.year, now.month, now.day)
+
+def my_cm():
+    """
+    The name of the cloudmaster managing me, excluding the 'cm-' prefix.
+    """
+    return os.getenv('CM')[3:]  # remove the "cm-" prefix
+
+def cm_by_name(name):
+
+    # Legacy.
+    if name.startswith('fp-nl-'):
+        name = name.replace('nl', 'doams3', 1)
+    elif name.startswith('fp-jp-'):
+        name = name.replace('jp', 'vltok1', 1)
+
+    return name.split('-')[1]
+
+def region_by_name(name):
+    return region_by_dc(dc_by_name(name))
+
+def my_region():
+    return region_by_dc(dc_by_cm(my_cm()))
+
+def dc_by_cm(cm):
+    ret = cm[:6]
+    assert ret in ['doams3', 'vltok1', 'dosgp1']
+    return ret
+
+def region_by_dc(dc):
+    return {'doams3': 'etc',
+            'dosgp1': 'sea',
+            'vltok1': 'sea'}[dc]
+
+def dc_by_name(name):
+    return dc_by_cm(cm_by_name(name))
+
+class vps:
+
+    def __init__(self, name, ip, etc):
+        self.name = name
+        self.ip = ip
+        self.etc = etc
+
+    def __repr__(self):
+        return "<%s (%s)>" % (self.name, self.ip)

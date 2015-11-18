@@ -35,6 +35,9 @@ fp-dirs:
 include:
     - proxy_ufw_rules
     - redis
+{% if pillar['datacenter'].startswith('vl') %}
+    - vultr
+{% endif %}
 
 {% for dir,dst_filename,src_filename,user,mode in template_files %}
 {{ dir+dst_filename }}:
@@ -108,7 +111,6 @@ requests:
     - require:
         - file: /home/lantern/check_load.py
         - pip: requests
-        - cron: REDIS_URL
         - pkg: python-redis
 
 "/home/lantern/check_traffic.py 2>&1 | logger -t check_traffic":
@@ -121,11 +123,7 @@ requests:
 #        - file: /home/lantern/check_traffic.py
 #        - pip: psutil
 
-{% if grains['id'].startswith('fp-jp-') %}
-
-vultr:
-  pip.installed:
-    - name: vultr==0.1.2
+{% if pillar['datacenter'].startswith('vl') %}
 
 /home/lantern/check_vultr_transfer.py:
     file.managed:
@@ -143,17 +141,11 @@ vultr:
     - require:
         - file: /home/lantern/check_vultr_transfer.py
         - pip: vultr
-        - cron: REDIS_URL
         - pkg: python-redis
 
 {% endif %}
 
 {% endif %}
-
-REDIS_URL:
-  cron.env_present:
-    - user: lantern
-    - value: {{ pillar['cfgsrv_redis_url'] }}
 
 # Dictionary of American English words for the dname generator in
 # generate-cert.

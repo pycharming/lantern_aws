@@ -101,6 +101,7 @@ def upload_pillars():
             ' && echo "" > $(hostname).sls""'
             ' && echo "in_production: %s" > global.sls '
             ' && echo "datacenter: %s" >> global.sls '
+            ' && echo "cloudmaster_name: %s" >> global.sls '
             ' && echo "do_token: %s" > do_credential.sls'
             ' && echo "vultr_apikey: %s" > vultr_credential.sls'
             ' && echo "cfgsrv_token: %s" > cfgsrv_credential.sls'
@@ -112,6 +113,7 @@ def upload_pillars():
             ) % (config.salt_version,
                  util.in_production(),
                  config.datacenter,
+                 config.cloudmaster_name,
                  do_token,
                  vultr_apikey,
                  cfgsrv_token,

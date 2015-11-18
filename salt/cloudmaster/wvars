@@ -1,3 +1,0 @@
-#!/bin/bash
-
-REDIS_URL={{ pillar['cfgsrv_redis_url'] }} VULTR_APIKEY={{ pillar['vultr_apikey'] }} DO_TOKEN={{ pillar['do_token'] }} PYTHONPATH=/usr/local/lib/pylib $*

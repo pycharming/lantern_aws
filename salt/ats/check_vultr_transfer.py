@@ -4,8 +4,9 @@ from __future__ import division
 from datetime import datetime as dt
 import os
 import time
+import traceback
 
-from vultr.vultr import Vultr, VultrError
+from vultr_util import vultr, VultrError
 
 import util
 
@@ -15,12 +16,6 @@ instance_id = "{{ grains['id'] }}"
 if instance_id.startswith("{"):
     instance_id = "fp-jp-20150531-001"
 vultr_subid_filename = "vultr_id"
-
-api_key = "{{ pillar['vultr_apikey'] }}"
-# For offline testing.
-if api_key.startswith("{"):
-    api_key = os.getenv("VULTR_APIKEY")
-vultr = Vultr(api_key)
 
 # To avoid artifacts at the very beginning of the month, where the consumption
 # stats may not be reset, I don't split servers until a little over one day has
@@ -36,7 +31,7 @@ significant_usage = 0.25
 retire_threshold = 0.95
 
 def vultr_dict():
-    while True:
+    for _ in xrange(10):
         try:
             try:
                 subid = file(vultr_subid_filename).read()
@@ -47,7 +42,11 @@ def vultr_dict():
                         return d
             return vultr.server_list(subid)
         except VultrError:
+            traceback.print_exc()
             time.sleep(10 * random.random() * 20)
+    else:
+        print "Too many failures trying to fetch Vultr list; giving up!"
+        sys.exit(1)
 
 def usage_portion(vd):
     allowed = int(vd['allowed_bandwidth_gb'])
