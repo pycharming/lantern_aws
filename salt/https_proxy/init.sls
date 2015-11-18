@@ -42,7 +42,7 @@ include:
 {% for dir,dst_filename,src_filename,user,mode in template_files %}
 {{ dir+dst_filename }}:
     file.managed:
-        - source: salt://fallback_proxy/{{ src_filename }}
+        - source: salt://http_proxy/{{ src_filename }}
         - template: jinja
         - context:
             auth_token: {{ auth_token }}
@@ -58,7 +58,7 @@ include:
 {% for dir,dst_filename,src_filename,user,mode in nontemplate_files %}
 {{ dir+dst_filename }}:
     file.managed:
-        - source: salt://fallback_proxy/{{ src_filename }}
+        - source: salt://http_proxy/{{ src_filename }}
         - user: {{ user }}
         - group: {{ user }}
         - mode: {{ mode }}
@@ -80,7 +80,7 @@ fallback-proxy-dirs-and-files:
 
 save-access-data:
     cmd.script:
-        - source: salt://fallback_proxy/save_access_data.py
+        - source: salt://http_proxy/save_access_data.py
         - template: jinja
         - context:
             fallback_json_file: {{ fallback_json_file }}
@@ -127,7 +127,7 @@ requests:
 
 /home/lantern/check_vultr_transfer.py:
     file.managed:
-        - source: salt://fallback_proxy/check_vultr_transfer.py
+        - source: salt://http_proxy/check_vultr_transfer.py
         - template: jinja
         - user: lantern
         - group: lantern
@@ -157,7 +157,7 @@ tcl:
 
 generate-cert:
     cmd.script:
-        - source: salt://fallback_proxy/gencert.py
+        - source: salt://http_proxy/gencert.py
         - template: jinja
         # Don't clobber the keystore of old fallbacks.
         - creates: /home/lantern/littleproxy_keystore.jks
@@ -166,14 +166,13 @@ generate-cert:
 
 install-http-proxy:
     cmd.script:
-        - source: salt://fallback_proxy/install_http_proxy.sh
+        - source: salt://http_proxy/install_http_proxy.sh
         - user: lantern
         - group: lantern
 
 convert-cert:
     cmd.script:
-        - source: salt://fallback_proxy/convcert.sh
-        - creates: /home/lantern/key.pem
+        - source: salt://http_proxy/convcert.sh
         - user: lantern
         - group: lantern
         - mode: 400
@@ -188,7 +187,6 @@ proxy-service:
             - cmd: fallback-proxy-dirs-and-files
             - cmd: convert-cert
             - cmd: install-http-proxy
-            - file: /etc/init.d/http-proxy
         - require:
             - pkg: tcl
             - cmd: ufw-rules-ready
