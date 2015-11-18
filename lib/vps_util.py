@@ -127,7 +127,7 @@ def retire_lcs(name,
     txn = redis_shell.pipeline()
     if srvs:
         scores = [redis_shell.zscore(region + ':slices', srv) for srv in srvs]
-        pairs = {"<empty:%s>" % score: score
+        pairs = {"<empty:%s>" % int(score): score
                  for score in scores
                  if score}
         if pairs:
