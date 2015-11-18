@@ -1,5 +1,5 @@
 dcenv:
   file.append:
     - name: /etc/environment
-      - text: |
+    - text: |
         CM={{ pillar['cloudmaster_name'] }}
