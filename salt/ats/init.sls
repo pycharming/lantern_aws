@@ -44,7 +44,7 @@ include:
 {% for dir,dst_filename,src_filename,user,mode in template_files %}
 {{ dir+dst_filename }}:
     file.managed:
-        - source: salt://fallback_proxy/{{ src_filename }}
+        - source: salt://ats/{{ src_filename }}
         - template: jinja
         - context:
             auth_token: {{ auth_token }}
@@ -63,7 +63,7 @@ include:
 {% for dir,dst_filename,src_filename,user,mode in nontemplate_files %}
 {{ dir+dst_filename }}:
     file.managed:
-        - source: salt://fallback_proxy/{{ src_filename }}
+        - source: salt://ats/{{ src_filename }}
         - user: {{ user }}
         - group: {{ user }}
         - mode: {{ mode }}
@@ -88,7 +88,7 @@ fallback-proxy-dirs-and-files:
 
 save-access-data:
     cmd.script:
-        - source: salt://fallback_proxy/save_access_data.py
+        - source: salt://ats/save_access_data.py
         - template: jinja
         - context:
             fallback_json_file: {{ fallback_json_file }}
@@ -140,7 +140,7 @@ vultr:
 
 /home/lantern/check_vultr_transfer.py:
     file.managed:
-        - source: salt://fallback_proxy/check_vultr_transfer.py
+        - source: salt://ats/check_vultr_transfer.py
         - template: jinja
         - user: lantern
         - group: lantern
@@ -176,7 +176,7 @@ tcl:
 
 generate-cert:
     cmd.script:
-        - source: salt://fallback_proxy/gencert.py
+        - source: salt://ats/gencert.py
         - template: jinja
         # Don't clobber the keystore of old fallbacks.
         - creates: /home/lantern/littleproxy_keystore.jks
@@ -185,14 +185,14 @@ generate-cert:
 
 install-ats:
     cmd.script:
-        - source: salt://fallback_proxy/install_ats.sh
+        - source: salt://ats/install_ats.sh
         - creates: /etc/init.d/trafficserver
         - requires:
             - file: fp-dirs
 
 convert-cert:
     cmd.script:
-        - source: salt://fallback_proxy/convcert.sh
+        - source: salt://ats/convcert.sh
         - creates: /opt/ts/etc/trafficserver/key.pem
         - user: lantern
         - group: lantern

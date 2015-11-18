@@ -21,4 +21,4 @@ base:
     'fp-*':
         - lantern_build_prereqs
         - apt_upgrade
-        - fallback_proxy
+        - ats
