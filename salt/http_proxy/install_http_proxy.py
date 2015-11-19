@@ -3,7 +3,6 @@
 import os
 import stat
 import requests
-import json
 
 GH_TOKEN = "{{ pillar['github_token'] }}"
 url = 'https://api.github.com/repos/getlantern/http-proxy-lantern/releases/latest'
@@ -16,7 +15,7 @@ headers = {
 print 'Retrieving latest binary from http-proxy-lantern repo...'
 r = requests.get(url, headers=headers)
 if(r.ok):
-    release = json.loads(r.text or r.content)
+    release = r.json()
     asset = release['assets'][0]
     download_url = asset['url']
     headers['Accept'] = 'application/octet-stream'

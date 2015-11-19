@@ -17,7 +17,6 @@ try:
     # Import local config overrides if available
     from config_overrides import *
 except ImportError:
-    print >> sys.stderr, "Import error, please check bin/config_overrides.py"
     pass
 
 
