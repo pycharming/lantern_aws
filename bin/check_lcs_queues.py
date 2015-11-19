@@ -11,20 +11,12 @@ import yaml
 
 from misc_util import memoized
 try:
-    import vultr_util as vu
     import vps_util
 except ImportError:
     print
-    print "*** vultr_util module not found.  Please add [...]/lantern_aws/lib to your PYTHONPATH"
+    print "*** vps_util module not found.  Please add [...]/lantern_aws/lib to your PYTHONPATH"
     print
     raise
-import digitalocean
-
-@memoized
-def do_vpss():
-    do_token = os.environ['DO_TOKEN']
-    mgr = digitalocean.Manager(token=do_token)
-    return mgr.get_all_droplets()
 
 @memoized
 def r():
@@ -43,16 +35,17 @@ def open_servers(region):
 def queued_ips(region):
     return [cfg.split('|')[0] for cfg in r().lrange(region + ':srvq', 0, -1)]
 
-def names_by_ip(dc):
-    if dc.startswith('vl'):
-        return {d['main_ip']: d['label']
-                for d in vu.vultr.server_list(None).itervalues()}
-    elif dc.startswith('do'):
-        return {d.ip_address: d.name
-                for d in do_vpss()}
+@memoized
+def all_vpss():
+    return [v
+            for provider in ['vl', 'do']
+            for v in vps_util.vps_shell(provider).all_vpss()]
+
+def names_by_ip():
+    return {v.ip: v.name for v in all_vpss()}
 
 def print_queued_server_ids(region):
-    d = names_by_ip(region)
+    d = names_by_ip()
     key = region + ':srvq'
     queued_cfgs = r().lrange(key, 0, -1)
     for i, ip in enumerate(reversed(queued_ips(region))):
