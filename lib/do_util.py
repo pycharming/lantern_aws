@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 import time
 
 import digitalocean
@@ -45,12 +46,15 @@ def droplets_by_name():
 dbn_cache=misc_util.Cache(timeout=60*60, update_fn=droplets_by_name)
 
 def destroy_vps(name):
-    droplet = dbn_cache.get()[name]
-    # We use the DO API directly and not salt-cloud here because the latter
-    # takes forever and generates lots of API requests, which may make us run
-    # out of our per-hour quota in busy times.
-    requests.delete('https://api.digitalocean.com/v2/droplets/%s' % droplet.id,
-                    headers={"Authorization": "Bearer " + do_token})
+    try:
+        droplet = dbn_cache.get()[name]
+        # We use the DO API directly and not salt-cloud here because the latter
+        # takes forever and generates lots of API requests, which may make us run
+        # out of our per-hour quota in busy times.
+        requests.delete('https://api.digitalocean.com/v2/droplets/%s' % droplet.id,
+                        headers={"Authorization": "Bearer " + do_token})
+    except KeyError:
+        print >> sys.stderr, "Droplet not found:", name
     os.system('salt-key -yd' + name)
 
 def droplet2vps(d):
