@@ -17,6 +17,7 @@ try:
     # Import local config overrides if available
     from config_overrides import *
 except ImportError:
+    print >> sys.stderr, "Import error, please check bin/config_overrides.py"
     pass
 
 
@@ -25,4 +26,4 @@ key_path = os.path.join(here.secrets_path,
                         'lantern_aws',
                         'cloudmaster.id_rsa')
 
-print >> sys.stderr, "Using cloudmaster: %s" % cloudmaster_name
+print >> sys.stderr, "Using cloudmaster: %s(%s)" % (cloudmaster_name, cloudmaster_address)
