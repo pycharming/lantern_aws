@@ -27,7 +27,11 @@ sshpass:
         - group: root
         - mode: 755
 
-{% if pillar['in_production'] %}
+{# Only launch servers from Amsterdam and Singapore. #}
+
+{% if pillar['in_production']
+      and (svc != 'refill_srvq'
+           or pillar['cloudmaster_name'] in ['doams3', 'dosgp1']) %}
 
 /etc/init/{{ svc }}.conf:
     file.managed:
@@ -54,6 +58,17 @@ sshpass:
             - pip: digitalocean
             - pip: vultr
             - pkg: python-redis
+
+{% else %}
+
+{{ svc }}:
+  service.dead:
+    - enable: no
+
+/etc/init/{{ svc }}.conf:
+  file.absent:
+    - require:
+        - service: {{ svc }}
 
 {% endif %}
 
