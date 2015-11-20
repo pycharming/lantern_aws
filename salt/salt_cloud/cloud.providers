@@ -1,31 +1,6 @@
-do_sg:
+do:
     provider: digital_ocean
     personal_access_token: {{ pillar['do_token'] }}
-    location: 'Singapore 1'
     private_networking: yes
-    ssh_key_file: /etc/salt/cloudmaster.id_rsa
-    ssh_key_names: cloudmaster
-
-do_nl:
-    provider: digital_ocean
-    personal_access_token: {{ pillar['do_token'] }}
-    location: 'Amsterdam 3'
-    private_networking: yes
-    ssh_key_file: /etc/salt/cloudmaster.id_rsa
-    ssh_key_names: cloudmaster
-
-do_nyc3:
-    provider: digital_ocean
-    personal_access_token: {{ pillar['do_token'] }}
-    location: 'New York 3'
-    private_networking: yes
-    ssh_key_file: /etc/salt/cloudmaster.id_rsa
-    ssh_key_names: cloudmaster
-
-do_sfo:
-    provider: digital_ocean
-    personal_access_token: {{ pillar['do_token'] }}
-    location: 'San Francisco 1'
-    private_networking: no
     ssh_key_file: /etc/salt/cloudmaster.id_rsa
     ssh_key_names: cloudmaster

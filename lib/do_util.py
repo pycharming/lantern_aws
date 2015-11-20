@@ -17,10 +17,12 @@ fetchaccessdata_tmpl = "scp -o StrictHostKeyChecking=no -i /etc/salt/cloudmaster
 do_token = os.getenv("DO_TOKEN")
 do = digitalocean.Manager(token=do_token)
 
+plan = vps_util.dc_by_cm(vps_util.my_cm()) + "_1GB"
+
 
 def create_vps(name):
     vps_util.save_pillar(name)
-    out = subprocess.check_output(["salt-cloud", "-p", "do_nl_1GB", name])
+    out = subprocess.check_output(["salt-cloud", "-p", plan, name])
     # Uberhack: XXX update with salt version...
     d = yaml.load(out[out.rfind(name + ":"):].replace("----------", "").replace("|_", "-")).values()[0]
     return d['name'], d['networks']['v4'][1]['ip_address']
