@@ -5,14 +5,14 @@ import stat
 import requests
 
 GH_TOKEN = "{{ pillar['github_token'] }}"
-url = 'https://api.github.com/repos/getlantern/http-proxy-lantern/releases/latest'
+VERSION = 'v0.0.3'
 
+url = 'https://api.github.com/repos/getlantern/http-proxy-lantern/releases/tags/' + VERSION
 headers = {
     'Authorization': 'token ' + GH_TOKEN,
     'Accept': 'application/vnd.github.v3.raw'
 }
-
-print 'Retrieving latest binary from http-proxy-lantern repo...'
+print 'Retrieving http-proxy %s...' % VERSION
 r = requests.get(url, headers=headers)
 if(r.ok):
     release = r.json()
