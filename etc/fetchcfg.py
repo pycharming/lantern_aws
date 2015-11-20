@@ -33,7 +33,7 @@ script = rs.register_script(luasrc)
 def fetch(region):
     cfg = script(keys=[region + ':srvq',
                        region + ':bakedin',
-                       'srvcount'
+                       'srvcount',
                        region + ':srvreqq'],
                  args=[int(time.time())])
     return cfg.split('|', 1)[1]
@@ -57,8 +57,8 @@ if __name__ == '__main__':
     elif len(args) == 2:
         region = args[1]
     if not rs.sismember('user-regions', region):
-        print "Usage: %s [--json] [datacenter]" % args[0]
-        print "Where datacenter must be one of 'doams3' (for Amsterdam, default) or 'vltok1' (for Tokyo)"
+        print "Usage: %s [--json] [user-region]" % args[0]
+        print "Where region must be one of 'sea' for Southeast Asia (currently, only China) or 'etc' (default) for anywhere else."
         print "and use --json to output a format that can be directly read by genconfig."
         sys.exit(1)
     cfg = fetch(region)
