@@ -1,8 +1,5 @@
 import os
-import re
 import stat
-import sys
-import time
 
 import yaml
 
@@ -28,6 +25,11 @@ def read_vultr_credential():
 def read_cfgsrv_credential():
     return secrets_from_yaml(['lantern_aws', 'config_server.yaml'],
                              ['auth_token', 'redis_url'])
+
+@memoized
+def read_github_token():
+    return secrets_from_yaml(['github.md'],
+                             ['repo-token'])[0]
 
 def secrets_from_yaml(path, keys):
     d = yaml.load(file(os.path.join(here.secrets_path, *path)))

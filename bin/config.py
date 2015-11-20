@@ -25,4 +25,4 @@ key_path = os.path.join(here.secrets_path,
                         'lantern_aws',
                         'cloudmaster.id_rsa')
 
-print >> sys.stderr, "Using cloudmaster: %s" % cloudmaster_name
+print >> sys.stderr, "Using cloudmaster: %s(%s)" % (cloudmaster_name, cloudmaster_address)

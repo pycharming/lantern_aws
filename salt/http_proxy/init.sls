@@ -166,7 +166,8 @@ generate-cert:
 
 install-http-proxy:
     cmd.script:
-        - source: salt://http_proxy/install_http_proxy.sh
+        - source: salt://http_proxy/install_http_proxy.py
+        - template: jinja
         - user: lantern
         - group: lantern
 
