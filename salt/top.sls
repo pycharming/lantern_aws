@@ -23,4 +23,8 @@ base:
     'fp-*':
         - lantern_build_prereqs
         - apt_upgrade
+{% if pillar['datacenter'] == 'doams3' %}
+        - http_proxy
+{% else %}
         - ats
+{% endif %}
