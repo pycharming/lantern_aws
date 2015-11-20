@@ -21,7 +21,6 @@ fp-dirs:
 
 # To filter through jinja.
 {% set template_files=[
-    ('/home/lantern/', 'util.py', 'util.py', 'lantern', 400),
     ('/home/lantern/', 'check_load.py', 'check_load.py', 'lantern', 700),
     ('/home/lantern/', 'check_traffic.py', 'check_traffic.py', 'lantern', 700),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
@@ -31,6 +30,15 @@ fp-dirs:
     ('/opt/ts/etc/trafficserver/', 'remap.config', 'remap.config', 'lantern', 400),
     ('/opt/ts/etc/trafficserver/', 'plugin.config', 'plugin.config', 'lantern', 400),
     ('/opt/ts/etc/trafficserver/', 'ssl_multicert.config', 'ssl_multicert.config', 'lantern', 400) ] %}
+
+# We source this from the http_proxy module to avoid duplication.
+/home/lantern/util.py:
+  file.managed:
+    - source: salt://http_proxy/util.py
+    - template: jinja
+    - user: lantern
+    - group: lantern
+    - mode: 400
 
 # To copy verbatim.
 {% set nontemplate_files=[
