@@ -59,16 +59,17 @@ retire = (split_long_ago
           and la15m > retire_threshold
           and util.redis_shell.llen(util.dc + ":srvq") >= min_q_size)
 
-if retire:
-    print "I'll try retiring myself"
-else:
-    print "Not retiring myself"
 
 if la15m > split_threshold:
     print "Splitting..."
-    util.split_server("reached load average %s" % la15m,
-                      retire)
+    util.split_server("reached load average %s" % la15m)
 else:
     print "Not splitting."
+
+if retire:
+    print "Retiring..."
+    util.retire_server("reached load average %s" % la15m)
+else:
+    print "Not retiring."
 
 print "... done."

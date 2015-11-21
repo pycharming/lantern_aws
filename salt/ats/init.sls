@@ -21,6 +21,7 @@ fp-dirs:
 
 # To filter through jinja.
 {% set template_files=[
+    ('/home/lantern/', 'util.py', 'util.py', 'lantern', 400),
     ('/home/lantern/', 'check_load.py', 'check_load.py', 'lantern', 700),
     ('/home/lantern/', 'check_traffic.py', 'check_traffic.py', 'lantern', 700),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
@@ -31,15 +32,6 @@ fp-dirs:
     ('/opt/ts/etc/trafficserver/', 'plugin.config', 'plugin.config', 'lantern', 400),
     ('/opt/ts/etc/trafficserver/', 'ssl_multicert.config', 'ssl_multicert.config', 'lantern', 400) ] %}
 
-# We source this from the http_proxy module to avoid duplication.
-/home/lantern/util.py:
-  file.managed:
-    - source: salt://http_proxy/util.py
-    - template: jinja
-    - user: lantern
-    - group: lantern
-    - mode: 400
-
 # To copy verbatim.
 {% set nontemplate_files=[
     ('/usr/local/bin/', 'badvpn-udpgw', 'badvpn-udpgw', 'root', 755),
@@ -48,6 +40,9 @@ fp-dirs:
 include:
     - proxy_ufw_rules
     - redis
+{% if pillar['datacenter'].startswith('vl') %}
+    - vultr
+{% endif %}
 
 {% for dir,dst_filename,src_filename,user,mode in template_files %}
 {{ dir+dst_filename }}:
@@ -140,11 +135,7 @@ requests:
 #        - file: /home/lantern/check_traffic.py
 #        - pip: psutil
 
-{% if grains['id'].startswith('fp-jp-') %}
-
-vultr:
-  pip.installed:
-    - name: vultr==0.1.2
+{% if pillar['datacenter'].startswith('vl') %}
 
 /home/lantern/check_vultr_transfer.py:
     file.managed:
@@ -161,7 +152,6 @@ vultr:
     - user: lantern
     - require:
         - file: /home/lantern/check_vultr_transfer.py
-        - pip: vultr
         - cron: REDIS_URL
         - pkg: python-redis
 

@@ -76,11 +76,12 @@ def run():
               usage * 100))
     if usage > retire_threshold:
         print "Retiring because I", msg
-        util.split_server(msg, retire=True)
+        util.split_server(msg)
+        util.retire_server(msg)
     elif t > significant_time and usage > significant_usage and usage > t:
         msg += " in %.2f%% of the current month" % (t * 100)
         print "Splitting because I", msg
-        util.split_server(msg, retire=False)
+        util.split_server(msg)
     else:
         print "Usage portion: %s; time portion: %s; not splitting." % (usage,
                                                                        t)

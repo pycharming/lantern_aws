@@ -41,50 +41,43 @@ def send_alarm(subject, body):
 def flag_as_done(flag_filename):
     file(flag_filename, 'w').write(str(datetime.datetime.utcnow()))
 
-def split_server(msg, retire=False):
-    if retire:
-        data = {'dislodge-users?': 'true'}
-        flag_filename = retire_flag_filename
-        # Uppercase so it catches our eye in the fallback-alarms list. As of
-        # this writing, we need to manually unregister these fallbacks from the
-        # list of ones to check and then shut them down.
-        participle = "RETIRED"
-        infinitive = "RETIRE"
-    else:
-        data = {}
-        flag_filename = split_flag_filename
-        participle = infinitive = 'split'
-    if os.path.exists(flag_filename):
+def split_server(msg):
+    if os.path.exists(split_flag_filename):
+        print "Not splitting myself again."
         return
     srvid = redis_shell.hget('srvip->srv', ip)
     if not srvid or not redis_shell.zrank(region + ':slices',
                                           srvid):
-        # This server is not open so it can't be split. We only check this
-        # after having tried because this is rarely needed.
         print "I was not open, so I won't try to split myself."
         flag_as_done(split_flag_filename)
+        return
+    for attempt in xrange(7):
+        try:
+            resp = subprocess.check_output(['curl',
+                                            '-i',
+                                            '-X', 'POST',
+                                            '-H', 'X-Lantern-Auth-Token: ' + auth_token,
+                                            'https://config.getiantem.org/split-server'])
+            if "Server successfully split" in resp:
+                flag_as_done(split_flag_filename)
+                send_alarm("Chained proxy split",
+                            " split because I " + msg)
+                break
+            else:
+                print "Bad response:"
+                print resp
+        except:
+            traceback.print_exc()
+        time.sleep(2 << attempt)
     else:
-        for attempt in xrange(7):
-            try:
-                resp = subprocess.check_output(['curl',
-                                                '-i',
-                                                '-X', 'POST',
-                                                '-H', 'X-Lantern-Auth-Token: ' + auth_token,
-                                                'https://config.getiantem.org/split-server'])
-                if "Server successfully split" in resp:
-                    flag_as_done(split_flag_filename)
-                    send_alarm("Chained fallback " + participle,
-                            participle + " because I " + msg)
-                    break
-                else:
-                    print "Bad response:"
-                    print resp
-            except:
-                traceback.print_exc()
-            time.sleep(2 << attempt)
-        else:
-            send_alarm("Unable to %s chained fallback" % infinitive,
-                        "I tried to %s myself because I %s, but I couldn't." % (infinitive, msg))
-    if retire:
-        redis_shell.lpush(vps_util.my_cm() + ':retireq', '%s|%s' % (instance_id, ip))
-        flag_as_done(retire_flag_filename)
+        send_alarm("Unable to split chained fallback",
+                    "I tried to split myself because I %s, but I couldn't." % msg)
+
+def retire_server(msg):
+    if os.path.exists(retire_flag_filename):
+        print "Not retiring myself again."
+        return
+    redis_shell.lpush(vps_util.my_cm() + ':retireq', '%s|%s' % (instance_id, ip))
+    flag_as_done(retire_flag_filename)
+    send_alarm("Chained proxy RETIRED",
+               " retired because I " + msg)
