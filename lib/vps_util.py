@@ -90,6 +90,9 @@ def hammer_the_damn_thing_until_it_proxies(name, ssh_tmpl, fetchaccessdata_cmd):
             pid = highstate_pid(name)
             if pid:
                 trycmd(kill_tmpl % pid, 5)
+            # Sometimes our hammering interrupts dpkg such that highstate will
+            # always fail to install any apt packages.
+            trycmd("salt %s cmd.run 'dpkg --configure -a'" % name)
             trycmd("salt -t 1200 %s state.highstate" % name)
 
 def cleanup_keys(do_shell=None, vultr_shell=None):
