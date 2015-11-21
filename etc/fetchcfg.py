@@ -14,8 +14,9 @@ rs = redis.from_url(redis_url)
 
 # KEYS[1]: '<region>:srvq'
 # KEYS[2]: '<region>:bakedin'
-# KEYS[3]: 'srvcount'
-# KEYS[4]: '<region>:srvreqq'
+# KEYS[3]: '<region>:bakedin-names'
+# KEYS[4]: 'srvcount'
+# KEYS[5]: '<region>:srvreqq'
 # ARGV[1]: unix timestamp in seconds
 luasrc = """
 local cfg = redis.call("rpop", KEYS[1])
@@ -23,8 +24,12 @@ if not cfg then
     return "<no-servers-in-srvq>"
 end
 redis.call("lpush", KEYS[2], ARGV[1] .. "|" .. cfg)
-local serial = redis.call("incr", KEYS[3])
-redis.call("lpush", KEYS[4], serial)
+local begin = string.find(cfg, "|")
+local end_ = string.find(cfg, "|", begin + 1)
+local name = string.sub(cfg, begin+1, end_-1)
+redis.call("sadd", KEYS[3], name)
+local serial = redis.call("incr", KEYS[4])
+redis.call("lpush", KEYS[5], serial)
 return cfg
 """
 
@@ -33,6 +38,7 @@ script = rs.register_script(luasrc)
 def fetch(region):
     cfg = script(keys=[region + ':srvq',
                        region + ':bakedin',
+                       region + ':bakedin-names',
                        'srvcount',
                        region + ':srvreqq'],
                  args=[int(time.time())])
