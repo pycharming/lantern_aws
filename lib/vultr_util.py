@@ -75,12 +75,14 @@ def wait_for_status_ok(subid):
         time.sleep(10)
 
 def init_vps(subid):
+    wait_for_status_ok(subid)
     # VPSs often (always?) report themselves as OK before stopping and
     # completing setup. Trying to initialize them at this early stage seems to
-    # cause trouble.
-    wait_for_status_ok(subid)
-    print("Status OK for the first time.  I don't buy it.  Lemme wait again...")
-    time.sleep(10)
+    # cause trouble.  I don't know of any way to determine programatically when
+    # it's OK to start pounding on these machines, but empirically some 400
+    # seconds after status first reported OK should be fine most of the time.
+    print("Status OK for the first time.  I don't buy it.  Lemme sleep some...")
+    time.sleep(400)
     while True:
         d = wait_for_status_ok(subid)
         print("Status OK again; bootstrapping...")
