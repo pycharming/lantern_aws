@@ -92,6 +92,7 @@ def upload_pillars():
     vultr_apikey = util.read_vultr_credential()
     cfgsrv_token, cfgsrv_redis_url = util.read_cfgsrv_credential()
     github_token = util.read_github_token()
+    loggly_token = util.read_loggly_token()
     if not util.in_production():
         cfgsrv_redis_url = "redis://%s:6379" % config.cloudmaster_address
     util.ssh_cloudmaster((
@@ -108,8 +109,9 @@ def upload_pillars():
             ' && echo "cfgsrv_token: %s" > cfgsrv_credential.sls'
             ' && echo "cfgsrv_redis_url: %s" >> cfgsrv_credential.sls'
             ' && echo "github_token: %s" > github_token.sls'
-            r' && echo "base: {\"*\": [salt, global], \"fp-*\": [cfgsrv_credential, vultr_credential, github_token], \"cm-*\": [do_credential, vultr_credential, cfgsrv_credential]}" > top.sls '
-            ' && sudo mv salt.sls global.sls top.sls do_credential.sls vultr_credential.sls cfgsrv_credential.sls github_token.sls $(hostname).sls /srv/pillar/ '
+            ' && echo "loggly_token: %s" > loggly_token.sls'
+            r' && echo "base: {\"*\": [salt, global], \"fp-*\": [cfgsrv_credential, vultr_credential, github_token, loggly_token], \"cm-*\": [do_credential, vultr_credential, cfgsrv_credential]}" > top.sls '
+            ' && sudo mv salt.sls global.sls top.sls do_credential.sls vultr_credential.sls cfgsrv_credential.sls github_token.sls loggly_token.sls $(hostname).sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.salt_version,
@@ -120,7 +122,8 @@ def upload_pillars():
                  vultr_apikey,
                  cfgsrv_token,
                  cfgsrv_redis_url,
-                 github_token))
+                 github_token,
+                 loggly_token))
 
 if __name__ == '__main__':
     check_master_if_in_production()

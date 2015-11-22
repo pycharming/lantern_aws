@@ -31,6 +31,11 @@ def read_github_token():
     return secrets_from_yaml(['github.md'],
                              ['repo-token'])[0]
 
+@memoized
+def read_loggly_token():
+    return secrets_from_yaml(['loggly.txt'],
+                             ['bravenewsoft.loggly.com'])[0]['token']
+
 def secrets_from_yaml(path, keys):
     d = yaml.load(file(os.path.join(here.secrets_path, *path)))
     return map(d.get, keys)

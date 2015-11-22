@@ -1,6 +1,7 @@
 {% set fallback_json_file='/home/lantern/fallback.json' %}
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
+{% set loggly_token=pillar.get('loggly_token') %}
 {% set proxy_port=grains.get('proxy_port', 62443) %}
 {% set traffic_check_period_minutes=60 %}
 {% from 'ip.sls' import external_ip %}
@@ -46,6 +47,7 @@ include:
         - template: jinja
         - context:
             auth_token: {{ auth_token }}
+            loggly_token: {{ loggly_token }}
             external_ip: {{ external_ip(grains) }}
             traffic_check_period_minutes: {{ traffic_check_period_minutes }}
         - user: {{ user }}
