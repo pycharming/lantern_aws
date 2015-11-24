@@ -37,6 +37,14 @@ def configs_start_with_newline(cfgbysrv):
             for srv, cfg in cfgbysrv.iteritems()
             if not cfg.startswith("\n")]
 
+def check_srvq_size(region):
+    size = redis_shell.llen(region + ':srvq')
+    if size < 80:
+        return ["Server queue for region '%s' has %s servers only."
+                % (region, size)]
+    else:
+        return []
+
 def report(errors):
     if not errors:
         print "No errors."
@@ -49,8 +57,11 @@ def report(errors):
 def run_all_checks():
     cfgbysrv = redis_shell.hgetall('srv->cfg')
     errors = configs_start_with_newline(cfgbysrv)
-    for region in redis_shell.smembers('user-regions'):
+    regions = redis_shell.smembers('user-regions')
+    for region in regions:
         errors.extend(srvs_in_cfgbysrv(region, cfgbysrv))
+    for region in regions:
+        errors.extend(check_srvq_size(region))
     report(errors)
 
 
