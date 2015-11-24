@@ -57,7 +57,7 @@ except ValueError:
 
 retire = (split_long_ago
           and la15m > retire_threshold
-          and util.redis_shell.llen(util.dc + ":srvq") >= min_q_size)
+          and util.redis_shell.llen(util.region + ":srvq") >= min_q_size)
 
 
 if la15m > split_threshold:
