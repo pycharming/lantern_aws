@@ -39,7 +39,7 @@ def configs_start_with_newline(cfgbysrv):
 
 def check_srvq_size(region):
     size = redis_shell.llen(region + ':srvq')
-    if size < 80:
+    if size < 20:
         return ["Server queue for region '%s' has %s servers only."
                 % (region, size)]
     else:
