@@ -114,7 +114,7 @@ def openings(region):
 
 reip = re.compile(r"(\d+\.\d+\.\d+\.\d+):443")
 def allips(txt):
-    return reip.findall(txt)
+    return set(reip.findall(txt))
 
 def reboot(ip):
     import os
