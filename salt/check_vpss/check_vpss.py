@@ -31,7 +31,8 @@ expected_vultr = vpss_from_cm("vltok1")
 
 def all_vpss(*cms):
     return set(v.name for v in vps_util.vps_shell(cms[0]).all_vpss()
-               if vps_util.cm_by_name(name) in cms)
+               if v.name.startswith('fp-')
+                  and vps_util.cm_by_name(v.name) in cms)
 
 actual_do = all_vpss('doams3', 'dosgp1')
 actual_vultr = all_vpss('vltok1')
