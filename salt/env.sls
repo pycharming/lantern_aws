@@ -1,4 +1,4 @@
-dcenv:
+env:
   file.append:
     - name: /etc/environment
     - text: |
