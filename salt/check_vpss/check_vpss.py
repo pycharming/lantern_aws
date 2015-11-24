@@ -29,13 +29,8 @@ def vpss_from_cm(cm):
 expected_do = vpss_from_cm("doams3") | vpss_from_cm('dosgp1')
 expected_vultr = vpss_from_cm("vltok1")
 
-def all_vpss(*cms):
-    return set(v.name for v in vps_util.vps_shell(cms[0]).all_vpss()
-               if v.name.startswith('fp-')
-                  and vps_util.cm_by_name(v.name) in cms)
-
-actual_do = all_vpss('doams3', 'dosgp1')
-actual_vultr = all_vpss('vltok1')
+actual_do = set(v.name for v in vps_util.vps_shell('do').all_vpss())
+actual_vultr = set(v.name for v in vps_util.vps_shell('vl').all_vpss())
 
 errors = []
 for caption, vpss in [("Missing DO droplets", expected_do - actual_do),
