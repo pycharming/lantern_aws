@@ -140,6 +140,10 @@ def retire_lcs(name,
         txn.incr('srvcount')
     else:
         print "No configs left to delete for %s." % name
+    # Check whether this server is in the queue (because of recycling).
+    for cfg in redis_shell.lrange(region + ':srvq', 0, -1):
+        if cfg.split('|')[0] == ip:
+            txn.lrem(region + ':srvq', cfg)
     txn.lrem(cm + ':vpss', name)
     txn.incr(cm + ':vpss:version')
     txn.execute()
