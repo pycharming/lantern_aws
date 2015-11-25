@@ -119,3 +119,17 @@ def allips(txt):
 def reboot(ip):
     import os
     os.system('ssh -o StrictHostKeyChecking=no %s "sudo reboot"' % ip)
+
+def retire_ips(cm, ips):
+    nip = names_by_ip()
+    pairs = []
+    ips = list(set(ips))
+    wnames = filter(nip.get, ips)
+    if len(wnames) != len(ips):
+        print "Some IPs don't have names to them:"
+        for ip in set(ips) - set(wnames):
+            print "   ", ip
+        if raw_input("Do you want to retire all others? (y/N): ") != 'y':
+            return
+    r().lpush(cm + ':retireq', *["%s|%s" % (nip[ip], ip)
+                                 for ip in wnames])
