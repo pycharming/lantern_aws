@@ -103,7 +103,7 @@ def upload_cfg(name, access_data):
                        trusted=True,
                        qos=10,
                        weight=1000000)
-    redis_shell.rpush(REGION + ":srvq",
+    redis_shell.lpush(REGION + ":srvq",
                       "%s|%s|\n    %s" % (ip,
                                           name,
                                           yaml.dump({'fallback-' + ip: access_data})))
