@@ -120,7 +120,7 @@ def reboot(ip):
     import os
     os.system('ssh -o StrictHostKeyChecking=no %s "sudo reboot"' % ip)
 
-def retire_ips(cm, ips):
+def retire_ips(cm, *ips):
     nip = names_by_ip()
     pairs = []
     ips = list(set(ips))
