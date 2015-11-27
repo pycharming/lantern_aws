@@ -1,4 +1,5 @@
 from functools import wraps
+import re
 import time
 
 
@@ -24,3 +25,7 @@ def memoized(f):
             ret = d[args] = f(*args)
             return ret
     return deco
+
+ipre = re.compile(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})")
+def scan_ips(txt):
+    return set(ipre.findall(txt))
