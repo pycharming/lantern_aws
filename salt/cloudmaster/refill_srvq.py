@@ -103,10 +103,11 @@ def upload_cfg(name, access_data):
                        trusted=True,
                        qos=10,
                        weight=1000000)
-    redis_shell.lpush(REGION + ":srvq",
-                      "%s|%s|\n    %s" % (ip,
-                                          name,
-                                          yaml.dump({'fallback-' + ip: access_data})))
+    cfg = "\n    " + yaml.dump({'fallback-' + ip: access_data})
+    txn = redis_shell.pipeline()
+    txn.hset('server->config', name, cfg)
+    txn.lpush(REGION + ":srvq", "%s|%s|%s" % (ip, name, cfg))
+    txn.execute()
 
 def register_vps(name):
     print "Registering VPS", name
