@@ -120,7 +120,7 @@ def reboot(ip):
     import os
     os.system('ssh -o StrictHostKeyChecking=no %s "sudo reboot"' % ip)
 
-def retire_ips(cm, *ips):
+def retire_ips(*ips):
     nip = names_by_ip()
     pairs = []
     ips = list(set(ips))
@@ -131,5 +131,14 @@ def retire_ips(cm, *ips):
             print "   ", ip
         if raw_input("Do you want to retire all others? (y/N): ") != 'y':
             return
-    r().lpush(cm + ':retireq', *["%s|%s" % (nip[ip], ip)
-                                 for ip in wnames])
+    ips_by_cm = {}
+    for ip in wnames:
+        ips_by_cm.setdefault(vps_util.cm_by_name(nip[ip]), []).append(ip)
+    for cm, ips in ips_by_cm.iteritems():
+        entries = ["%s|%s" % (nip[ip], ip)
+                   for ip in ips]
+        print "The following entries will be retired for cloudmaster " + cm
+        for s in entries:
+            print "   ", s
+        if raw_input("OK to retire? (y/N)") == "y":
+            r().lpush(cm + ':retireq', *entries)
