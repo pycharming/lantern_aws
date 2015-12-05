@@ -140,5 +140,5 @@ def retire_ips(*ips):
         print "The following entries will be retired for cloudmaster " + cm
         for s in entries:
             print "   ", s
-        if raw_input("OK to retire? (y/N)") == "y":
+        if raw_input("OK to retire? (y/N) ") == "y":
             r().lpush(cm + ':retireq', *entries)
