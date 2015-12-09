@@ -95,8 +95,15 @@ def upload_pillars():
     github_token = util.read_github_token()
     loggly_token = util.read_loggly_token()
     if not util.in_production():
+        if config.cloudmaster_name == "cm-dosgp1staging":
+            # Exception: make the staging cloudmaster in Singapore use the
+            # redis instance of the staging cloudmaster in Amsterdam, to be
+            # more like the production setup.
+            redis_address = '188.166.55.168'
+        else:
+            redis_address = config.cloudmaster_address
         cfgsrv_redis_url = "redis://redis:%s@%s:6379" % (cfgsrv_redis_test_pass,
-                                                         config.cloudmaster_address)
+                                                         redis_address)
     util.ssh_cloudmaster((
             'echo "salt_version: %s" > salt.sls '
             # Hack so every instance will read specific pillars from a file
