@@ -87,10 +87,10 @@ databases {{ databases }}
 #   like in the following example:
 #
 #   save ""
-save ""
 # save 900 1
 # save 300 10
 # save 60 10000
+save 300 1
 
 # By default Redis will stop accepting writes if RDB snapshots are enabled
 # (at least one save point) and the latest background save failed.
@@ -316,7 +316,7 @@ requirepass {{ pillar['cfgsrv_redis_test_pass'] }}
 #
 # Please check http://redis.io/topics/persistence for more information.
 
-appendonly no
+appendonly yes
 
 # The name of the append only file (default: "appendonly.aof")
 # appendfilename appendonly.aof
