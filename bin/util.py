@@ -24,7 +24,7 @@ def read_vultr_credential():
 @memoized
 def read_cfgsrv_credential():
     return secrets_from_yaml(['lantern_aws', 'config_server.yaml'],
-                             ['auth_token', 'redis_url'])
+                             ['auth_token', 'redis_url', 'redis_test_pass'])
 
 @memoized
 def read_github_token():
