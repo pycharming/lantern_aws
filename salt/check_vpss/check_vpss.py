@@ -26,10 +26,15 @@ def vpss_from_cm(cm):
         file(cm + '_vpss_version', 'w').write(remote_version)
         return set(ret)
 
+def in_production(name):
+    return (not name.startswith('fp-')
+            or vps_util.cm_by_name(name) in ['doams3', 'dosgp1'])
+
 expected_do = vpss_from_cm("doams3") | vpss_from_cm('dosgp1')
 expected_vultr = vpss_from_cm("vltok1")
 
-actual_do = set(v.name for v in vps_util.vps_shell('do').all_vpss())
+actual_do = set(v.name for v in vps_util.vps_shell('do').all_vpss()
+                if in_production(v.name))
 actual_vultr = set(v.name for v in vps_util.vps_shell('vl').all_vpss())
 
 errors = []
