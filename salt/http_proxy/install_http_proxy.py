@@ -25,8 +25,13 @@ if(r.ok):
             for chunk in r.iter_content(chunk_size=1048576):
                 if chunk:
                     f.write(chunk)
+        os.chmod('http-proxy-temp', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        # We have noticed some errors, which may have to do with the binary
+        # being updated while the service is running.
+        os.system('sudo service http-proxy stop')
         os.rename('http-proxy-temp', 'http-proxy')
-        os.chmod('http-proxy', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        # We don't (re)start the service again here because it has other
+        # dependencies; the salt configuration will take care of that.
         print 'Downloaded ' + download_url
     else:
         r.raise_for_status()
