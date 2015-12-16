@@ -26,12 +26,14 @@ if(r.ok):
                 if chunk:
                     f.write(chunk)
         os.chmod('http-proxy-temp', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-        # We have noticed some errors, which may have to do with the binary
-        # being updated while the service is running.
-        os.system('sudo service http-proxy stop')
+        # We have noticed 'text file busy' errors trying to restart the
+        # http-proxy service, which may have to do with the binary being
+        # updated while the service is running. According to [1], unlinking the
+        # executable before replacing it should fix that.
+        #
+        # [1] http://stackoverflow.com/questions/1712033/replacing-a-running-executable-in-linux
+        os.unlink('http-proxy')
         os.rename('http-proxy-temp', 'http-proxy')
-        # We don't (re)start the service again here because it has other
-        # dependencies; the salt configuration will take care of that.
         print 'Downloaded ' + download_url
     else:
         r.raise_for_status()
