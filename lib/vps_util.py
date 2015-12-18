@@ -122,6 +122,13 @@ def srv_cfg_by_ip():
 
 def retire_lcs(name,
                ip,
+               # It's safe to cache this because a proxy will take at least 24h
+               # since the time it's recycled (and thus new server IDs can be
+               # entered for it) and the time it's destroyed. To be more
+               # precise, 24h must elapse since the time it's been _split_. For
+               # this to work, it's crucial to remove the
+               # /home/lantern/server_split flag file whenever we recycle
+               # proxies.
                byip=util.Cache(timeout=60*60,
                                update_fn=srv_cfg_by_ip)):
     cm = cm_by_name(name)
