@@ -32,7 +32,8 @@ if(r.ok):
         # executable before replacing it should fix that.
         #
         # [1] http://stackoverflow.com/questions/1712033/replacing-a-running-executable-in-linux
-        os.unlink('http-proxy')
+        if os.path.exists('http-proxy'):
+            os.unlink('http-proxy')
         os.rename('http-proxy-temp', 'http-proxy')
         print 'Downloaded ' + download_url
     else:
