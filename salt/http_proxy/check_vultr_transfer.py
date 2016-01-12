@@ -3,6 +3,7 @@ from __future__ import division
 
 from datetime import datetime as dt
 import os
+import random
 import time
 
 from vultr.vultr import Vultr, VultrError
