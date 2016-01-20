@@ -1,4 +1,4 @@
-{% set admins=['myles', 'aranhoide', 'menteslibres', 'fffw', 'atavism', 'uaalto'] %}
+{% set admins=['myles', 'aranhoide', 'ox.to.a.cart', 'menteslibres', 'fffw', 'atavism', 'uaalto'] %}
 
 {% for name in admins + ['lantern'] %}
 
