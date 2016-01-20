@@ -6,11 +6,6 @@ import sys
 
 import util
 
-if util.instance_id.startswith('fp-nl-201503'):
-    # These are chronically overloaded from traffic by old clients. We can't do
-    # much about them until we stop supporting those versions, so let's
-    # suppress the noise.
-    sys.exit(0)
 
 retire_threshold = 0.5
 report_threshold = 0.45
