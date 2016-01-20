@@ -12,9 +12,9 @@ if util.instance_id.startswith('fp-nl-201503'):
     # suppress the noise.
     sys.exit(0)
 
-retire_threshold = 3.0
-report_threshold = 1.8
-split_threshold = 1.2
+retire_threshold = 0.5
+report_threshold = 0.45
+split_threshold = 0.4
 # We don't want to retire overloaded servers while the refill queue is too
 # empty, because that will strain the remaining servers, which might cause a
 # cascade of fallbacks retiring themselves faster than we can launch them.
