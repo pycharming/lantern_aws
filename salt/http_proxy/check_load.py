@@ -7,9 +7,9 @@ import sys
 import util
 
 
-retire_threshold = 0.5
-report_threshold = 0.45
-split_threshold = 0.4
+retire_threshold = 0.55
+report_threshold = 0.5
+split_threshold = 0.45
 # We don't want to retire overloaded servers while the refill queue is too
 # empty, because that will strain the remaining servers, which might cause a
 # cascade of fallbacks retiring themselves faster than we can launch them.
