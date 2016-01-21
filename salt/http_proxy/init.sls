@@ -104,6 +104,9 @@ requests:
 
 {% if pillar['in_production'] %}
 
+uptime:
+    pip.installed
+
 "/home/lantern/check_load.py 2>&1 | logger -t check_load":
   cron.present:
     - minute: "*"
@@ -111,6 +114,7 @@ requests:
     - require:
         - file: /home/lantern/check_load.py
         - pip: requests
+        - pip: uptime
         - pkg: python-redis
 
 "/home/lantern/check_traffic.py 2>&1 | logger -t check_traffic":

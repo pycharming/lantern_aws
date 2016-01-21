@@ -4,8 +4,15 @@ from datetime import datetime
 import os
 import sys
 
+from uptime import uptime
+
 import util
 
+
+# Avoid false positives by system load caused by machine setup or startup.
+if uptime() < 60 * 45:
+    print "Ignoring load average; I have just launched/booted."
+    sys.exit(0)
 
 retire_threshold = 0.55
 report_threshold = 0.5
