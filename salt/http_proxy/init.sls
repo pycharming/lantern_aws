@@ -106,7 +106,7 @@ requests:
 
 "/home/lantern/check_load.py 2>&1 | logger -t check_load":
   cron.present:
-    - minute: "*/7"
+    - minute: "*"
     - user: lantern
     - require:
         - file: /home/lantern/check_load.py
