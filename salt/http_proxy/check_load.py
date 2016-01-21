@@ -37,10 +37,9 @@ else:
 min_q_size = 15
 
 
-# Using the 5m load average, because we want to react quickly to surges, but
-# we're not confident 1m load average is reliable (it might be raised to
-# threshold levels by a salt update, for example).
-_, lavg, _ = os.getloadavg()
+# Using the 15m load average, because we have observed that 5m yields some
+# false positives when running Salt updates.
+_, _, lavg = os.getloadavg()
 
 print "Starting with load average %s..." % lavg
 
