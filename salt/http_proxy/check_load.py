@@ -21,14 +21,17 @@ split_threshold = 0.45
 min_q_size = 15
 
 
-_, _, la15m = os.getloadavg()
+# Using the 5m load average, because we want to react quickly to surges, but
+# we're not confident 1m load average is reliable (it might be raised to
+# threshold levels by a salt update, for example).
+_, lavg, _ = os.getloadavg()
 
-print "Starting with load average %s..." % la15m
+print "Starting with load average %s..." % lavg
 
-if la15m > report_threshold:
+if lavg > report_threshold:
     print "report threshold surpassed; notifying..."
     util.send_alarm('Chained fallback high load',
-                    "load average %s" % la15m)
+                    "load average %s" % lavg)
 
 # We don't want to retire servers in the surge that made us split them, because
 # we want to give splitting a chance to ease load on the server. So we check
@@ -51,19 +54,19 @@ except ValueError:
     split_long_ago = True
 
 retire = (split_long_ago
-          and la15m > retire_threshold
+          and lavg > retire_threshold
           and util.redis_shell.llen(util.region + ":srvq") >= min_q_size)
 
 
-if la15m > split_threshold:
+if lavg > split_threshold:
     print "Splitting..."
-    util.split_server("reached load average %s" % la15m)
+    util.split_server("reached load average %s" % lavg)
 else:
     print "Not splitting."
 
 if retire:
     print "Retiring..."
-    util.retire_server("reached load average %s" % la15m)
+    util.retire_server("reached load average %s" % lavg)
 else:
     print "Not retiring."
 
