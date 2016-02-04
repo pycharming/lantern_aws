@@ -9,3 +9,4 @@ example/*.p12
 bin/config_overrides.py
 hslog
 .ropeproject
+bin/result
