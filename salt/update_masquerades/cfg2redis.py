@@ -12,7 +12,7 @@ from redis_util import redis_shell
 def feed(src):
     p = redis_shell.pipeline(transaction=True)
     cfg = yaml.load(file(src))
-    cfg['client']['frontedservers'] = "<DC CONFIG HERE>"
+    cfg['client']['frontedservers'] = []
     cfg['client']['chainedservers'] = "<SERVER CONFIG HERE>"
     globalcfg = yaml.dump(cfg)
     p.set("globalcfg", globalcfg)
