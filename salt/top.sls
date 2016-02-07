@@ -16,6 +16,7 @@ base:
     'cm-doams3':
         - vps_sanity_checks
         - check_vpss
+        - update_masquerades
     'cm-*':
         - salt_cloud
         - cloudmaster
