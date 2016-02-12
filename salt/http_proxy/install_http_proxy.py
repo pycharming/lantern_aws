@@ -5,7 +5,7 @@ import stat
 import requests
 
 GH_TOKEN = "{{ pillar['github_token'] }}"
-VERSION = 'v0.0.8'
+VERSION = 'v0.0.9'
 
 url = 'https://api.github.com/repos/getlantern/http-proxy-lantern/releases/tags/' + VERSION
 headers = {
