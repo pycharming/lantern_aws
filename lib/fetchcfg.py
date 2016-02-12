@@ -75,7 +75,7 @@ if __name__ == '__main__':
         print "    --print-name-and-ip: print name and ip of the new proxy, in addition to its config."
         sys.exit(1)
     ip, name, cfg = fetch(region)
-    if opts['use_json']:
+    if opts['json']:
         cfg = tojson(cfg)
     if opts['print-name-and-ip']:
         print "\n%s (%s):\n" % (name, ip)
