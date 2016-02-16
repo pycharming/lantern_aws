@@ -1,4 +1,4 @@
- # Lantern Cloud
+# Lantern Cloud
 
 This project contains code and configuration scripts to launch and manage cloud-hosted infrastructure for the [Lantern](https://github.com/getlantern/lantern) censorship circumvention tool.
 
@@ -7,18 +7,7 @@ At this moment, three types of machines are launched and managed by this project
 - **Fallback Proxies**: These run Lantern instances to offer access to the
   free internet to Lantern users that have no available peers for this end.
 
-- **Flashlight Servers**: These serve a similar role as fallback proxies, but
-  they use [domain fronting](https://trac.torproject.org/projects/tor/wiki/doc/meek) for extra blocking resistance.
-
-- A single **peerscanner**, which checks that flashlight servers are up and
-  maintains their DNS entries.
-
-- [soon] **waddell servers**: which offer lightweight messaging between
-  lantern-related clients and services.
-
 - A single **Cloud Master**, which launches fallback proxies on request from the [Lantern Controller](https://github.com/getlantern/lantern-controller), or any of the other previously mentioned server types, on request from administrators (see `bin/fake_controller.py`).  Further operations on fallback proxies (especially 'batch' operations involving many such machines) are typically done through this cloud master.
-
-As of this writing, only Digital Ocean machines are supported, but it should be easy to add support for any cloud provider that offers Ubuntu 12.04+ (although 14.04 is preferred) and is supported by [Salt Cloud](https://docs.saltstack.com/en/latest/topics/cloud/).
 
 ## How does it work
 
@@ -133,6 +122,10 @@ then at least the syntax seems OK.  If you have nothing better to do, you can ma
     bin/ssh_cloudmaster.py 'salt <your-machine-id> cmd.run 'tail -n 40 /var/log/salt/minion'
 
 and making sure that new stuff keeps getting printed.
+
+The following will check for a running HTTP proxy:
+
+    bin/ssh_cloudmaster.py 'salt "fp-*" cmd.run "service http-proxy status"' | tee status
 
 If all you want to know is whether the machine(s) are done setting themselves
 up (e.g., you haven't made any config changes), you can run something like
