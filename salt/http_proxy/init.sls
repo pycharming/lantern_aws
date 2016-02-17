@@ -30,7 +30,8 @@ fp-dirs:
 # To copy verbatim.
 {% set nontemplate_files=[
     ('/usr/local/bin/', 'badvpn-udpgw', 'badvpn-udpgw', 'root', 755),
-    ('/etc/init.d/', 'badvpn-udpgw', 'udpgw-init', 'root', 755)] %}
+    ('/etc/init.d/', 'badvpn-udpgw', 'udpgw-init', 'root', 755),
+    ('/etc/', 'rc.local', 'rc.local', 'root', '755')] %}
 
 include:
     - proxy_ufw_rules
@@ -246,3 +247,15 @@ lantern-disabled:
     file.absent:
         - require:
             - service: ats-disabled
+
+# Increase syn_backlog to avoid dropping of opened connections
+net.ipv4.tcp_max_syn_backlog:
+    sysctl.present:
+        - value: 4096
+
+# Increase the current txqueuelen
+# This is done permanently in /etc/rc.local
+/sbin/ifconfig eth0 txqueuelen 20000:
+    cmd.run
+    
+
