@@ -9,6 +9,7 @@
 
 from datetime import datetime
 import os
+import sys
 
 import boto
 from dateutil.parser import parse as parse_time
@@ -19,8 +20,22 @@ tmp_rdb_filename = '/home/redis/dump.rdb'
 live_rdb_filename = '/var/lib/redis/dump.rdb'
 
 
+def bytes2mb(bytes):
+    return bytes / 1024. / 1024.
+
+def cb(bytes, total):
+    print "%.2f of %.2f MB (%.2f%%)" % (bytes2mb(bytes),
+                                        bytes2mb(total),
+                                        bytes * 100. / total)
+
 def parse_last_modified(k):
     return parse_time(k.last_modified)
+
+def try_cmd(description, cmd, on_error=sys.exit):
+    print "%s..." % description.capitalize()
+    error = os.system(cmd)
+    if error:
+        raise RuntimeError("Error %s: %s" % (description, error))
 
 def run():
     s3 = boto.connect_s3()
@@ -29,26 +44,22 @@ def run():
     k = max(keys, key=parse_last_modified)
     try:
         last_backup_time = parse_time(file(last_backup_time_filename).read())
-	if parse_last_modified(k) <= last_backup_time:
-            print "Current backup is already the most recent; exiting."
+        if parse_last_modified(k) <= last_backup_time:
+            print "Current backup is already the most recent one; exiting."
             return
     except IOError:
         print "First backup ever!"
-    print "Got new backup! Downloading..."
-    f = open(tmp_rdb_filename, 'w')
-    k.get_contents_to_file(f)
-    print "Stopping redis server..."
-    error = os.system('service redis-server stop')
-    if error:
-        print "Error trying to stop redis-server:", error
-        return
+    print "Got new backup! Downloading %s..." % k.name
+    for suffix in ['', '.gz']:
+        path = tmp_rdb_filename + suffix
+        if os.path.exists(path):
+            os.unlink(path)
+    k.get_contents_to_filename(tmp_rdb_filename + ".gz", cb=cb)
+    try_cmd('uncompressing backup', 'gunzip %s.gz' % tmp_rdb_filename)
+    try_cmd('stopping redis server', 'service redis-server stop')
     print "Replacing dump file..."
     os.rename(tmp_rdb_filename, live_rdb_filename)
-    print "Starting redis server..."
-    error = os.system('service redis-server start')
-    if error:
-        print "Error trying to start redis-server:", error
-        return
+    try_cmd('starting redis server', 'service redis-server start')
     print "Saving new backup time..."
     file(last_backup_time_filename, 'w').write(k.last_modified)
     print "Done."
