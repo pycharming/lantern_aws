@@ -19,6 +19,7 @@ tokyo_dcid = u'25'
 planid_768mb = u'31'
 planid_1gb = u'111'
 ubuntu14_04_64bit = u'160'
+vultr_server_list_retries = 10
 
 # XXX: feed cloudmaster's internal IP when we launch one in Tokyo.
 def ssh_tmpl(ssh_cmd):
@@ -41,7 +42,7 @@ def ip_prefix(ip):
 
 def ip_prefixes():
     return set(ip_prefix(d['main_ip'])
-               for d in vultr.server_list(None).values()
+               for d in retrying_server_list().values()
                if d['label'].startswith('fl-jp-'))
 
 def minion_id(prefix, n):
@@ -114,7 +115,7 @@ def init_vps(subid):
 
 def destroy_vps(name,
                 server_cache=util.Cache(timeout=60*60,
-                                        update_fn=lambda: vultr.server_list(None).values())):
+                                        update_fn=lambda: retrying_server_list().values())):
     for d in server_cache.get():
         if d['label'] == name:
             vultr.server_destroy(d['SUBID'])
@@ -126,4 +127,12 @@ def dict2vps(d):
     return vps_util.vps(d['label'], d['main_ip'], d)
 
 def all_vpss():
-    return map(dict2vps, vultr.server_list(None).itervalues())
+    return map(dict2vps, retrying_server_list().itervalues())
+
+def retrying_server_list():
+    for _ in xrange(vultr_server_list_retries):
+        ret = vultr.server_list(None)
+        if ret:
+            return ret
+        print "vultr.server_list(None) returned an empty list; retrying..."
+    raise RuntimeError("vultr.server_list(None) repeatedly returned []")

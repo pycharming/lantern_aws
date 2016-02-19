@@ -22,9 +22,9 @@ def all_vpss(provider):
     return ret
 
 @misc_util.memoized
-def requests(which):
-    print "Fetching %s requests..." % which
-    ret = redis_shell.hgetall(which + '-requests')
+def requests(which, country):
+    print "Fetching %s requests for country '%s'..." % (which, country)
+    ret = redis_shell.hgetall("%s:%s-requests" % (country, which))
     print "...done fetching %s requests." % which
     print
     ret = {k: int(v) for k, v in ret.iteritems()}
