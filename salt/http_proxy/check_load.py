@@ -4,7 +4,6 @@ from datetime import datetime
 import os
 import sys
 
-import psutil
 from uptime import uptime
 
 import util
@@ -15,16 +14,9 @@ if uptime() < 60 * 45:
     print "Ignoring load average; I have just launched/booted."
     sys.exit(0)
 
-if psutil.virtual_memory().total < 800000000:
-    # As of this writing only 768MB Vultr instances meet this condition.
-    retire_threshold = 1.1
-    report_threshold = 1.0
-    split_threshold = 0.9
-else:
-    # 1GB boxes.
-    retire_threshold = 0.55
-    report_threshold = 0.5
-    split_threshold = 0.45
+retire_threshold = 1.4
+report_threshold = 1.2
+split_threshold = 1.0
 
 # We don't want to retire overloaded servers while the refill queue is too
 # empty, because that will strain the remaining servers, which might cause a
