@@ -3,6 +3,7 @@
 {% set auth_token=pillar.get('auth_token') %}
 {% set proxy_port=grains.get('proxy_port', 62443) %}
 {% set traffic_check_period_minutes=60 %}
+{% set http_proxy_sha='0b1e256b80632f1599ef437b0b7de7c0cf9fd4cd' %}
 {% from 'ip.sls' import external_ip %}
 
 fp-dirs:
@@ -176,6 +177,7 @@ generate-cert:
 install-http-proxy:
     cmd.script:
         - source: salt://http_proxy/install_http_proxy.py
+        - unless: "[ $(shasum /home/lantern/http-proxy | cut -d ' ' -sf 1) = {{ http_proxy_sha }} ]"
         - template: jinja
         - user: lantern
         - group: lantern

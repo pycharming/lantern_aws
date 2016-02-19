@@ -5,6 +5,9 @@ import stat
 import requests
 
 GH_TOKEN = "{{ pillar['github_token'] }}"
+
+# WARNING: if you update this you also need to update http_proxy_sha in
+# init.sls.  Use the sha you get with `shasum http-proxy`
 VERSION = 'v0.0.9'
 
 url = 'https://api.github.com/repos/getlantern/http-proxy-lantern/releases/tags/' + VERSION
