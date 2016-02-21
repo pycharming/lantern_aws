@@ -29,3 +29,7 @@ def requests(which, country):
     print
     ret = {k: int(v) for k, v in ret.iteritems()}
     return ret
+
+@misc_util.memoized
+def srv2region(srv):
+    return redis_shell.hget('srv->user-region', srv)
