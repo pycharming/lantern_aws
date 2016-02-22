@@ -25,6 +25,7 @@ vps_shell = vps_util.vps_shell(CM)
 def run():
     print "Serving user region", repr(REGION), ", MAXPROCS:", repr(MAXPROCS)
     qname = REGION + ":srvreqq"
+    quarantine = CM + ":quarantined_vpss"
     reqq = redisq.Queue(qname, redis_shell, LAUNCH_TIMEOUT)
     procq = multiprocessing.Queue()
     pending = {}
@@ -37,16 +38,37 @@ def run():
         proc.daemon = True
         proc.start()
     while True:
+        # If the request queue is totally empty (no tasks enqueued or even in
+        # progress), flush the quarantine queue into the destroy queue.
+        if redis_shell.llen(qname) == 1:  # 1 for the redisq sentinel entry
+            names = redis_shell.smembers(quarantine)
+            if names:
+                p = redis_shell.pipeline()
+                p.srem(quarantine, *names)
+                p.lpush(CM + ":destroyq", *names)
+                p.execute()
         while not procq.empty():
             try:
                 result = procq.get(False)
                 print "Got result:", result
                 task = pending.get(result['reqid'])
                 if task and task['name'] == result['name']:
-                    del pending[result['reqid']]
-                    upload_cfg(result['name'], result['access_data'])
-                    register_vps(task['name'])
-                    task['remove_req']()
+                    p = redis_shell.pipeline()
+                    if result['blocked']:
+                        p.sadd(quarantine, result['name'])
+                        p.incr(CM + ":blocked_vps_count")  # stats
+                        # We'll remove the original request anyway because we
+                        # don't want it to stay around until timeout. Insert a
+                        # new one to replace it instead.
+                        reqid = redis_shell.incr('srvcount')
+                        p.lpush(qname, reqid)
+                    else:
+                        p.incr(CM + ":unblocked_vps_count")  # stats
+                        del pending[result['reqid']]
+                        upload_cfg(result['name'], result['access_data'])
+                        register_vps(task['name'])
+                    task['remove_req'](p)
+                    p.execute()
             except Empty:
                 print "Wat?"
                 break
@@ -92,9 +114,17 @@ def get_lcs_name():
     return 'fp-%s-%s-%03d' % (CM, date, serial)
 
 def launch_one_server(q, reqid, name):
-    q.put({'reqid': reqid,
-           'name': name,
-           'access_data': vps_shell.init_vps(vps_shell.create_vps(name))})
+    name, ip = vps_shell.create_vps(name)
+    if redis_shell.sismember(REGION + ':blocked_ips', ip):
+        q.put({'reqid': reqid,
+               'name': name,
+               'blocked': True,
+               'access_data': None})
+    else:
+        q.put({'reqid': reqid,
+               'name': name,
+               'blocked': False,
+               'access_data': vps_shell.init_vps((name, ip))})
 
 def upload_cfg(name, access_data):
     ip = access_data['addr'].split(':')[0]
