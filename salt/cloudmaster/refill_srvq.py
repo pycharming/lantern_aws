@@ -43,6 +43,7 @@ def run():
         if redis_shell.llen(qname) == 1:  # 1 for the redisq sentinel entry
             names = redis_shell.smembers(quarantine)
             if names:
+                print "Flushing %s VPSs from quarantine." % len(names)
                 p = redis_shell.pipeline()
                 p.srem(quarantine, *names)
                 p.lpush(CM + ":destroyq", *names)
@@ -55,6 +56,7 @@ def run():
                 if task and task['name'] == result['name']:
                     p = redis_shell.pipeline()
                     if result['blocked']:
+                        print "Quarantining %(name)s (%(ip)s)." % result
                         p.sadd(quarantine, result['name'])
                         p.incr(CM + ":blocked_vps_count")  # stats
                         # We'll remove the original request anyway because we
@@ -118,11 +120,13 @@ def launch_one_server(q, reqid, name):
     if redis_shell.sismember(REGION + ':blocked_ips', ip):
         q.put({'reqid': reqid,
                'name': name,
+               'ip': ip,
                'blocked': True,
                'access_data': None})
     else:
         q.put({'reqid': reqid,
                'name': name,
+               'ip': ip,
                'blocked': False,
                'access_data': vps_shell.init_vps((name, ip))})
 
