@@ -14,9 +14,9 @@ if uptime() < 60 * 45:
     print "Ignoring load average; I have just launched/booted."
     sys.exit(0)
 
-retire_threshold = 1.4
-report_threshold = 1.2
-split_threshold = 1.0
+retire_threshold = 2.0
+report_threshold = 1.6
+split_threshold = 1.5
 
 # We don't want to retire overloaded servers while the refill queue is too
 # empty, because that will strain the remaining servers, which might cause a
