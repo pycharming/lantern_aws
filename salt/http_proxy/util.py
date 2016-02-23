@@ -57,6 +57,9 @@ def close_server(msg):
     p.zadd(skey, ('<empty:%s>' % score), score)
     p.execute()
     flag_as_done(close_flag_filename)
+    # Save the slice I had assigned; it might be useful for debugging and for
+    # responding to server overload in this slice.
+    file('slice', 'w').write(str(score))
     send_alarm("Chained proxy closed", " closed because I " + msg)
 
 def retire_server(msg):
