@@ -24,7 +24,7 @@ if api_key.startswith("{"):
 vultr = Vultr(api_key)
 
 # To avoid artifacts at the very beginning of the month, where the consumption
-# stats may not be reset, I don't split servers until a little over one day has
+# stats may not be reset, I don't close servers until a little over one day has
 # elapsed.
 significant_time = 0.05
 
@@ -32,7 +32,7 @@ significant_time = 0.05
 # consumed this much of our monthly allowance.
 significant_usage = 0.25
 
-# Servers reaching this threshold at any time of the month are split and their
+# Servers reaching this threshold at any time of the month are closed and their
 # current users are reassigned to other servers.
 retire_threshold = 0.95
 
@@ -77,15 +77,14 @@ def run():
               usage * 100))
     if usage > retire_threshold:
         print "Retiring because I", msg
-        util.split_server(msg)
+        util.close_server(msg)
         util.retire_server(msg)
     elif t > significant_time and usage > significant_usage and usage > t:
         msg += " in %.2f%% of the current month" % (t * 100)
-        print "Splitting because I", msg
-        util.split_server(msg)
+        print "closing because I", msg
+        util.close_server(msg)
     else:
-        print "Usage portion: %s; time portion: %s; not splitting." % (usage,
-                                                                       t)
+        print "Usage portion: %s; time portion: %s; not closing." % (usage, t)
     print "Done."
 
 
