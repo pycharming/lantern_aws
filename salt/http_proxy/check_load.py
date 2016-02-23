@@ -16,7 +16,7 @@ if uptime() < 60 * 45:
 
 retire_threshold = 2.0
 report_threshold = 1.6
-split_threshold = 1.5
+close_threshold = 1.2
 
 # We don't want to retire overloaded servers while the refill queue is too
 # empty, because that will strain the remaining servers, which might cause a
@@ -40,36 +40,36 @@ if lavg > report_threshold:
     util.send_alarm('Chained fallback high load',
                     "load average %s" % lavg)
 
-# We don't want to retire servers in the surge that made us split them, because
-# we want to give splitting a chance to ease load on the server. So we check
-# whether at least one day has elapsed since we split the server before we
-# retire it because of load.
+# We don't want to retire servers in the surge that made us close them, because
+# load usually eases after closing and we want to give it a chance to
+# stabilize. So we check whether at least one day has elapsed since we closed
+# the server before we retire it because of load.
 #
 # We do this here, and not in util.py, because that module is used by the
 # traffic checks too, and this reasoning doesn't apply to that case: once a
 # server has consumed too much traffic there's no point in waiting before
 # retiring it.
 try:
-    s = file(util.split_flag_filename).read()
+    s = file(util.close_flag_filename).read()
     t0 = datetime.strptime(s, '%Y-%m-%d %H:%M:%S.%f')
-    split_long_ago = (datetime.utcnow() - t0).days > 1
+    closed_long_ago = (datetime.utcnow() - t0).days > 1
 except IOError:
-    split_long_ago = False
+    closed_long_ago = False
 except ValueError:
-    # Some old manually split servers have flag files that are empty or have
+    # Some old manually closed servers have flag files that are empty or have
     # contents that are not valid datetime isoformats.
-    split_long_ago = True
+    closed_long_ago = True
 
-retire = (split_long_ago
+retire = (closed_long_ago
           and lavg > retire_threshold
           and util.redis_shell.llen(util.region + ":srvq") >= min_q_size)
 
 
-if lavg > split_threshold:
-    print "Splitting..."
-    util.split_server("reached load average %s" % lavg)
+if lavg > close_threshold:
+    print "Closing..."
+    util.close_server("reached load average %s" % lavg)
 else:
-    print "Not splitting."
+    print "Not closing."
 
 if retire:
     print "Retiring..."
