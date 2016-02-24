@@ -8,7 +8,7 @@
 {% for size in ['512MB', '1GB', '2GB'] %}
 do{{ dc }}_{{ size }}:
     provider: do
-    image: "14.04.3 x64"
+    image: "14.04.4 x64"
     location: '{{ location }}'
     size: {{ size }}
     script_args: '-- git {{ pillar['salt_version'] }}'
