@@ -24,10 +24,12 @@ def create_vps(name):
     out = subprocess.check_output(["salt-cloud", "-p", plan, name])
     # Uberhack: XXX update with salt version...
     d = yaml.load(out[out.rfind(name + ":"):].replace("----------", "").replace("|_", "-")).values()[0]
-    return d['name'], d['networks']['v4'][1]['ip_address']
+    return {'name': d['name'],
+            'ip': d['networks']['v4'][1]['ip_address']}
 
-def init_vps(name_and_ip):
-    name, ip = name_and_ip
+def init_vps(d):
+    name = d['name']
+    ip = d['ip']
     if not vps_util.highstate_pid(name):
         print("Highstate not running yet; waiting for a bit just in case...")
         time.sleep(10)

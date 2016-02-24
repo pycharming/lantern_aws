@@ -6,6 +6,7 @@ import sys
 import tempfile
 import time
 import traceback
+from itertools import *
 
 from vultr.vultr import Vultr, VultrError
 
@@ -16,17 +17,23 @@ from vps_util import trycmd
 
 api_key = os.getenv("VULTR_APIKEY")
 tokyo_dcid = u'25'
-planid_768mb = u'31'
+frankfurt_dcid = u'9'
+planid_768mb_tokyo = u'31'
+planid_768mb_frankfurt = u'29'
 planid_1gb = u'111'
 ubuntu14_04_64bit = u'160'
 vultr_server_list_retries = 10
+
+vultr_dcid = {'vltok1': tokyo_dcid,
+              'vlfra1': frankfurt_dcid}
+
 
 # XXX: feed cloudmaster's internal IP when we launch one in Tokyo.
 def ssh_tmpl(ssh_cmd):
     return "sshpass -p %s ssh -o StrictHostKeyChecking=no root@%s " + ("'%s'" % ssh_cmd)
 
 #{% from 'ip.sls' import external_ip %}
-bootstrap_tmpl = ssh_tmpl("curl -L https://raw.githubusercontent.com/saltstack/salt-bootstrap/902da734465798edb3aa6a68445ada358a69b0ef/bootstrap-salt.sh | sh -s -- -X -A {{ external_ip(grains) }} -i %s git {{ pillar['salt_version'] }}")
+bootstrap_tmpl = ssh_tmpl("curl -L https://bootstrap.saltstack.com | sh -s -- -X -A {{ external_ip(grains) }} -i %s git {{ pillar['salt_version'] }}")
 
 scpkeys_tmpl = "sshpass -p %s scp -p -C -o StrictHostKeyChecking=no minion.pem minion.pub root@%s:/etc/salt/pki/minion/"
 
@@ -52,30 +59,50 @@ def minion_id(prefix, n):
         str(n).zfill(3))
 
 def create_vps(label):
-    return vultr.server_create(tokyo_dcid,
-                               planid_768mb,
-                               ubuntu14_04_64bit,
-                               label=label,
-                               enable_private_network="yes")['SUBID']
+    dc = vps_util.dc_by_cm(vps_util.my_cm())
+    if dc == 'vltok1':
+        dcid = tokyo_dcid
+        planid = planid_768mb_tokyo
+    elif dc == 'vlfra1':
+        dcid = frankfurt_dcid
+        planid = planid_768mb_frankfurt
+    subid = vultr.server_create(dcid,
+                                planid,
+                                ubuntu14_04_64bit,
+                                label=label,
+                                enable_ipv6='yes',
+                                enable_private_network="yes")['SUBID']
+    for _ in xrange(30):
+        time.sleep(10)
+        d = try_vultr_cmd(vultr.server_list, subid)
+        if d['main_ip']:
+            d['ip'] = d['main_ip']
+            return d
+    raise RuntimeError("Couldn't get subscription ID")
+
+def try_vultr_cmd(cmd, *args):
+    "With exponential backoff, to work around Vultr's one-request-per-second limit."
+    for tryno in count(1):
+        try:
+            return apply(cmd, args)
+        except VultrError as e:
+            traceback.print_exc()
+            time.sleep(1.5 ** tryno)
+    raise e
 
 def wait_for_status_ok(subid):
     backoff = 1
     while True:
-        try:
-            d = vultr.server_list(subid)
-            if (d['status'] == 'active'
-                and d['power_status'] == 'running'
-                and d['server_state'] == 'ok'):
-                return d
-        except VultrError:
-            traceback.print_exc()
-            time.sleep(backoff * (1 + random.random()))
-            if backoff < 60:
-                backoff *= 1.5
+        d = try_vultr_cmd(vultr.server_list, subid)
+        if (d['status'] == 'active'
+            and d['power_status'] == 'running'
+            and d['server_state'] == 'ok'):
+            return d
         print("Server not started up; waiting...")
         time.sleep(10)
 
-def init_vps(subid):
+def init_vps(d):
+    subid = d['SUBID']
     wait_for_status_ok(subid)
     # VPSs often (always?) report themselves as OK before stopping and
     # completing setup. Trying to initialize them at this early stage seems to

@@ -17,7 +17,7 @@ import vps_util
 CM = vps_util.my_cm()
 REGION = vps_util.my_region()
 MAXPROCS = int(os.getenv('MAXPROCS'))
-LAUNCH_TIMEOUT = 60 * 60
+LAUNCH_TIMEOUT = 30 * 60
 
 vps_shell = vps_util.vps_shell(CM)
 
@@ -116,7 +116,8 @@ def get_lcs_name():
     return 'fp-%s-%s-%03d' % (CM, date, serial)
 
 def launch_one_server(q, reqid, name):
-    name, ip = vps_shell.create_vps(name)
+    d = vps_shell.create_vps(name)
+    ip = d['ip']
     if redis_shell.sismember(REGION + ':blocked_ips', ip):
         q.put({'reqid': reqid,
                'name': name,
@@ -128,7 +129,7 @@ def launch_one_server(q, reqid, name):
                'name': name,
                'ip': ip,
                'blocked': False,
-               'access_data': vps_shell.init_vps((name, ip))})
+               'access_data': vps_shell.init_vps(d)})
 
 def upload_cfg(name, access_data):
     ip = access_data['addr'].split(':')[0]

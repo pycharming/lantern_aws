@@ -207,16 +207,26 @@ def my_region():
 
 def dc_by_cm(cm):
     ret = cm[:6]
-    assert ret in ['doams3', 'vltok1', 'dosgp1']
+    assert ret in ['doams3', 'vltok1', 'dosgp1', 'vlfra1']
     return ret
 
 def region_by_dc(dc):
     return {'doams3': 'etc',
+            'vlfra1': 'etc',
             'dosgp1': 'sea',
             'vltok1': 'sea'}[dc]
 
 def dc_by_name(name):
     return dc_by_cm(cm_by_name(name))
+
+def access_data_to_cfg(access_data):
+    ret = access_data.copy()
+    ip = ret['addr'].split(':')[0]
+    ret.update(pipeline=True,
+               trusted=True,
+               qos=10,
+               weight=1000000)
+    return "\n    " + yaml.dump({'fallback-' + ip: ret})
 
 class vps:
 

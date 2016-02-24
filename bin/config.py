@@ -11,7 +11,8 @@ datacenter = os.getenv("DC", 'doams3')
 cloudmaster_name = 'cm-' + datacenter
 cloudmaster_address = {'doams3':  '188.166.35.238',
                        'dosgp1': '128.199.84.79',
-                       'vltok1': '45.32.47.4'}[datacenter]
+                       'vltok1': '45.32.47.4',
+                       'vlfra1': '45.63.116.130'}[datacenter]
 
 # To override values locally, put them in config_overrides.py (not version controlled)
 try:

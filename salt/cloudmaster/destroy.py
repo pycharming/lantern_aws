@@ -16,7 +16,7 @@ def run():
     qname = vps_util.my_cm() + ":destroyq"
     region = vps_util.my_region()
     q = redisq.Queue(qname, redis_shell, TIMEOUT)
-    print "Starting retire server in cloudmaster %s, region %s." % (vps_util.my_cm(), region)
+    print "Starting destroy service in cloudmaster %s, region %s." % (vps_util.my_cm(), region)
     while True:
         name, remover = q.next_job()
         if name:

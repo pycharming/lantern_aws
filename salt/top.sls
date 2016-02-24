@@ -13,7 +13,7 @@ base:
         - reboot
         - pylib
         - env
-    'cm-doams3':
+    'cm-vlfra1':
         - vps_sanity_checks
         - check_vpss
         - update_masquerades
