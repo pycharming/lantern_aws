@@ -35,6 +35,14 @@ _, _, lavg = os.getloadavg()
 
 print "Starting with load average %s..." % lavg
 
+# Allow us to override any of the above locally in some machines. For example,
+# we may not want fallback proxies to retire themselves even if they're
+# overloaded.
+try:
+    from check_load_overrides import *
+except ImportError:
+    pass
+
 if lavg > report_threshold:
     print "report threshold surpassed; notifying..."
     util.send_alarm('Chained fallback high load',
