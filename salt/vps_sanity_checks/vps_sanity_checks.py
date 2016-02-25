@@ -15,6 +15,7 @@ def srvs_in_cfgbysrv(region, cfgbysrv):
                                                           '+inf',
                                                           withscores=True)
               if not srv.startswith('<empty')
+              and not srv.startswith('<locked')
               and srv not in cfgbysrv]
     for srv, score in issues[:]:
         # Double-check to avoid race conditions.
