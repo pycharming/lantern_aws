@@ -29,3 +29,9 @@ def memoized(f):
 ipre = re.compile(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})")
 def scan_ips(txt):
     return set(ipre.findall(txt))
+
+class obj(dict):
+    def __getattr__(self, name):
+        return self.__getitem__(name)
+    def __setattr__(self, name, value):
+        return self.__setitem__(name, value)
