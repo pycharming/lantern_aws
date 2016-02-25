@@ -147,7 +147,7 @@ uptime:
   cron.present:
     - identifier: check_vultr_transfer
     - minute: random
-    - hour: */3
+    - hour: '*/3'
     - user: lantern
     - require:
         - file: /home/lantern/check_vultr_transfer.py
