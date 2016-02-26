@@ -106,8 +106,6 @@ requests:
 
 {% if pillar['in_production'] %}
 
-python-psutil:
-    pkg.installed
 
 uptime:
     pip.installed
@@ -121,7 +119,6 @@ uptime:
         - pip: requests
         - pip: uptime
         - pkg: python-redis
-        - pkg: python-psutil
 
 "/home/lantern/check_traffic.py 2>&1 | logger -t check_traffic":
   cron.absent:
@@ -131,7 +128,6 @@ uptime:
 #    - user: lantern
 #    - require:
 #        - file: /home/lantern/check_traffic.py
-#        - pip: psutil
 
 {% if pillar['datacenter'].startswith('vl') %}
 
