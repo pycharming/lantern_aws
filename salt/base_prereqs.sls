@@ -20,6 +20,7 @@ base-packages:
             - git
             - mailutils
             - debconf-utils
+            - python-psutil
         - reload_modules: yes
 
 /usr/local/lib/pylib:
