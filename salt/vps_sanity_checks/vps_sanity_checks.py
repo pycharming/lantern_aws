@@ -46,6 +46,12 @@ def check_srvq_size(region):
     else:
         return []
 
+def fallback_srvs_in_srv_table(region, cfgbysrv):
+    if redis_shell.get(region + ':fallbacksrv') in cfgbysrv:
+        return []
+    else:
+        return ["Fallback server for region '%s' is not in srv->cfg" % region]
+
 def report(errors):
     if not errors:
         print "No errors."
@@ -63,6 +69,8 @@ def run_all_checks():
         errors.extend(srvs_in_cfgbysrv(region, cfgbysrv))
     for region in regions:
         errors.extend(check_srvq_size(region))
+    for region in regions:
+        errors.extend(fallback_srvs_in_srv_table(region, cfgbysrv))
     report(errors)
 
 
