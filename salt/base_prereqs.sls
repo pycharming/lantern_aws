@@ -21,6 +21,7 @@ base-packages:
             - mailutils
             - debconf-utils
             - python-psutil
+            - python-dateutil
         - reload_modules: yes
 
 /usr/local/lib/pylib:
