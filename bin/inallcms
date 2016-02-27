@@ -1,0 +1,6 @@
+#!/bin/bash
+
+DC=doams3 $*
+DC=vlfra1 $*
+DC=dosgp1 $*
+DC=vltok1 $*
