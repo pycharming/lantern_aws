@@ -34,9 +34,9 @@ import vps_util
 import vultr_util
 
 envvars = ["INFLUX_PASSWORD", "REDIS_URL", "DO_TOKEN", "VULTR_APIKEY"]
-locs = ["https://github.com/getlantern/too-many-secrets/blob/master/monitoring/credentials.txt#L8", "https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/config_server.yaml#L2", "https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/do_credential#L11", "https://github.com/getlantern/too-many-secrets/blob/master/vultr.md"]
+locs = ["https://github.com/getlantern/too-many-secrets/blob/master/dashboard.getlantern.org ('operator password' in line 7)", "https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/config_server.yaml#L2", "https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/do_credential#L11", "https://github.com/getlantern/too-many-secrets/blob/master/vultr.md"]
 
-# Just make sure we have all the environment variables we need.
+# Make sure we have all the environment variables we need.
 for i in range(len(envvars)):
     env = envvars[i]
     cur = os.getenv(env)
