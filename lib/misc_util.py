@@ -1,5 +1,6 @@
 from functools import wraps
 import re
+import subprocess
 import time
 
 
@@ -35,3 +36,6 @@ class obj(dict):
         return self.__getitem__(name)
     def __setattr__(self, name, value):
         return self.__setitem__(name, value)
+
+def ssh(ip, cmd):
+    return subprocess.check_output(['ssh', '-o', 'StrictHostKeyChecking=no', 'lantern@' + ip, cmd])
