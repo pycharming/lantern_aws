@@ -12,28 +12,23 @@ import yaml
 from misc_util import memoized
 try:
     import vps_util
+    from redis_util import redis_shell
 except ImportError:
     print
-    print "*** vps_util module not found.  Please add [...]/lantern_aws/lib to your PYTHONPATH"
+    print "*** Please add [...]/lantern_aws/lib to your PYTHONPATH"
     print
     raise
 
-@memoized
-def r():
-    url = os.getenv("REDISCLOUD_PRODUCTION_URL")
-    if not url:
-        raise RuntimeError("Error: You need to set a REDISCLOUD_PRODUCTION_URL env var.")
-    return redis.from_url(url)
 
 def ip_by_srv():
     return {v: k
-            for k, v in r().hgetall("srvip->srv").iteritems()}
+            for k, v in redis_shell.hgetall("srvip->srv").iteritems()}
 
 def open_servers(region):
-    return sorted(r().zrangebyscore(region + ':slices', '-inf', '+inf'))
+    return sorted(redis_shell.zrangebyscore(region + ':slices', '-inf', '+inf'))
 
 def queued_ips(region):
-    return [cfg.split('|')[0] for cfg in r().lrange(region + ':srvq', 0, -1)]
+    return [cfg.split('|')[0] for cfg in redis_shell.lrange(region + ':srvq', 0, -1)]
 
 @memoized
 def all_vpss():
@@ -47,7 +42,7 @@ def names_by_ip():
 def print_queued_server_ids(region):
     d = names_by_ip()
     key = region + ':srvq'
-    queued_cfgs = r().lrange(key, 0, -1)
+    queued_cfgs = redis_shell.lrange(key, 0, -1)
     for i, ip in enumerate(reversed(queued_ips(region))):
         print i+1, d.get(ip)
 pq = print_queued_server_ids  # shortcut since I use this a lot.
@@ -74,23 +69,23 @@ def unused_servers(cm):
              if vps.name.startswith('fp-%s-' % cm))
     ret = set()
     for v in vv:
-        id_ = r().hget("srvip->srv", v.ip)
-        if not id_ or not r().hget("srv->cfg", id_):
+        id_ = redis_shell.hget("srvip->srv", v.ip)
+        if not id_ or not redis_shell.hget("srv->cfg", id_):
             ret.add(v)
     return ret
 
 def today(cm):
     """The number of servers launched today."""
     todaystr = vps_util.todaystr()
-    return sum(1 for x in r().lrange(cm + ':vpss', 0, -1)
+    return sum(1 for x in redis_shell.lrange(cm + ':vpss', 0, -1)
                if ('-%s-' % todaystr) in x)
 
 def reqq(region):
-    return r().lrange(region + ':srvreqq', 0, -1)
+    return redis_shell.lrange(region + ':srvreqq', 0, -1)
 
 def slices(region):
     """The list of slices in a region."""
-    return r().zrangebyscore(region + ':slices', '-inf', '+inf')
+    return redis_shell.zrangebyscore(region + ':slices', '-inf', '+inf')
 
 def ddslices(region):
     """Deduplicate the slices table, effectively removing splits.
@@ -104,7 +99,7 @@ def ddslices(region):
                 for slice, next in zip(s, s[1:])
                 if slice.startswith('<empty') and next.startswith('<empty')]
     if toremove:
-        r().zrem(region + ':slices', *toremove)
+        redis_shell.zrem(region + ':slices', *toremove)
     return toremove
 
 def openings(region):
@@ -141,4 +136,4 @@ def retire_ips(*ips):
         for s in entries:
             print "   ", s
         if raw_input("OK to retire? (y/N) ") == "y":
-            r().lpush(cm + ':retireq', *entries)
+            redis_shell.lpush(cm + ':retireq', *entries)
