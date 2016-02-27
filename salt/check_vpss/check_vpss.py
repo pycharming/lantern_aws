@@ -57,12 +57,9 @@ def send_mail(from_, to, subject, body):
 if errors:
     for error in errors:
         print "ERROR: ", error
-    try:
-        send_mail('lantern@production-cloudmaster',
-                'fallback-alarms@getlantern.org',
-                'Mismatch in VPS list',
-                "".join(error + "\n" for error in errors))
-    except socket.error:
-        print "Couldn't send mail with errors!"
+    send_mail('lantern@production-cloudmaster',
+            'fallback-alarms@getlantern.org',
+            'Mismatch in VPS list',
+            "".join(error + "\n" for error in errors))
 else:
     print "No errors."
