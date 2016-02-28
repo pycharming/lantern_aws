@@ -121,3 +121,9 @@ redis-server:
             - pkg: redis-server
 
 {% endif %}
+
+# Utility to check results of deploying salt updates.
+/usr/bin/check_deployment.py:
+  file.managed:
+    - source: salt://cloudmaster/check_deployment.py
+    - mode: 755
