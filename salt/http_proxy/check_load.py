@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 import sys
 
+import psutil
 from uptime import uptime
 
 import util
@@ -14,9 +15,11 @@ if uptime() < 60 * 45:
     print "Ignoring load average; I have just launched/booted."
     sys.exit(0)
 
-retire_threshold = 2.0
-report_threshold = 1.6
-close_threshold = 1.2
+cpus = psutil.NUM_CPUS
+retire_threshold = 2.0 * cpus
+report_threshold = 1.6 * cpus
+close_threshold = 1.2 * cpus
+
 
 # We don't want to retire overloaded servers while the refill queue is too
 # empty, because that will strain the remaining servers, which might cause a
