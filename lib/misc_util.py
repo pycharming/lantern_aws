@@ -1,5 +1,6 @@
 from functools import wraps
 import re
+import multiprocessing
 import subprocess
 import time
 
@@ -37,5 +38,16 @@ class obj(dict):
     def __setattr__(self, name, value):
         return self.__setitem__(name, value)
 
-def ssh(ip, cmd):
-    return subprocess.check_output(['ssh', '-o', 'StrictHostKeyChecking=no', 'lantern@' + ip, cmd])
+def ssh(ip, cmd, timeout=60):
+    try:
+        return subprocess.check_output(['timeout', str(timeout), 'ssh', '-o', 'StrictHostKeyChecking=no', 'lantern@' + ip, cmd])
+    except subprocess.CalledProcessError as e:
+        return e
+
+def _single_arg_ssh(args):
+    "Utility function for pssh; importable and taking a single argument."
+    return ssh(*args)
+
+def pssh(ips, cmd, timeout=60, pool=None):
+    pool = pool or multiprocessing.Pool(min(len(ips), 50))
+    return pool.map(_single_arg_ssh, ((ip, cmd, timeout) for ip in ips))
