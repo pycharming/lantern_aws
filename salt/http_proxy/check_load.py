@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 from datetime import datetime
+from multiprocessing import cpu_count
 import os
 import sys
 
-import psutil
 from uptime import uptime
 
 import util
@@ -15,7 +15,7 @@ if uptime() < 60 * 45:
     print "Ignoring load average; I have just launched/booted."
     sys.exit(0)
 
-cpus = psutil.NUM_CPUS
+cpus = cpu_count()
 retire_threshold = 2.0 * cpus
 report_threshold = 1.6 * cpus
 close_threshold = 1.2 * cpus
