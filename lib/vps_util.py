@@ -96,14 +96,7 @@ def hammer_the_damn_thing_until_it_proxies(name, ssh_tmpl, fetchaccessdata_cmd):
             trycmd("salt -t 1200 %s state.highstate" % name)
 
 def cleanup_keys(do_shell=None, vultr_shell=None):
-    if do_shell is None:
-        import do_util
-        do_shell = do_util.do
-    if vultr_shell is None:
-        import vultr_util
-        vultr_shell = vultr_util.vultr
-    vpss = (set(d.name for d in do_shell.get_all_droplets())
-            | set(d['label'] for d in vultr_shell.server_list(None).values()))
+    vpss = all_vpss()
     ignore = set(["Accepted", "Unaccepted", "Rejected", "Keys:"])
     filter_out = vpss | ignore
     for key in subprocess.check_output(['salt-key', '-L']).split():
@@ -237,3 +230,7 @@ class vps:
 
     def __repr__(self):
         return "<%s (%s)>" % (self.name, self.ip)
+
+def all_vpss():
+    return (set(vps_shell('vl').all_vpss())
+            | set(vps_shell('do').all_vpss()))
