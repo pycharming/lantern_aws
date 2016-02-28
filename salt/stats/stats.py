@@ -63,21 +63,20 @@ def get_bps(minutes_back=None):
         while True:
             line = f.readline()
             if not line:
-                if start and end:
+                if start:
                     update()
                 break
             s = parse_line(line)
             if s.time < start_time:
                 continue
             if not start:
-                start = s
+                start = end = s
                 continue
-            if not end or end.bytes_sent <= s.bytes_sent and end.bytes_recv <= s.bytes_recv:
+            if end.bytes_sent <= s.bytes_sent and end.bytes_recv <= s.bytes_recv:
                 end = s
                 continue
             update()
-            start = s
-            end = None
+            start = end = s
     if not rt.seconds:
         raise RuntimeError('no useful sample intervals')
     ret = rt.tx / rt.seconds
