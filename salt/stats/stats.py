@@ -44,7 +44,7 @@ def parse_line(line):
     return sample(parse_time(time), float(load_avg), float(cpu), float(mempc), int(memact), float(swappc), int(swaptx), int(sent), int(recv), int(err), int(drop))
 
 def get_bps(minutes_back=None):
-    "bytes sent+received per second during the requested interval"
+    "max(sent, received) bytes per second during the requested interval"
     if minutes_back is None:
         start_time = datetime.fromtimestamp(0)
     else:
