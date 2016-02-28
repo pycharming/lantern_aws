@@ -51,14 +51,17 @@ def get_bps(minutes_back=None):
         # allow string arguments for command line usage.
         minutes_back = int(minutes_back)
         start_time = datetime.utcnow() - timedelta(minutes=minutes_back)
-    rt = obj(seconds=0, tx=0)
+    rt = obj(seconds=0, bytes_sent=0, bytes_recv=0)
     # Start and end of each run of samples with monotonically increasing
     # bytes_sent and bytes_recv. This is necessary to avoid distortions caused
     # by reboots, downtime, etc.
     start = end = None
     def update():
         rt.seconds += (end.time - start.time).total_seconds()
-        rt.tx += end.bytes_sent + end.bytes_recv - start.bytes_sent - start.bytes_recv
+        assert end.bytes_sent >= start.bytes_sent >= 0, "bad bytes sent! %s..%s (delta %s)" % (start.bytes_sent, end.bytes_sent, end.bytes_sent - start.bytes_sent)
+        assert end.bytes_recv >= start.bytes_recv >= 0, "bad bytes recv! %s..%s (delta %s)" % (start.bytes_recv, end.bytes_recv, end.bytes_recv - start.bytes_recv)
+        rt.bytes_sent += end.bytes_sent - start.bytes_sent
+        rt.bytes_recv += end.bytes_recv - start.bytes_recv
     with file(path) as f:
         while True:
             line = f.readline()
@@ -79,7 +82,8 @@ def get_bps(minutes_back=None):
             start = end = s
     if not rt.seconds:
         raise RuntimeError('no useful sample intervals')
-    ret = rt.tx / rt.seconds
+    ret = max(rt.bytes_sent, rt.bytes_recv) / rt.seconds
+    print "Sent %s bytes, received %s bytes in %s seconds (%s bps)" % (rt.bytes_sent, rt.bytes_recv, rt.seconds, ret)
     print ret
     return ret
 
