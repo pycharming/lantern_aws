@@ -223,9 +223,11 @@ def access_data_to_cfg(access_data):
 
 class vps:
 
-    def __init__(self, name, ip, etc):
+    def __init__(self, name, ip, ram, provider, etc):
         self.name = name
         self.ip = ip
+        self.ram = ram
+        self.provider = provider
         self.etc = etc
 
     def __repr__(self):

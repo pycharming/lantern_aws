@@ -151,7 +151,10 @@ def destroy_vps(name,
     os.system('salt-key -yd ' + name)
 
 def dict2vps(d):
-    return vps_util.vps(d['label'], d['main_ip'], d)
+    ram_suffix = " MB"
+    assert d['ram'].endswith(ram_suffix)
+    ram = int(d['ram'][:-len(ram_suffix)])
+    return vps_util.vps(d['label'], d['main_ip'], ram, 'vl', d)
 
 def all_vpss():
     return map(dict2vps, retrying_server_list().itervalues())
