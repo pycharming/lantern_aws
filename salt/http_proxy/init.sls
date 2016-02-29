@@ -26,6 +26,7 @@ fp-dirs:
     ('/home/lantern/', 'check_load.py', 'check_load.py', 'lantern', 700),
     ('/home/lantern/', 'check_traffic.py', 'check_traffic.py', 'lantern', 700),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
+    ('/home/lantern/', 'config.ini', 'config.ini', 'lantern', 400),
     ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400)] %}
 
 # To copy verbatim.
