@@ -31,7 +31,7 @@ sshpass:
 
 {% if pillar['in_production']
       and (svc != 'refill_srvq'
-           or pillar['cloudmaster_name'] in ['cm-dosgp1', 'cm-doams3']) %}
+           or pillar['cloudmaster_name'] in ['cm-dosgp1', 'cm-vlfra1']) %}
 
 /etc/init/{{ svc }}.conf:
     file.managed:
