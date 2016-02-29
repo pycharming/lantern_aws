@@ -3,6 +3,8 @@
 {% set auth_token=pillar.get('auth_token') %}
 {% set proxy_port=grains.get('proxy_port', 62443) %}
 {% set traffic_check_period_minutes=60 %}
+{% set http_proxy_version ='v0.0.9' %}
+# Be sure to also update sha (`shasum http-proxy`) when you bump up version
 {% set http_proxy_sha='0b1e256b80632f1599ef437b0b7de7c0cf9fd4cd' %}
 {% from 'ip.sls' import external_ip %}
 
@@ -50,6 +52,7 @@ include:
         - context:
             auth_token: {{ auth_token }}
             external_ip: {{ external_ip(grains) }}
+            proxy_port: {{ proxy_port }}
             traffic_check_period_minutes: {{ traffic_check_period_minutes }}
         - user: {{ user }}
         - group: {{ user }}
@@ -177,6 +180,8 @@ install-http-proxy:
         - source: salt://http_proxy/install_http_proxy.py
         - unless: "[ $(shasum /home/lantern/http-proxy | cut -d ' ' -sf 1) = {{ http_proxy_sha }} ]"
         - template: jinja
+        - context:
+            http_proxy_version: {{ http_proxy_version }}
         - user: lantern
         - group: lantern
 
