@@ -10,7 +10,8 @@ import tempfile
 import time
 import yaml
 
-from redis_util import redis_shell
+import redis_util
+from redis_util import log2redis, nameipsrv, redis_shell
 import misc_util as util
 
 
@@ -236,3 +237,15 @@ class vps:
 def all_vpss():
     return (set(vps_shell('vl').all_vpss())
             | set(vps_shell('do').all_vpss()))
+
+def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks'):
+    name, ip, srv = nameipsrv(name, ip, srv)
+    p = redis_shell.pipeline()
+    p.rpush(cm_by_name(name) + ':retireq', '%s|%s' % (name, ip))
+    log2redis({'op': 'retire',
+               'name': name,
+               'ip': ip,
+               'srv': srv,
+               'reason': reason},
+              pipeline=p)
+    p.execute()
