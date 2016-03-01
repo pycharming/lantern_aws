@@ -59,3 +59,15 @@ def nameipsrv(name=None, ip=None, srv=None):
     if not srv:
         srv = redis_shell.hget('name->srv', name)
     return nis(name, ip, srv)
+
+def pack_ip(ip):
+    return ''.join(chr(int(c)) for c in ip.split('.'))
+
+def pack_srv(srv):
+    #XXX: make robust for srv > 2 ** 16
+    srv = int(srv)
+    return chr(srv // 256) + chr(srv % 256)
+
+def unpack2int(s):
+    return sum(ord(c) << (8 * i)
+               for i, c in enumerate(reversed(s)))

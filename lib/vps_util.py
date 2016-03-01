@@ -238,9 +238,9 @@ def all_vpss():
     return (set(vps_shell('vl').all_vpss())
             | set(vps_shell('do').all_vpss()))
 
-def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks'):
+def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', pipeline=None):
     name, ip, srv = nameipsrv(name, ip, srv)
-    p = redis_shell.pipeline()
+    p = pipeline or redis_shell.pipeline()
     p.rpush(cm_by_name(name) + ':retireq', '%s|%s' % (name, ip))
     log2redis({'op': 'retire',
                'name': name,
@@ -248,4 +248,5 @@ def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks'):
                'srv': srv,
                'reason': reason},
               pipeline=p)
-    p.execute()
+    if not pipeline:
+        p.execute()

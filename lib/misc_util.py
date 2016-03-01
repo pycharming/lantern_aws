@@ -51,3 +51,12 @@ def _single_arg_ssh(args):
 def pssh(ips, cmd, timeout=60, pool=None):
     pool = pool or multiprocessing.Pool(min(len(ips), 50))
     return pool.map(_single_arg_ssh, ((ip, cmd, timeout) for ip in ips))
+
+def confirm(msg):
+    while True:
+        resp = raw_input(msg + " (y/N): ")
+        if not resp or resp in 'nN':
+            return False
+        if resp in 'yY':
+            return True
+        print "*** Please enter 'y' or 'n'. ***"
