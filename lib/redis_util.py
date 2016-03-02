@@ -45,6 +45,7 @@ def read_log_entry(s):
     return Reader('json').read(StringIO(s))
 
 nis = namedtuple('nameipsrv', ['name', 'ip', 'srv'])
+
 def nameipsrv(name=None, ip=None, srv=None):
     if not name and not ip and not srv:
         raise ValueError('need srv, name or ip')
@@ -59,6 +60,21 @@ def nameipsrv(name=None, ip=None, srv=None):
     if not srv:
         srv = redis_shell.hget('name->srv', name)
     return nis(name, ip, srv)
+
+def namesipssrvs(names=None, ips=None, srvs=None):
+    if len(filter(None, [names, ips, srvs])) != 1:
+        raise ValueError('Currently only one input list is supported.')
+    if not names:
+        if not srvs:
+            srvs = redis_shell.hmget('srvip->srv', *ips)
+        names = redis_shell.hmget('srv->name', *srvs)
+    if not ips:
+        if not srvs:
+            srvs = redis_shell.hmget('name->srv', *names)
+        ips = redis_shell.hmget('srv->srvip', *srvs)
+    if not srvs:
+        srvs = redis_shell.hmget('name->srv', *names)
+    return map(nis, names, ips, srvs)
 
 def pack_ip(ip):
     return ''.join(chr(int(c)) for c in ip.split('.'))
