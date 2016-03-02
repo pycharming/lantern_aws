@@ -1,3 +1,4 @@
+from collections import defaultdict
 from functools import wraps
 import re
 import multiprocessing
@@ -33,6 +34,12 @@ def scan_ips(txt):
     return set(ipre.findall(txt))
 
 class obj(dict):
+    def __getattr__(self, name):
+        return self.__getitem__(name)
+    def __setattr__(self, name, value):
+        return self.__setitem__(name, value)
+
+class defaultobj(defaultdict):
     def __getattr__(self, name):
         return self.__getitem__(name)
     def __setattr__(self, name, value):
