@@ -139,11 +139,13 @@ uptime:
         - group: lantern
         - mode: 700
 
+{% set offset=[0, 1, 2]|random %}
 "/home/lantern/check_vultr_transfer.py 2>&1 | logger -t check_vultr_transfer":
   cron.present:
     - identifier: check_vultr_transfer
     - minute: random
-    - hour: '*/3'
+            {# There is probably some Jinja shortcut for this, but this works. #}
+    - hour: {{ [0 + offset, 3 + offset, 6 + offset, 9 + offset, 12 + offset, 15 + offset, 18 + offset, 21 + offset]|join(',') }}
     - user: lantern
     - require:
         - file: /home/lantern/check_vultr_transfer.py
