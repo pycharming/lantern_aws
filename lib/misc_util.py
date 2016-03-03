@@ -4,6 +4,7 @@ import re
 import multiprocessing
 import subprocess
 import time
+import traceback
 
 
 class Cache:
@@ -49,7 +50,9 @@ def ssh(ip, cmd, timeout=60):
     try:
         return subprocess.check_output(['timeout', str(timeout), 'ssh', '-o', 'StrictHostKeyChecking=no', 'lantern@' + ip, cmd])
     except subprocess.CalledProcessError as e:
-        return e
+        return ('CalledProcessError', e.returncode, e.output)
+    except Exception as e:
+        return traceback.format_exc()
 
 def _single_arg_ssh(args):
     "Utility function for pssh; importable and taking a single argument."
