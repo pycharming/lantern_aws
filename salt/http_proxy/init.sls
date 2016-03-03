@@ -3,7 +3,9 @@
 {% set auth_token=pillar.get('auth_token') %}
 {% set proxy_port=grains.get('proxy_port', 62443) %}
 {% set traffic_check_period_minutes=60 %}
-{% set http_proxy_sha='0b1e256b80632f1599ef437b0b7de7c0cf9fd4cd' %}
+{% set http_proxy_version ='v0.0.10' %}
+# Be sure to also update sha (`shasum http-proxy`) when you bump up version
+{% set http_proxy_sha='2379c82c9fdfbbea919b1dacfeef51859a440ade' %}
 {% from 'ip.sls' import external_ip %}
 
 fp-dirs:
@@ -26,6 +28,7 @@ fp-dirs:
     ('/home/lantern/', 'check_load.py', 'check_load.py', 'lantern', 700),
     ('/home/lantern/', 'check_traffic.py', 'check_traffic.py', 'lantern', 700),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
+    ('/home/lantern/', 'config.ini', 'config.ini', 'lantern', 400),
     ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400)] %}
 
 # To copy verbatim.
@@ -49,6 +52,7 @@ include:
         - context:
             auth_token: {{ auth_token }}
             external_ip: {{ external_ip(grains) }}
+            proxy_port: {{ proxy_port }}
             traffic_check_period_minutes: {{ traffic_check_period_minutes }}
         - user: {{ user }}
         - group: {{ user }}
@@ -178,6 +182,8 @@ install-http-proxy:
         - source: salt://http_proxy/install_http_proxy.py
         - unless: "[ $(shasum /home/lantern/http-proxy | cut -d ' ' -sf 1) = {{ http_proxy_sha }} ]"
         - template: jinja
+        - context:
+            http_proxy_version: {{ http_proxy_version }}
         - user: lantern
         - group: lantern
 
