@@ -24,6 +24,12 @@ base-packages:
             - python-dateutil
         - reload_modules: yes
 
+transit-python:
+  pip.installed:
+    - order: 1
+    - use_wheel: yes
+    - pre_releases: yes
+
 /usr/local/lib/pylib:
     file.directory:
         - order: 1
