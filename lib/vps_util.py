@@ -114,30 +114,32 @@ def srv_cfg_by_ip():
             ret[ip] = cfg, [srv]
     return ret
 
-def retire_lcs(name,
-               ip,
-               # It's safe to cache this because a proxy will take at least 24h
-               # since the time it's recycled (and thus new server IDs can be
-               # entered for it) and the time it's destroyed. To be more
-               # precise, 24h must elapse since the time it's been _split_. For
-               # this to work, it's crucial to remove the
-               # /home/lantern/server_split flag file whenever we recycle
-               # proxies.
-               byip=util.Cache(timeout=60*60,
-                               update_fn=srv_cfg_by_ip)):
+def actually_retire_proxy(name, ip, pipeline=None):
+    """
+    While retire_proxy just enqueues the proxy for retirement, this actually
+    updates the redis tables.
+    """
+    name, ip, srv = nameipsrv(name=name, ip=ip)
     cm = cm_by_name(name)
     region = region_by_name(name)
-    srvs = byip.get().get(ip, (None, []))[1]
-    txn = redis_shell.pipeline()
-    if srvs:
-        scores = [redis_shell.zscore(region + ':slices', srv) for srv in srvs]
-        pairs = {"<empty:%s>" % int(score): score
-                 for score in scores
-                 if score}
-        if pairs:
-            txn.zadd(region + ":slices", **pairs)
-            txn.zrem(region + ":slices", *srvs)
-        txn.hdel('srv->cfg', *srvs)
+    txn = pipeline or redis_shell.pipeline()
+    if srv:
+        score = redis_shell.zscore(region + ':slices', srv)
+        if score:
+            txn.zrem(region + ":slices", srv)
+            txn.zadd(region + ":slices", "<empty:%s>" % int(score), score)
+        txn.hdel('srv->cfg', srv)
+        txn.hdel('srv->name', srv)
+        txn.hdel('srv->srvip', srv)
+        txn.hdel('name->srv', name)
+        txn.hdel('srvip->srv', ip)
+        # For debugging purposes; we can delete these anytime if they're a
+        # space problem.
+        txn.hset('history:srv->name', srv, name)
+        txn.hset('history:name->srv', name, srv)
+        txn.hset('history:srv->srvip', srv, ip)
+        # An IP may be used by multiple servers through history.
+        txn.rpush('history:srvip->srv:%s' % ip, srv)
         txn.incr('srvcount')
     else:
         print "No configs left to delete for %s." % name
@@ -147,7 +149,8 @@ def retire_lcs(name,
             txn.lrem(region + ':srvq', cfg)
     txn.lrem(cm + ':vpss', name)
     txn.incr(cm + ':vpss:version')
-    txn.execute()
+    if txn is not pipeline:
+        txn.execute()
 
 def vps_shell(provider_etc):
     """

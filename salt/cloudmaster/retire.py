@@ -24,12 +24,12 @@ def run():
         if task:
             name, ip = task.split('|')
             is_baked_in = redis_shell.sismember(region + ":bakedin-names", name)
+            txn = redis_shell.pipeline()
             if is_baked_in:
                 print "Not retiring baked-in server %s (%s)" % (name, ip)
             else:
                 print "Retiring", name, ip
-                vps_util.retire_lcs(name, ip)
-            txn = redis_shell.pipeline()
+                vps_util.actually_retire_proxy(name, ip, txn)
             remover(txn)
             if not is_baked_in:
                 # Introduce the job with the timestamp already filled in, so it will
