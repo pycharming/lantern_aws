@@ -6,4 +6,4 @@ import util
 
 
 if __name__ == '__main__':
-    util.ssh_cloudmaster(*sys.argv[1:])
+    util.ssh_cloudmaster(" ".join(sys.argv[1:]))
