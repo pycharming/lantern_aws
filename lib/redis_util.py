@@ -24,14 +24,11 @@ def utcnow():
     "A timezone-aware (as required by transit) datetime for now in UTC."
     return datetime.now(tzutc())
 
-def log2redis(data, pipeline=None, db_version=None):
-    msg = {'time': utcnow(),
+def log2redis(data, pipeline=None, time=None):
+    time = time or utcnow()
+    msg = {'time': time,
            'data': data}
-    if db_version:
-        msg['db_version': db_version]
-    io = StringIO()
-    Writer(io, 'json').write(msg)
-    s = io.getvalue()
+    s = transit_dumps(msg)
     if redis_shell.llen(logkey) >= max_history_length:
         p = pipeline or redis_shell.pipeline()
         p.lpop(logkey)
@@ -41,7 +38,12 @@ def log2redis(data, pipeline=None, db_version=None):
     if p not in [pipeline, redis_shell]:
         p.execute()
 
-def read_log_entry(s):
+def transit_dumps(x):
+    io = StringIO()
+    Writer(io, 'json').write(x)
+    return io.getvalue()
+
+def transit_loads(s):
     return Reader('json').read(StringIO(s))
 
 nis = namedtuple('nameipsrv', ['name', 'ip', 'srv'])
