@@ -15,6 +15,7 @@ from transit.writer import Writer
 redis_shell = redis.from_url(os.getenv('REDIS_URL'))
 
 logkey = 'log'
+versionkey = 'version'
 # We keep a sliding buffer of logs of this length. Length is a bit generous now
 # because we haven't implemented consumers yet.
 max_history_length = 100000
@@ -25,11 +26,26 @@ def utcnow():
     return datetime.now(tzutc())
 
 def log2redis(data, pipeline=None, time=None):
+    """
+    Log an event or mutation to the general redis log.
+
+    For a mutating operation, call this with the pipeline where your changes
+    are performed. Also call `bump_version` *once* with that pipeline, *before*
+    any calls to this.
+
+    The UTC date/time and DB version of the database at the time of logging
+    (that is, prior to any bumping) are recorded in the log.
+    """
     time = time or utcnow()
+    version = redis_shell.get(versionkey) or 0
     msg = {'time': time,
+           'version': version,
            'data': data}
     s = transit_dumps(msg)
     if redis_shell.llen(logkey) >= max_history_length:
+        # We only create a new pipeline here if we are to discard old logs, so
+        # we at least keep the log size constant. We don't watch for the length
+        # of the log because the limit is meant to be approximate anyway.
         p = pipeline or redis_shell.pipeline()
         p.lpop(logkey)
     else:
@@ -37,6 +53,18 @@ def log2redis(data, pipeline=None, time=None):
     p.rpush(logkey, s)
     if p not in [pipeline, redis_shell]:
         p.execute()
+
+def bump_version(p):
+    """
+    For a mutating operation, call this with the pipeline where your mutations
+    are performed. Then be ready to catch redis.WatchError when you execute the
+    pipeline.
+
+    [1] https://github.com/andymccurdy/redis-py#pipelines
+    """
+    p.watch(versionkey)
+    p.incr(versionkey)
+    p.multi()
 
 def transit_dumps(x):
     io = StringIO()
