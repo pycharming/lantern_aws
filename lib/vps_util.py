@@ -243,6 +243,11 @@ def all_vpss():
 
 def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', pipeline=None):
     name, ip, srv = nameipsrv(name, ip, srv)
+    region = region_by_name(name)
+    if srv == redis_shell.get(region + ':fallbacksrv'):
+        print >> sys.stderr, "I'm *not retiring* %s (%s) because it is the fallback server for region '%s'." % (name, ip, region)
+        print >> sys.stderr, "Please set a new fallback server first."
+        return
     p = pipeline or redis_shell.pipeline()
     p.rpush(cm_by_name(name) + ':retireq', '%s|%s' % (name, ip))
     log2redis({'op': 'retire',
