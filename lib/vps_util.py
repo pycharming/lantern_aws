@@ -258,3 +258,27 @@ def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', p
               pipeline=p)
     if not pipeline:
         p.execute()
+
+def pull_from_srvq(region):
+    import fetchcfg
+    srv = redis_shell.incr('srvcount')
+    ip, name, cfg = fetchcfg.fetch(region)
+    p.hset('srv->cfg', srv, cfg)
+    p.hset('srv->name', srv, name)
+    p.hset('name->srv', name, srv)
+    p.hset('srvip->srv', ip, srv)
+    p.hset('srv->srvip', srv, ip)
+    p.execute()
+    return redis_util.nis(name, ip, srv)
+
+def assign_clientip_to_srv(clientip, srvname=None, srvip=None, srv=None):
+    nis = redis_util.nameipsrv(srvname, srvip, srv)
+    region = region_by_name(nis.name)
+    redis_shell.hset(region + ':clientip->srv',
+                     redis_util.pack_ip(clientip),
+                     redis_util.pack_srv(nis.srv))
+
+def assign_clientip_to_new_own_srv(clientip, region):
+    name, ip, srv = pull_from_srvq(region)
+    assign_clientip_to_srv(clientip, name, ip, srv)
+    return name, ip, srv

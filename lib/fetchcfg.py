@@ -1,16 +1,11 @@
 #!/usr/bin/env python
 
 import os
-import redis
 import sys
 import time
 
-redis_url = os.getenv("REDIS_URL") or os.getenv("REDISCLOUD_PRODUCTION_URL")
-if not redis_url:
-    print "You need a REDIS_URL env variable.  Get the value at"
-    print "https://github.com/getlantern/too-many-secrets/blob/master/lantern_aws/config_server.yaml#L2"
-    sys.exit(1)
-rs = redis.from_url(redis_url)
+from redis_util import redis_shell as rs
+
 
 # KEYS[1]: '<region>:srvq'
 # KEYS[2]: '<region>:bakedin'
@@ -42,7 +37,7 @@ def fetch(region):
                              'srvcount',
                              region + ':srvreqq'],
                        args=[int(time.time())])
-    return ipnamecfg.split('|', 2)
+    return ipnamecfg.split('|')
 
 def tojson(cfg):
     import yaml
