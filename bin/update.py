@@ -94,6 +94,7 @@ def upload_pillars():
         = util.read_cfgsrv_credential()
     github_token = util.read_github_token()
     loggly_token = util.read_loggly_token()
+    slack_webhook_url = util.read_slack_webhook_url()
     if not util.in_production():
         if config.cloudmaster_name == "cm-dosgp1staging":
             # Exception: make the staging cloudmaster in Singapore use the
@@ -112,6 +113,7 @@ def upload_pillars():
             ' && echo "" > $(hostname).sls""'
             ' && echo "in_production: %s" > global.sls '
             ' && echo "datacenter: %s" >> global.sls '
+            ' && echo "slack_webhook_url: %s" >> global.sls '
             ' && echo "cloudmaster_name: %s" >> global.sls '
             ' && echo "do_token: %s" > do_credential.sls'
             ' && echo "vultr_apikey: %s" > vultr_credential.sls'
@@ -127,6 +129,7 @@ def upload_pillars():
             ) % (config.salt_version,
                  util.in_production(),
                  config.datacenter,
+                 slack_webhook_url,
                  config.cloudmaster_name,
                  do_token,
                  vultr_apikey,

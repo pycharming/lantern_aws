@@ -1,13 +1,6 @@
 #!/usr/bin/env python
 
-from email.mime.text import MIMEText
-import os
-import smtplib
-import sys
-
-import redis
-from vultr.vultr import Vultr
-
+from alert import alert
 from redis_util import redis_shell
 import vps_util
 
@@ -45,21 +38,12 @@ for caption, vpss in [("Missing DO droplets", expected_do - actual_do),
     if vpss:
         errors.append(caption + ": " + ", ".join(sorted(vpss)))
 
-def send_mail(from_, to, subject, body):
-    msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = from_
-    msg['To'] = to
-    s = smtplib.SMTP('localhost')
-    s.sendmail(from_, [to], msg.as_string())
-    s.close()
-
 if errors:
     for error in errors:
         print "ERROR: ", error
-    send_mail('lantern@production-cloudmaster',
-            'fallback-alarms@getlantern.org',
-            'Mismatch in VPS list',
-            "".join(error + "\n" for error in errors))
+    alert(type='vps-list-mismatch',
+          details={'errors': errors},
+          title='Mismatch in VPS list',
+          text="".join(error + "\n" for error in errors))
 else:
     print "No errors."

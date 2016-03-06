@@ -36,6 +36,11 @@ def read_loggly_token():
     return secrets_from_yaml(['loggly.txt'],
                              ['bravenewsoft.loggly.com'])[0]['token']
 
+@memoized
+def read_slack_webhook_url():
+    return secrets_from_yaml(['lantern_aws', 'slack.yaml'],
+                             ['webhook_url'])[0]
+
 def secrets_from_yaml(path, keys):
     d = yaml.load(file(os.path.join(here.secrets_path, *path)))
     return map(d.get, keys)

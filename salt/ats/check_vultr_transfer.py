@@ -1,1 +1,0 @@
-../http_proxy/check_vultr_transfer.py

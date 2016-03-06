@@ -18,7 +18,6 @@ base-packages:
             - curl
             - python-pycurl
             - git
-            - mailutils
             - debconf-utils
             - python-psutil
             - python-dateutil

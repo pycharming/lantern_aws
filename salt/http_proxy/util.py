@@ -1,14 +1,8 @@
 import datetime
-from email.mime.text import MIMEText
 import os
-import smtplib
-import subprocess
-import time
-import traceback
 
+from alert import alert
 from redis_util import redis_shell
-import requests
-
 import vps_util
 
 auth_token = "{{ pillar['cfgsrv_token'] }}"
@@ -21,22 +15,6 @@ close_flag_filename = "server_closed"
 retire_flag_filename = "server_retired"
 
 
-def send_mail(from_, to, subject, body):
-    msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = from_
-    msg['To'] = to
-    s = smtplib.SMTP('localhost')
-    s.sendmail(from_, [to], msg.as_string())
-    s.close()
-
-def send_alarm(subject, body):
-    send_mail('lantern@%s' % instance_id,
-              'fallback-alarms@getlantern.org',
-              subject,
-              "Chained fallback %s (%s) reports: %s" % (instance_id,
-                                                        ip,
-                                                        body))
 
 def flag_as_done(flag_filename):
     file(flag_filename, 'w').write(str(datetime.datetime.utcnow()))
@@ -60,7 +38,10 @@ def close_server(msg):
     # Save the slice I had assigned; it might be useful for debugging and for
     # responding to server overload in this slice.
     file('slice', 'w').write(str(score))
-    send_alarm("Chained proxy closed", " closed because I " + msg)
+    alert(type='proxy-closed',
+          details={'reason': msg},
+          text="*Closed* because I " + msg,
+          color='good')
 
 def retire_server(msg):
     if os.path.exists(retire_flag_filename):
@@ -68,5 +49,7 @@ def retire_server(msg):
         return
     redis_shell.lpush(vps_util.my_cm() + ':retireq', '%s|%s' % (instance_id, ip))
     flag_as_done(retire_flag_filename)
-    send_alarm("Chained proxy RETIRED",
-               " retired because I " + msg)
+    alert(type='proxy-retired',
+          details={'reason': msg},
+          text="*Retired* because I " + msg,
+          color='warning')

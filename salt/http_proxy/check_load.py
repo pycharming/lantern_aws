@@ -7,6 +7,7 @@ import sys
 
 from uptime import uptime
 
+from alert import alert
 import util
 
 
@@ -48,8 +49,10 @@ except ImportError:
 
 if lavg > report_threshold:
     print "report threshold surpassed; notifying..."
-    util.send_alarm('Chained fallback high load',
-                    "load average %s" % lavg)
+    alert(type='high-proxy-load',
+          details={'load-avg': lavg},
+          title='High load in proxy',
+          text="Load average %s" % lavg)
 
 # We don't want to retire servers in the surge that made us close them, because
 # load usually eases after closing and we want to give it a chance to

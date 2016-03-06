@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
-import os
-import time
 
-import mail_util
+from alert import alert
 from redis_util import redis_shell
 
 
@@ -59,7 +57,10 @@ def report(errors):
     print "Got errors:"
     for error in errors:
         print "   ", error
-    mail_util.send_alarm("Sanity checks failed!", "\n".join(errors))
+    alert(type='sanity-check-failures',
+          details={'errors': errors},
+          text='\n'.join(errors),
+          color='danger')
 
 def run_all_checks():
     cfgbysrv = redis_shell.hgetall('srv->cfg')

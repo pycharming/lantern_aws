@@ -1,0 +1,42 @@
+import json
+import os
+
+import redis_util
+import requests
+
+
+instance_id = "{{ grains['id'] }}"
+# {% from 'ip.sls' import external_ip %}
+ip = "{{ external_ip(grains) }}"
+url = os.environ.get('SLACK_WEBHOOK_URL')
+
+
+def send_to_slack(title, text, color='warning'):
+    payload = {"fallback": title + '\n' + text,
+               "color": color,
+               "title": title,
+               "text": text,
+               "mrkdwn_in": ['text']}
+    requests.post(url,
+                  headers={'content-type': 'application/json'},
+                  data=json.dumps({'attachments': [payload]}))
+
+def alert(type, details, title=None, text=None, color='warning'):
+    """
+    Shortcut for logging an alert and sending it to slack.
+
+    Prepends name and IP of reporting machine in text, inserts them in details.
+
+    Use this only if you don't need to include the redis logging in a
+    transaction.
+    """
+    if not title:
+        title = type.replace("-", " ").capitalize()
+    if not text:
+        text = str(details)
+    text = "%s (%s) reports:\n%s" % (instance_id, ip, text)
+    details_ = details.copy()
+    details_['name'] = instance_id
+    details_['ip'] = ip
+    redis_util.log2redis({'alert': type, 'details': details_})
+    send_to_slack(title, text, color)
