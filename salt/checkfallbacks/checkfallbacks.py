@@ -31,6 +31,7 @@ if errors:
           details={'errors': errors},
           title='Proxy check failures',
           text="".join(error[len('[failed fallback check] '):] + "\n"
-                      for error in errors))
+                       for error in errors),
+          color="#dddd77")
 else:
     print "No errors."
