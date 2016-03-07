@@ -115,5 +115,9 @@ def pack_srv(srv):
     return chr(srv // 256) + chr(srv % 256)
 
 def unpack2int(s):
-    return sum(ord(c) << (8 * i)
+    ret =  sum(ord(c) << (8 * i)
                for i, c in enumerate(reversed(s)))
+    # special case: encoded IPv6 addresses
+    if len(s) == 7 and ret > 2 ** 55:
+        ret -= 2 ** 56
+    return ret
