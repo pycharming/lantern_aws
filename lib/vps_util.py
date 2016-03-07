@@ -169,12 +169,6 @@ def vps_shell(provider_etc):
 
 def destroy_vps(name):
     vps_shell(dc_by_name(name)).destroy_vps(name)
-    srv = redis_shell.hget('name->srv', name)
-    if srv:
-        txn = redis_shell.pipeline()
-        txn.hdel('name->srv', name)
-        txn.hdel('srv->name', srv)
-        txn.execute()
 
 def todaystr():
     now = datetime.utcnow()
@@ -204,14 +198,15 @@ def my_region():
 
 def dc_by_cm(cm):
     ret = cm[:6]
-    assert ret in ['doams3', 'vltok1', 'dosgp1', 'vlfra1']
+    assert ret in _region_by_production_cm
     return ret
 
+_region_by_production_cm = {'doams3': 'etc',
+                            'vlfra1': 'etc',
+                            'dosgp1': 'sea',
+                            'vltok1': 'sea'}
 def region_by_dc(dc):
-    return {'doams3': 'etc',
-            'vlfra1': 'etc',
-            'dosgp1': 'sea',
-            'vltok1': 'sea'}[dc]
+    return _region_by_production_cm[dc]
 
 def dc_by_name(name):
     return dc_by_cm(cm_by_name(name))
@@ -282,3 +277,6 @@ def assign_clientip_to_new_own_srv(clientip, region):
     name, ip, srv = pull_from_srvq(region)
     assign_clientip_to_srv(clientip, name, ip, srv)
     return name, ip, srv
+
+def is_production_proxy(name):
+    return name.startswith('fp-') and cm_by_name(name) in _region_by_production_cm
