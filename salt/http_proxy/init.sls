@@ -5,7 +5,7 @@
 {% set traffic_check_period_minutes=60 %}
 {% set http_proxy_version ='v0.0.11' %}
 # Be sure to also update sha (`shasum http-proxy`) when you bump up version
-{% set http_proxy_sha='2379c82c9fdfbbea919b1dacfeef51859a440ade' %}
+{% set http_proxy_sha='29f7269219164acf231d3dd4766a5916f1e3e311' %}
 {% from 'ip.sls' import external_ip %}
 
 fp-dirs:
