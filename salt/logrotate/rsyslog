@@ -1,7 +1,7 @@
 /var/log/syslog
 {
-        rotate 10
-        size 100M
+        rotate 5
+        size 200M
         missingok
         notifempty
         delaycompress

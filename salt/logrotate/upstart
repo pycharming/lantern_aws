@@ -12,8 +12,8 @@
 # general one because according to the logrotate man page "latter definitions
 # override earlier ones".
 /var/log/upstart/http-proxy.log {
-        rotate 10
-        size 100M
+        rotate 5
+        size 200M
         daily
         missingok
         compress
