@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os.path
+import time
 import traceback
 
 import psutil
@@ -17,6 +18,11 @@ critical_threshold = 90
 # figure was chosen to keep syslog rotations that haven't exceeded their
 # prescribed size (200 MB, at the time of this writing) by more than 20%.
 max_size = 240 * 1024 * 1024
+# In seconds
+report_period = 60 * 60
+
+suppress_path = '/home/lantern/suppress-disk-warnings'
+last_warning_time_path = '/home/lantern/last-disk-warning-time'
 
 
 def delete_big_files(_, dirname, names):
@@ -46,10 +52,18 @@ def run():
         print "High disk usage!"
         # Allow us to suppress this for machines with known, but stable, high
         # disk usage.
-        if not os.path.exists('/home/lantern/suppress-disk-warnings'):
-            alert("high-disk-usage",
-                  details={'usage': usage},
-                  text="Using %s%% of disk.\nPlease fix this or I'll delete big logs as soon as I reach %s%%." % (usage, critical_threshold))
+        if os.path.exists(suppress_path):
+            return
+        try:
+            last_time_reported = int(file(last_warning_time_path).read())
+        except IOError:
+            last_time_reported = 0
+        if time.time() - last_time_reported < report_period:
+            return
+        file(last_warning_time_path, 'w').write(str(time.time()))
+        alert("high-disk-usage",
+              details={'usage': usage},
+              text="Using %s%% of disk.\nPlease fix this or I'll delete big logs as soon as I reach %s%%." % (usage, critical_threshold))
 
 
 if __name__ == '__main__':
