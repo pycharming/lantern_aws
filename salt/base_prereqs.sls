@@ -25,7 +25,7 @@ base-packages:
 
 transit-python:
   pip.installed:
-    - order: 1
+    - order: 2
     - use_wheel: yes
     - pre_releases: yes
 
