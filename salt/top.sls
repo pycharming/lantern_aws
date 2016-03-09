@@ -15,6 +15,7 @@ base:
         - env
         - stats
         - logrotate
+        - check_disk
     'cm-vlfra1':
         - vps_sanity_checks
         - check_vpss
