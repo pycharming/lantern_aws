@@ -14,7 +14,6 @@
 /var/log/upstart/http-proxy.log {
         rotate 5
         size 200M
-        daily
         missingok
         compress
         notifempty
