@@ -1,0 +1,22 @@
+/var/log/upstart/*.log {
+        rotate 4
+        daily
+        missingok
+        compress
+        notifempty
+        nocreate
+}
+
+# We used to get all stderr here. That shouldn't be true anymore, but it can't
+# hurt to limit the size of these just in case... This goes after the more
+# general one because according to the logrotate man page "latter definitions
+# override earlier ones".
+/var/log/upstart/http-proxy.log {
+        rotate 10
+        size 100M
+        daily
+        missingok
+        compress
+        notifempty
+        nocreate
+}

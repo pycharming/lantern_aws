@@ -14,6 +14,7 @@ base:
         - pylib
         - env
         - stats
+        - logrotate
     'cm-vlfra1':
         - vps_sanity_checks
         - check_vpss
