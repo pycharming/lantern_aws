@@ -55,7 +55,7 @@ def run():
         if os.path.exists(suppress_path):
             return
         try:
-            last_time_reported = int(file(last_warning_time_path).read())
+            last_time_reported = float(file(last_warning_time_path).read())
         except IOError:
             last_time_reported = 0
         if time.time() - last_time_reported < report_period:
