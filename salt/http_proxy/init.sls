@@ -3,9 +3,9 @@
 {% set auth_token=pillar.get('auth_token') %}
 {% set proxy_port=grains.get('proxy_port', 62443) %}
 {% set traffic_check_period_minutes=60 %}
-{% set http_proxy_version ='v0.0.11' %}
+{% set http_proxy_version ='v0.0.12' %}
 # Be sure to also update sha (`shasum http-proxy`) when you bump up version
-{% set http_proxy_sha='29f7269219164acf231d3dd4766a5916f1e3e311' %}
+{% set http_proxy_sha='e16eb549b0f5b6e9951a18e278550a8132389c69' %}
 {% from 'ip.sls' import external_ip %}
 
 fp-dirs:
