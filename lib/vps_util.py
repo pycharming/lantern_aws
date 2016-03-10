@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from datetime import datetime
+import itertools as it
 import os
 import random
 import re
@@ -114,6 +115,26 @@ def srv_cfg_by_ip():
             ret[ip] = cfg, [srv]
     return ret
 
+def actually_close_proxy(name=None, ip=None, srv=None, pipeline=None):
+    name, ip, srv = nameipsrv(name, ip, srv)
+    region = region_by_name(name)
+    slices_key = region + ':slices'
+    def remove_if_there(k):
+        score = redis_shell.zscore(slices_key, k)
+        if score is None:
+            return False
+        else:
+            txn.zrem(slices_key, k)
+            txn.zadd(slices_key, "<empty:%s>" % int(score), score)
+            return True
+    txn = pipeline or redis_shell.pipeline()
+    remove_if_there(srv)
+    c = it.count()
+    while remove_if_there('%s|%s' % (srv, c.next())):
+        pass
+    if txn is not pipeline:
+        txn.execute()
+
 def actually_retire_proxy(name, ip, pipeline=None):
     """
     While retire_proxy just enqueues the proxy for retirement, this actually
@@ -124,10 +145,7 @@ def actually_retire_proxy(name, ip, pipeline=None):
     region = region_by_name(name)
     txn = pipeline or redis_shell.pipeline()
     if srv:
-        score = redis_shell.zscore(region + ':slices', srv)
-        if score:
-            txn.zrem(region + ":slices", srv)
-            txn.zadd(region + ":slices", "<empty:%s>" % int(score), score)
+        actually_close_proxy(name, ip, srv, txn)
         txn.hdel('srv->cfg', srv)
         txn.hdel('srv->name', srv)
         txn.hdel('srv->srvip', srv)

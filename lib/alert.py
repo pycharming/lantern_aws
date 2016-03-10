@@ -21,14 +21,11 @@ def send_to_slack(title, text, color='warning'):
                   headers={'content-type': 'application/json'},
                   data=json.dumps({'attachments': [payload]}))
 
-def alert(type, details, title=None, text=None, color='warning'):
+def alert(type, details, title=None, text=None, color='warning', pipeline=None):
     """
     Shortcut for logging an alert and sending it to slack.
 
     Prepends name and IP of reporting machine in text, inserts them in details.
-
-    Use this only if you don't need to include the redis logging in a
-    transaction.
     """
     if not title:
         title = type.replace("-", " ").capitalize()
@@ -38,5 +35,5 @@ def alert(type, details, title=None, text=None, color='warning'):
     details_ = details.copy()
     details_['name'] = instance_id
     details_['ip'] = ip
-    redis_util.log2redis({'alert': type, 'details': details_})
+    redis_util.log2redis({'alert': type, 'details': details_}, pipeline=pipeline)
     send_to_slack(title, text, color)

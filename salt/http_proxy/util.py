@@ -23,25 +23,15 @@ def close_server(msg):
     if os.path.exists(close_flag_filename):
         print "Not closing myself again."
         return
-    srvid = redis_shell.hget('srvip->srv', ip)
-    skey = region + ":slices"
-    score = redis_shell.zscore(skey, srvid)
-    if not score:
-        print "I was not open, so I won't try to close myself."
-        flag_as_done(close_flag_filename)
-        return
-    p = redis_shell.pipeline()
-    p.zrem(skey, srvid)
-    p.zadd(skey, ('<empty:%s>' % score), score)
-    p.execute()
-    flag_as_done(close_flag_filename)
-    # Save the slice I had assigned; it might be useful for debugging and for
-    # responding to server overload in this slice.
-    file('slice', 'w').write(str(score))
+    txn = redis_shell.pipeline()
+    actually_close_proxy(name=instance_id, ip=ip, pipeline=txn)
     alert(type='proxy-closed',
           details={'reason': msg},
           text="*Closed* because I " + msg,
-          color='good')
+          color='good',
+          pipeline=txn)
+    txn.execute()
+    flag_as_done(close_flag_filename)
 
 def retire_server(msg):
     if os.path.exists(retire_flag_filename):
