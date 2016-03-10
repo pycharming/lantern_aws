@@ -7,26 +7,26 @@ from redis_util import redis_shell
 
 def srvs_in_cfgbysrv(region, cfgbysrv):
     key = region + ':slices'
-    issues = [(srv, score)
-              for srv, score in redis_shell.zrangebyscore(key,
+    issues = [(k, score)
+              for k, score in redis_shell.zrangebyscore(key,
                                                           '-inf',
                                                           '+inf',
                                                           withscores=True)
-              if not srv.startswith('<empty')
-              and not srv.startswith('<locked')
-              and srv not in cfgbysrv]
-    for srv, score in issues[:]:
+              if not k.startswith('<empty')
+              and not k.startswith('<locked')
+              and k.split('|')[0] not in cfgbysrv]
+    for k, score in issues[:]:
         # Double-check to avoid race conditions.
-        if redis_shell.hexists('srv->cfg', srv):
-            issues.remove((srv, score))
+        if redis_shell.hexists('srv->cfg', k.split('|')[0]):
+            issues.remove((k, score))
         else:
             # Might as well fix it while we're at it!
             txn = redis_shell.pipeline()
-            txn.zrem(key, srv)
-            txn.zadd(key, '<empty:%s>' % score, score)
+            txn.zrem(key, k)
+            txn.zadd(key, '<empty:%s>' % int(score), score)
             txn.execute()
-    return ["Server %s in %s's slice table but no config for it." % (srv, region)
-            for srv, _ in issues]
+    return ["Key %s in %s's slice table but no config for it." % (k, region)
+            for k, _ in issues]
 
 def configs_start_with_newline(cfgbysrv):
     """At some point we've found configurations that don't start with a newline.
