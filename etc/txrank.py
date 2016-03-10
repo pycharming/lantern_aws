@@ -107,7 +107,7 @@ def fp_status(name):
     region = vps_util.region_by_name(name)
     for srv in cfg[1]:
         for suffix in ["", "|0"]:
-            if redis_shell.zscore(region + ':slices', srv + suffix):
+            if redis_shell.zscore(region + ':slices', "%s%s" % (srv, suffix)):
                 return "open"
     else:
         return "full"
