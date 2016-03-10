@@ -15,8 +15,10 @@ except IOError:
     local_version = None
 remote_version = redis_shell.get('srvcount')
 if local_version != remote_version:
-    json.dump([yaml.load(x).values()[0]
-               for x in redis_shell.hgetall('srv->cfg').values()],
+    suppress = redis_shell.smembers('checkfallbacks-suppress')
+    json.dump([yaml.load(cfg).values()[0]
+               for srv, cfg in redis_shell.hgetall('srv->cfg').iteritems()
+               if srv not in suppress],
               file(prefix + '.json', 'w'))
     file(prefix + '-version', 'w').write(remote_version)
 
