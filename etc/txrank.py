@@ -102,10 +102,10 @@ def fp_status(name):
     if ip in bakedin():
         return "baked-in"
     cfg = srv_cfg_by_name(name)
-    if not cfgs:
+    if not cfg:
         return "???"
     region = vps_util.region_by_name(name)
-    for srv in cfgs[1]:
+    for srv in cfg[1]:
         for suffix in ["", "|0"]:
             if redis_shell.zscore(region + ':slices', srv + suffix):
                 return "open"
