@@ -258,6 +258,7 @@ def pull_from_srvq(region):
     import fetchcfg
     srv = redis_shell.incr('srvcount')
     ip, name, cfg = fetchcfg.fetch(region)
+    p = redis_shell.pipeline()
     p.hset('srv->cfg', srv, cfg)
     p.hset('srv->name', srv, name)
     p.hset('name->srv', name, srv)
