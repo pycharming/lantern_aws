@@ -16,17 +16,17 @@ from vps_util import trycmd
 
 
 api_key = os.getenv("VULTR_APIKEY")
-tokyo_dcid = u'25'
-frankfurt_dcid = u'9'
-planid_768mb_tokyo = u'31'
-planid_768mb_frankfurt = u'29'
 planid_1gb = u'111'
 ubuntu14_04_64bit = u'160'
 vultr_server_list_retries = 10
 
-vultr_dcid = {'vltok1': tokyo_dcid,
-              'vlfra1': frankfurt_dcid}
+vultr_dcid = {'vltok1': u'25',
+              'vlfra1': u'9',
+              'vlpar1': u'24'}
 
+default_plan = {'vltok1': u'31',
+                'vlfra1': u'29',
+                'vlpar': u'29'}
 
 # XXX: feed cloudmaster's internal IP when we launch one in Tokyo.
 def ssh_tmpl(ssh_cmd):
@@ -60,14 +60,8 @@ def minion_id(prefix, n):
 
 def create_vps(label):
     dc = vps_util.dc_by_cm(vps_util.my_cm())
-    if dc == 'vltok1':
-        dcid = tokyo_dcid
-        planid = planid_768mb_tokyo
-    elif dc == 'vlfra1':
-        dcid = frankfurt_dcid
-        planid = planid_768mb_frankfurt
-    subid = vultr.server_create(dcid,
-                                planid,
+    subid = vultr.server_create(vultr_dcid[dc],
+                                default_plan[dc],
                                 ubuntu14_04_64bit,
                                 label=label,
                                 enable_ipv6='yes',
