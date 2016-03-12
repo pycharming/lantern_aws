@@ -17,7 +17,7 @@ if uptime() < 60 * 45:
     sys.exit(0)
 
 cpus = cpu_count()
-retire_threshold = 3.0 * cpus
+retire_threshold = 2.75 * cpus
 report_threshold = 1.9 * cpus
 close_threshold = 1.6 * cpus
 
