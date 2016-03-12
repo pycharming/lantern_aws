@@ -203,6 +203,7 @@ def dc_by_cm(cm):
 
 _region_by_production_cm = {'doams3': 'etc',
                             'vlfra1': 'etc',
+                            'vlpar1': 'etc',
                             'dosgp1': 'sea',
                             'vltok1': 'sea'}
 def region_by_dc(dc):
