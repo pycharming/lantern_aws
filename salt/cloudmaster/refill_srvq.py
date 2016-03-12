@@ -9,6 +9,7 @@ import traceback
 
 import yaml
 
+from alert import send_to_slack
 from redis_util import redis_shell
 import redisq
 import vps_util
@@ -118,18 +119,32 @@ def get_lcs_name():
 def launch_one_server(q, reqid, name):
     d = vps_shell.create_vps(name)
     ip = d['ip']
+    msg = {'reqid': reqid,
+           'name': name,
+           'ip': ip,
+           'access_data': None}
     if redis_shell.sismember(REGION + ':blocked_ips', ip):
-        q.put({'reqid': reqid,
-               'name': name,
-               'ip': ip,
-               'blocked': True,
-               'access_data': None})
+        msg['blocked'] = True
     else:
-        q.put({'reqid': reqid,
-               'name': name,
-               'ip': ip,
-               'blocked': False,
-               'access_data': vps_shell.init_vps(d)})
+        access_data = vps_shell.init_vps(d)
+        #XXX: DRY
+        adip = access_data['addr'].split(':')[0]
+        if adip != ip:
+            print "IP mismatch! %s != %s" % (adip, ip)
+            send_to_slack("IP mismatch",
+                          "Proxy which reported IP %s on creation has IP %s in access_data" % (ip, adip),
+                          color="#ff00ff")
+            msg['ip'] = adip
+        if redis_shell.ismember(REGION + ":blocked_ips", ip):
+            print "Blocked IP %s sneaked in!" % adip
+            send_to_slack("Blocked IP sneaked in",
+                          "Blocked IP %s was sneaking into %s's cloudmaster" % (adip, CM),
+                          color="danger")
+            msg['blocked'] = True
+        else:
+            msg['blocked'] = False
+            msg['access_data'] = access_data
+    q.put(msg)
 
 def upload_cfg(name, access_data):
     ip = access_data['addr'].split(':')[0]
