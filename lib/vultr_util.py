@@ -19,6 +19,7 @@ api_key = os.getenv("VULTR_APIKEY")
 planid_1gb = u'111'
 ubuntu14_04_64bit = u'160'
 vultr_server_list_retries = 10
+cloudmaster_keyid = u'56aa5453eef0b'
 
 vultr_dcid = {'vltok1': u'25',
               'vlfra1': u'9',
@@ -30,14 +31,14 @@ default_plan = {'vltok1': u'31',
 
 # XXX: feed cloudmaster's internal IP when we launch one in Tokyo.
 def ssh_tmpl(ssh_cmd):
-    return "sshpass -p %s ssh -o StrictHostKeyChecking=no root@%s " + ("'%s'" % ssh_cmd)
+    return "ssh -i /etc/salt/cloudmaster.id_rsa -o StrictHostKeyChecking=no root@%s " + ("'%s'" % ssh_cmd)
 
 #{% from 'ip.sls' import external_ip %}
 bootstrap_tmpl = ssh_tmpl("curl -L https://bootstrap.saltstack.com | sh -s -- -X -A {{ external_ip(grains) }} -i %s git {{ pillar['salt_version'] }}")
 
-scpkeys_tmpl = "sshpass -p %s scp -p -C -o StrictHostKeyChecking=no minion.pem minion.pub root@%s:/etc/salt/pki/minion/"
+scpkeys_tmpl = "scp -p -C -i /etc/salt/cloudmaster.id_rsa -o StrictHostKeyChecking=no minion.pem minion.pub root@%s:/etc/salt/pki/minion/"
 
-fetchaccessdata_tmpl = "sshpass -p %s scp -o StrictHostKeyChecking=no root@%s:/home/lantern/access_data.json ."
+fetchaccessdata_tmpl = "scp -i /etc/salt/cloudmaster.id_rsa -o StrictHostKeyChecking=no root@%s:/home/lantern/access_data.json ."
 
 start_tmpl = ssh_tmpl("service salt-minion restart")
 
@@ -64,6 +65,7 @@ def create_vps(label):
                                 default_plan[dc],
                                 ubuntu14_04_64bit,
                                 label=label,
+                                sshkeyid=cloudmaster_keyid,
                                 enable_ipv6='yes',
                                 enable_private_network="yes")['SUBID']
     for _ in xrange(30):
@@ -114,7 +116,7 @@ def init_vps(d):
         ip = d['main_ip']
         name = d['label']
         passw = d['default_password']
-        if os.system(bootstrap_tmpl % (passw, ip, name)):
+        if os.system(bootstrap_tmpl % (ip, name)):
             print("Error trying to bootstrap; retrying...")
         else:
             break
@@ -124,18 +126,18 @@ def init_vps(d):
         trycmd('salt-key --gen-keys=%s' % name)
         for suffix in ['.pem', '.pub']:
             os.rename(name + suffix, 'minion' + suffix)
-        trycmd(scpkeys_tmpl % (passw, ip))
+        trycmd(scpkeys_tmpl % ip)
         os.rename('minion.pub', os.path.join('/etc/salt/pki/master/minions', name))
         print("Starting salt-minion...")
-        trycmd(start_tmpl % (passw, ip))
+        trycmd(start_tmpl % ip)
         vps_util.save_pillar(name)
         print("Calling highstate...")
         time.sleep(10)
         trycmd("salt -t 1800 %s state.highstate" % name)
         return vps_util.hammer_the_damn_thing_until_it_proxies(
             name,
-            ssh_tmpl('%%s') % (passw, ip),
-            fetchaccessdata_tmpl % (passw, ip))
+            ssh_tmpl('%%s') % ip,
+            fetchaccessdata_tmpl % ip)
 
 def destroy_vps(name,
                 server_cache=util.Cache(timeout=60*60,
