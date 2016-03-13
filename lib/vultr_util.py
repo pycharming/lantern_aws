@@ -70,7 +70,7 @@ def create_vps(label):
         time.sleep(10)
         d = try_vultr_cmd(vultr.server_list, subid)
         ip = d.get('main_ip')
-        if ip and misc_util.ipre.match(ip):
+        if ip and util.ipre.match(ip):
             d['ip'] = ip
             return d
     raise RuntimeError("Couldn't get the new VPS's IP")
