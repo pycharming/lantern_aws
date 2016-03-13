@@ -82,7 +82,9 @@ def try_vultr_cmd(cmd, *args):
             return apply(cmd, args)
         except VultrError as e:
             traceback.print_exc()
-            time.sleep(1.5 ** tryno)
+            # Add some random factor too, to break synchronization between
+            # concurrently starting jobs.
+            time.sleep(1.5 ** tryno + random.random() * 10)
     raise e
 
 def wait_for_status_ok(subid):
