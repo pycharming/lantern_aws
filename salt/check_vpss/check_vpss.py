@@ -24,7 +24,7 @@ def in_production(name):
             or vps_util.cm_by_name(name) in ['doams3', 'dosgp1'])
 
 expected_do = vpss_from_cm('doams3') | vpss_from_cm('dosgp1')
-expected_vultr = vpss_from_cm('vltok1') | vpss_from_cm('vlfra1')
+expected_vultr = vpss_from_cm('vltok1') | vpss_from_cm('vlfra1') | vpss_from_cm('vlpar1')
 
 actual_do = set(v.name for v in vps_util.vps_shell('do').all_vpss()
                 if in_production(v.name))
