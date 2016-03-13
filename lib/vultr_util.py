@@ -69,10 +69,11 @@ def create_vps(label):
     for _ in xrange(30):
         time.sleep(10)
         d = try_vultr_cmd(vultr.server_list, subid)
-        if d['main_ip']:
-            d['ip'] = d['main_ip']
+        ip = d.get('main_ip')
+        if ip and misc_util.ipre.match(ip):
+            d['ip'] = ip
             return d
-    raise RuntimeError("Couldn't get subscription ID")
+    raise RuntimeError("Couldn't get the new VPS's IP")
 
 def try_vultr_cmd(cmd, *args):
     "With exponential backoff, to work around Vultr's one-request-per-second limit."
