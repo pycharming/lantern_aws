@@ -135,7 +135,7 @@ def launch_one_server(q, reqid, name):
                           "Proxy which reported IP %s on creation has IP %s in access_data" % (ip, adip),
                           color="#ff00ff")
             msg['ip'] = adip
-        if redis_shell.sismember(REGION + ":blocked_ips", ip):
+        if redis_shell.sismember(REGION + ":blocked_ips", adip):
             print "Blocked IP %s sneaked in!" % adip
             send_to_slack("Blocked IP sneaked in",
                           "Blocked IP %s was sneaking into %s's cloudmaster" % (adip, CM),
