@@ -17,9 +17,9 @@ if uptime() < 60 * 45:
     sys.exit(0)
 
 cpus = cpu_count()
-retire_threshold = 2.0 * cpus
-report_threshold = 1.7 * cpus
-close_threshold = 1.4 * cpus
+retire_threshold = 3.5 * cpus
+report_threshold = 1.9 * cpus
+close_threshold = 1.6 * cpus
 
 
 # We don't want to retire overloaded servers while the refill queue is too

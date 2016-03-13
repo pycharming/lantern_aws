@@ -26,7 +26,6 @@ fp-dirs:
     ('/etc/init/', 'http-proxy.conf', 'http-proxy.conf', 'root', 644),
     ('/home/lantern/', 'util.py', 'util.py', 'lantern', 400),
     ('/home/lantern/', 'check_load.py', 'check_load.py', 'lantern', 700),
-    ('/home/lantern/', 'check_traffic.py', 'check_traffic.py', 'lantern', 700),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
     ('/home/lantern/', 'config.ini', 'config.ini', 'lantern', 400),
     ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400)] %}
@@ -127,11 +126,6 @@ uptime:
 "/home/lantern/check_traffic.py 2>&1 | logger -t check_traffic":
   cron.absent:
     - user: lantern
-#  cron.present:
-#    - minute: "*/{{ traffic_check_period_minutes }}"
-#    - user: lantern
-#    - require:
-#        - file: /home/lantern/check_traffic.py
 
 {% if pillar['datacenter'].startswith('vl') %}
 
