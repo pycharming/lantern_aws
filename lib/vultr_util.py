@@ -26,7 +26,7 @@ vultr_dcid = {'vltok1': u'25',
 
 default_plan = {'vltok1': u'31',
                 'vlfra1': u'29',
-                'vlpar': u'29'}
+                'vlpar1': u'29'}
 
 # XXX: feed cloudmaster's internal IP when we launch one in Tokyo.
 def ssh_tmpl(ssh_cmd):
