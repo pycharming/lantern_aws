@@ -23,6 +23,11 @@ def close_server(msg):
     if os.path.exists(close_flag_filename):
         print "Not closing myself again."
         return
+    if region in ['tmp', 'etc', 'ir']:
+        send_to_slack(title="Attempt to close server",
+                      text="I tried to close myself, but this is temporarily disabled during transition to the 'ir' region.",
+                      color="#ff00ff")
+        return
     txn = redis_shell.pipeline()
     vps_util.actually_close_proxy(name=instance_id, ip=ip, pipeline=txn)
     alert(type='proxy-closed',
@@ -36,6 +41,11 @@ def close_server(msg):
 def retire_server(msg):
     if os.path.exists(retire_flag_filename):
         print "Not retiring myself again."
+        return
+    if region in ['tmp', 'etc', 'ir']:
+        send_to_slack(title="Attempt to retire server",
+                      text="I tried to close myself, but this is temporarily disabled during transition to the 'ir' region.",
+                      color="#ff00ff")
         return
     vps_util.retire_proxy(name=instance_id, ip=ip, reason=msg)
     flag_as_done(retire_flag_filename)
