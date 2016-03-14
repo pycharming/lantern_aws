@@ -1,5 +1,6 @@
 #!/bin/bash
 
+DC=donyc3 $@ &
 DC=doams3 $@ &
 DC=vlfra1 $@ &
 DC=vlpar1 $@ &
