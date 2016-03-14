@@ -219,9 +219,10 @@ def dc_by_cm(cm):
     assert ret in _region_by_production_cm
     return ret
 
-_region_by_production_cm = {'doams3': 'etc',
-                            'vlfra1': 'etc',
-                            'vlpar1': 'etc',
+_region_by_production_cm = {'donyc3': 'etc',
+                            'doams3': 'ir',
+                            'vlfra1': 'ir',
+                            'vlpar1': 'ir',
                             'dosgp1': 'sea',
                             'vltok1': 'sea'}
 def region_by_dc(dc):

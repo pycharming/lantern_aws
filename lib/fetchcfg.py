@@ -64,7 +64,7 @@ if __name__ == '__main__':
         region = args[1]
     if not rs.sismember('user-regions', region):
         print "Usage: %s [--json] [--print-name-and-ip] [user-region]" % args[0]
-        print "Where region must be one of 'sea' for Southeast Asia (currently, only China) or 'etc' (default) for anywhere else."
+        print "Where region must be one of 'sea' for Southeast Asia (currently, only China) 'ir' for Iran, or 'etc' (default) for anywhere else."
         print "Options (all default to false):"
         print "    --json: output a format that can be directly read by genconfig."
         print "    --print-name-and-ip: print name and ip of the new proxy, in addition to its config."
