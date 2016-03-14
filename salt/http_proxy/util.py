@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from alert import alert
+from alert import alert, send_to_slack
 from redis_util import redis_shell
 import vps_util
 
@@ -24,7 +24,7 @@ def close_server(msg):
         print "Not closing myself again."
         return
     txn = redis_shell.pipeline()
-    actually_close_proxy(name=instance_id, ip=ip, pipeline=txn)
+    vps_util.actually_close_proxy(name=instance_id, ip=ip, pipeline=txn)
     alert(type='proxy-closed',
           details={'reason': msg},
           text="*Closed* because I " + msg,
@@ -37,9 +37,8 @@ def retire_server(msg):
     if os.path.exists(retire_flag_filename):
         print "Not retiring myself again."
         return
-    redis_shell.lpush(vps_util.my_cm() + ':retireq', '%s|%s' % (instance_id, ip))
+    vps_util.retire_proxy(name=instance_id, ip=ip, reason=msg)
     flag_as_done(retire_flag_filename)
-    alert(type='proxy-retired',
-          details={'reason': msg},
-          text="*Retired* because I " + msg,
-          color='warning')
+    send_to_slack(title="Proxy retired",
+                  text="*Retired* because I " + msg,
+                  color='warning')
