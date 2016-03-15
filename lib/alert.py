@@ -12,6 +12,7 @@ url = os.environ.get('SLACK_WEBHOOK_URL')
 
 
 def send_to_slack(title, text, color='warning'):
+    text = "%s (%s) reports:\n%s" % (instance_id, ip, text)
     payload = {"fallback": title + '\n' + text,
                "color": color,
                "title": title,
@@ -31,7 +32,6 @@ def alert(type, details, title=None, text=None, color='warning', pipeline=None):
         title = type.replace("-", " ").capitalize()
     if not text:
         text = str(details)
-    text = "%s (%s) reports:\n%s" % (instance_id, ip, text)
     details_ = details.copy()
     details_['name'] = instance_id
     details_['ip'] = ip
