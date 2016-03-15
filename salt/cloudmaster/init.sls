@@ -122,8 +122,14 @@ redis-server:
 
 {% endif %}
 
-# Utility to check results of deploying salt updates.
+# Utilities for deploying salt updates.
+
 /usr/bin/check_deployment.py:
   file.managed:
     - source: salt://cloudmaster/check_deployment.py
+    - mode: 755
+
+/usr/bin/kill_running_highstates.py:
+  file.managed:
+    - source: salt://cloudmaster/kill_running_highstates.py
     - mode: 755
