@@ -21,6 +21,8 @@ base-packages:
             - debconf-utils
             - python-psutil
             - python-dateutil
+            - htop
+            - vim
         - reload_modules: yes
 
 transit-python:

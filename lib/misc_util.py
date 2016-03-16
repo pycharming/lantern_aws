@@ -1,3 +1,5 @@
+from __future__ import division
+
 from collections import defaultdict
 from functools import wraps
 import re
@@ -70,3 +72,6 @@ def confirm(msg):
         if resp in 'yY':
             return True
         print "*** Please enter 'y' or 'n'. ***"
+
+def percent(part, whole):
+    return "%.2f%%" % (part * 100 / whole)
