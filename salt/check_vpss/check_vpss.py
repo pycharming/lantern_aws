@@ -21,7 +21,7 @@ def vpss_from_cm(cm):
 
 def in_production(name):
     return (not name.startswith('fp-')
-            or vps_util.cm_by_name(name) in ['doams3', 'dosgp1'])
+            or vps_util.cm_by_name(name) in ['doams3', 'dosgp1', 'donyc3'])
 
 expected_do = vpss_from_cm('doams3') | vpss_from_cm('dosgp1') | vpss_from_cm('donyc3')
 expected_vultr = vpss_from_cm('vltok1') | vpss_from_cm('vlfra1') | vpss_from_cm('vlpar1')
