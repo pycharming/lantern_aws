@@ -25,10 +25,6 @@ broker-service:
             - pkg: tcl
             - cmd: ufw-rules-ready
 
-net.ipv4.tcp_max_syn_backlog:
-    sysctl.present:
-        - value: 4096
-
 # Update various sysctl settings per the recommendations here -
 # https://russ.garrett.co.uk/2009/01/01/linux-kernel-tuning/
 net.core.wmem_max:
