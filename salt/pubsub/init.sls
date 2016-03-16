@@ -22,7 +22,6 @@ broker-service:
         - name: broker
         - enable: yes
         - require:
-            - pkg: tcl
             - cmd: ufw-rules-ready
 
 # Update various sysctl settings per the recommendations here -
