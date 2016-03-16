@@ -1,9 +1,4 @@
-[lantern_proxy]
-title=Lantern Proxy
-description=Lantern censorship circumvention tool
-{% if proxy_protocol == 'tcp' %}
-ports=62000,62443/tcp
-{% else %}
-ports={{ grains.get('proxy_port', 443) }}/{{ proxy_protocol }}
-{% endif %}
-
+[pubsub]
+title=Pubsub Broker
+description=Efficient publish/subscribe broker using a custom protocol on port 14443 and HTTPS connections on 443.
+ports=14443,62443/tcp
