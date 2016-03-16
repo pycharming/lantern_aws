@@ -28,3 +28,5 @@ base:
         - lantern_build_prereqs
         - apt_upgrade
         - http_proxy
+    'pubsub-*':
+        - pubsub
