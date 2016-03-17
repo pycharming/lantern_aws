@@ -263,6 +263,10 @@ def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', p
         print >> sys.stderr, "I'm *not retiring* %s (%s) because it is the fallback server for region '%s'." % (name, ip, region)
         print >> sys.stderr, "Please set a new fallback server first."
         return
+    if srv == redis_shell.hget('user-region->honeypot', region):
+        print >> sys.stderr, "I'm *not retiring* %s (%s) because it is the honeypot server for region '%s'." % (name, ip, region)
+        print >> sys.stderr, "Please set a new honeypot server first."
+        return
     p = pipeline or redis_shell.pipeline()
     p.rpush(cm_by_name(name) + ':retireq', '%s|%s' % (name, ip))
     log2redis({'op': 'retire',
