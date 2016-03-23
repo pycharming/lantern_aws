@@ -15,23 +15,38 @@ include:
         - watch:
             - file: /etc/ufw/applications.d/salt
 
-sshpass:
-  pkg.installed
+{# Old name for refill_region_srvq. #}
 
-{% for svc in ['refill_srvq', 'retire', 'destroy'] %}
+refill_srvq:
+  service.dead:
+    - enable: no
 
-/usr/bin/{{ svc }}.py:
+/etc/init/refill_srvq.conf:
+  file.absent:
+    - require:
+       - service: refill_srvq
+
+{% for executable in ['refill_srvq', 'retire', 'destroy'] %}
+/usr/bin/{{ executable }}.py:
     file.managed:
-        - source: salt://cloudmaster/{{ svc }}.py
+        - source: salt://cloudmaster/{{ executable }}.py
         - user: root
         - group: root
         - mode: 755
+{% endfor %}
 
-{# Only launch servers from Amsterdam and Singapore. #}
+{% for svc, executable in [('refill_cm_srvq', 'refill_srvq'),
+                           ('refill_region_srvq', 'refill_srvq'),
+                           ('retire', 'retire'),
+                           ('destroy', 'destroy')] %}
+
+{# Only launch regional servers from select datacenters. #}
 
 {% if pillar['in_production']
-      and (svc != 'refill_srvq'
-           or pillar['cloudmaster_name'] in ['cm-donyc3', 'cm-dosgp1', 'cm-vlpar1']) %}
+      or pillar['in_staging']
+      and (svc != 'refill_region_srvq'
+           or pillar['cloudmaster_name'] in ['cm-donyc3', 'cm-dosgp1', 'cm-vlpar1',
+                                             'cm-donyc3staging', 'cm-dosgp1staging', 'cm-doams3staging']) %}
 
 /etc/init/{{ svc }}.conf:
     file.managed:
@@ -52,7 +67,7 @@ sshpass:
     cmd.run:
         - name: 'initctl reload-configuration'
         - watch:
-            - file: /usr/bin/{{ svc }}.py
+            - file: /usr/bin/{{ executable }}.py
             - file: /etc/init/{{ svc }}.conf
         - require:
             - pip: digitalocean

@@ -17,6 +17,13 @@ import vps_util
 
 CM = vps_util.my_cm()
 REGION = vps_util.my_region()
+scope = os.environ['QSCOPE']
+if scope == 'REGION':
+    QPREFIX = REGION
+elif scope == 'CM':
+    QPREFIX = CM
+else:
+    assert False
 MAXPROCS = int(os.getenv('MAXPROCS'))
 LAUNCH_TIMEOUT = 30 * 60
 
@@ -25,7 +32,7 @@ vps_shell = vps_util.vps_shell(CM)
 
 def run():
     print "Serving user region", repr(REGION), ", MAXPROCS:", repr(MAXPROCS)
-    qname = REGION + ":srvreqq"
+    qname = QPREFIX + ":srvreqq"
     quarantine = CM + ":quarantined_vpss"
     reqq = redisq.Queue(qname, redis_shell, LAUNCH_TIMEOUT)
     procq = multiprocessing.Queue()
@@ -156,7 +163,7 @@ def upload_cfg(name, access_data):
     cfg = "\n    " + yaml.dump({'fallback-' + ip: access_data})
     txn = redis_shell.pipeline()
     txn.hset('server->config', name, cfg)
-    txn.lpush(REGION + ":srvq", "%s|%s|%s" % (ip, name, cfg))
+    txn.lpush(QPREFIX + ":srvq", "%s|%s|%s" % (ip, name, cfg))
     txn.execute()
 
 def register_vps(name):
