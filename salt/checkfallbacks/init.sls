@@ -12,7 +12,7 @@
     - mode: 755
 
 "/usr/bin/checkfallbacks.py | logger -t checkfallbacks":
-{% if pillar['in_production'] %}
+{% if pillar['in_production'] or pillar['in_staging'] %}
   cron.present:
     - minute: '*/11'
     - user: lantern

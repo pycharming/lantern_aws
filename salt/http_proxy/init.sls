@@ -107,7 +107,7 @@ requests:
         - user: lantern
 
 
-{% if pillar['in_production'] %}
+{% if pillar['in_production'] or pillar['in_staging'] %}
 
 
 uptime:

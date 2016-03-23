@@ -94,12 +94,15 @@ def upload_pillars():
         = util.read_cfgsrv_credential()
     github_token = util.read_github_token()
     loggly_token = util.read_loggly_token()
-    slack_webhook_url = util.read_slack_webhook_url()
+    if util.in_production():
+        slack_webhook_url = util.read_slack_webhook_url()
+    else:
+        slack_webhook_url = util.read_slack_staging_webhook_url()
     if not util.in_production():
-        if config.cloudmaster_name == "cm-dosgp1staging":
-            # Exception: make the staging cloudmaster in Singapore use the
-            # redis instance of the staging cloudmaster in Amsterdam, to be
-            # more like the production setup.
+        if util.in_staging():
+            # Exception: make the staging cloudmasters use the redis instance
+            # of the staging cloudmaster in Amsterdam, to be more like the
+            # production setup.
             redis_address = '188.166.55.168'
         else:
             redis_address = config.cloudmaster_address
@@ -111,7 +114,8 @@ def upload_pillars():
             # named with the <instance_name>.sls scheme.
             r' && echo "include: [{{ grains[\"id\"] }}]" >> salt.sls '
             ' && echo "" > $(hostname).sls""'
-            ' && echo "in_production: %s" > global.sls '
+            ' && echo "in_staging: %s" > global.sls '
+            ' && echo "in_production: %s" >> global.sls '
             ' && echo "datacenter: %s" >> global.sls '
             ' && echo "slack_webhook_url: %s" >> global.sls '
             ' && echo "cloudmaster_name: %s" >> global.sls '
@@ -127,6 +131,7 @@ def upload_pillars():
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.salt_version,
+                 util.in_staging(),
                  util.in_production(),
                  config.datacenter,
                  slack_webhook_url,
