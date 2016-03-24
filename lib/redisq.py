@@ -4,6 +4,13 @@
 import os
 import time
 
+# KEYS[1]: name of the queue to use
+qinit_src = """
+if redis.call("llen", KEYS[1]) == 0 then
+  redis.call("lpush", KEYS[1], "-1")
+end
+"""
+
 # KEYS[1]: name of the queue to use.
 # ARGV[1]: current unix timestamp.
 qread_src = """
@@ -33,6 +40,10 @@ def now():
 class Queue:
 
     def __init__(self, qname, redis_shell, timeout):
+        # Make ~sure the sentinel is there. If there's already data in the
+        # queue this won't work, so deploy the server before any requesting
+        # clients.
+        redis_shell.register_script(qinit_src)(keys=[qname])
         self.qname = qname
         self.redis_shell = redis_shell
         self.timeout = timeout
