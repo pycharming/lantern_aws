@@ -61,7 +61,7 @@ def destroy_vps(name):
     os.system('salt-key -yd' + name)
 
 def droplet2vps(d):
-    url = "https://cloud.digitalocean.com/droplets/%s#actions-graphs" % d.id
+    url = "https://cloud.digitalocean.com/droplets/%s/graphs" % d.id
     return vps_util.vps(d.name, d.ip_address, d.memory, 'do', url, d)
 
 def all_vpss():
