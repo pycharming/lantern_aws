@@ -253,8 +253,7 @@ class vps:
 
     def browse(self):
         for url in [self.dashboard_url, self.provider_url]:
-            print "Opening %r..." % url
-            os.system('google-chrome-stable --new-tab %s &' % url)
+            os.system('google-chrome-stable --new-tab %s > /dev/null 2>&1 &' % url)
 
     def __repr__(self):
         return "<%s (%s)>" % (self.name, self.ip)
