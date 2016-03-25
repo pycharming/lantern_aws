@@ -44,11 +44,15 @@ def check_srvq_size(region):
     else:
         return []
 
-def fallback_srvs_in_srv_table(region, cfgbysrv):
-    if redis_shell.get(region + ':fallbacksrv') in cfgbysrv:
-        return []
-    else:
-        return ["Fallback server for region '%s' is not in srv->cfg" % region]
+def fallbacks_and_honeypots_in_srv_table(region, cfgbysrv):
+    ret = []
+    for srv in redis_shell.smembers(region + ':fallbacks'):
+        if srv not in cfgbysrv:
+            ret.append("Fallback server %s for region %s is not in srv->cfg" % (srv, region))
+    for srv in redis_shell.smembers(region + ':honeypots'):
+        if srv not in cfgbysrv:
+            ret.append("Honeypot server %s for region %s is not in srv->cfg" % (srv, region))
+    return ret
 
 def report(errors):
     if not errors:
@@ -71,7 +75,7 @@ def run_all_checks():
     for region in regions:
         errors.extend(check_srvq_size(region))
     for region in regions:
-        errors.extend(fallback_srvs_in_srv_table(region, cfgbysrv))
+        errors.extend(fallbacks_and_honeypots_in_srv_table(region, cfgbysrv))
     report(errors)
 
 
