@@ -242,12 +242,19 @@ def access_data_to_cfg(access_data):
 
 class vps:
 
-    def __init__(self, name, ip, ram, provider, etc):
+    def __init__(self, name, ip, ram, provider, provider_url, etc):
         self.name = name
         self.ip = ip
         self.ram = ram
         self.provider = provider
+        self.provider_url = provider_url
+        self.dashboard_url = "https://dashboard.getlantern.org/dashboard/script/single-proxy.js?name=%s" % name
         self.etc = etc
+
+    def browse(self):
+        for url in [self.dashboard_url, self.provider_url]:
+            print "Opening %r..." % url
+            os.system('google-chrome-stable --new-tab %s &' % url)
 
     def __repr__(self):
         return "<%s (%s)>" % (self.name, self.ip)

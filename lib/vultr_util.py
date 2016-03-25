@@ -153,7 +153,8 @@ def dict2vps(d):
     ram_suffix = " MB"
     assert d['ram'].endswith(ram_suffix)
     ram = int(d['ram'][:-len(ram_suffix)])
-    return vps_util.vps(d['label'], d['main_ip'], ram, 'vl', d)
+    url = "https://my.vultr.com/subs/?SUBID=%s#subsusage" % d['SUBID']
+    return vps_util.vps(d['label'], d['main_ip'], ram, 'vl', url, d)
 
 def all_vpss():
     return map(dict2vps, retrying_server_list().itervalues())
