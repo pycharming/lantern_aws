@@ -42,8 +42,8 @@ refill_srvq:
 
 {# Only launch regional servers from select datacenters. #}
 
-{% if pillar['in_production']
-      or pillar['in_staging']
+{% if (pillar['in_production']
+       or pillar['in_staging'])
       and (svc != 'refill_region_srvq'
            or pillar['cloudmaster_name'] in ['cm-donyc3', 'cm-dosgp1', 'cm-doams3',
                                              'cm-donyc3staging', 'cm-dosgp1staging', 'cm-doams3staging']) %}
