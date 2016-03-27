@@ -23,7 +23,8 @@ expected_do = vpss_from_cm('doams3') | vpss_from_cm('dosgp1') | vpss_from_cm('do
 expected_vultr = vpss_from_cm('vltok1') | vpss_from_cm('vlfra1') | vpss_from_cm('vlpar1')
 
 actual_do = set(v.name for v in vps_util.vps_shell('do').all_vpss()
-                if vps_util.is_production_proxy(v.name))
+                if not v.name.startswith('fp-')
+                or vps_util.is_production_proxy(v.name))
 actual_vultr = set(v.name for v in vps_util.vps_shell('vl').all_vpss())
 
 errors = []
