@@ -19,7 +19,7 @@ def vpss_from_cm(cm):
         file(cm + '_vpss_version', 'w').write(remote_version)
         return set(ret)
 
-expected_do = vpss_from_cm('doams3') | vpss_from_cm('dosgp1') | vpss_from_cm('donyc3')
+expected_do = vpss_from_cm('doams3') | vpss_from_cm('dosgp1') | vpss_from_cm('donyc3') | vpss_from_cm('dosfo1')
 expected_vultr = vpss_from_cm('vltok1') | vpss_from_cm('vlfra1') | vpss_from_cm('vlpar1')
 
 actual_do = set(v.name for v in vps_util.vps_shell('do').all_vpss()
