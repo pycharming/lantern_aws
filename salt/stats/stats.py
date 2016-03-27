@@ -22,26 +22,28 @@ def save():
     net = psutil.net_io_counters(pernic=False)
     mem = psutil.virtual_memory()
     swap = psutil.swap_memory()
-    cpu = psutil.cpu_percent(interval=1)
+    cpu = psutil.cpu_times_percent(interval=1)
+    duse = psutil.disk_usage('/')
+    dtx = psutil.disk_io_counters(perdisk=False)
     if os.path.exists(path):
         lines = file(path).readlines()[-num_samples:]
     else:
         lines = []
     new_line = "|".join(map(str,
-        [now, la1m, cpu, mem.percent, mem.active, swap.percent, swap.sin + swap.sout,
-         net.bytes_sent, net.bytes_recv, net.errin + net.errout, net.dropin + net.dropout]))
-    print "Time | load avg 1m | CPU% | mem% | active mem | swap%% | swaptx | bytes sent | bytes recv | net errors | net drops"
+        [now, la1m, cpu.user, cpu.system, cpu.iowait, cpu.idle, mem.percent, mem.active, swap.percent, swap.sin + swap.sout,
+         duse.percent, dtx.read_bytes + dtx.write_bytes, net.bytes_sent, net.bytes_recv, net.errin + net.errout, net.dropin + net.dropout]))
+    print "Time | load avg 1m | user CPU | sys CPU | IO CPU | idle CPU | mem% | active mem | swap% | swap tx | disk% | disk tx | bytes sent | bytes recv | net errors | net drops"
     print new_line
     lines.append(new_line + '\n')
     with file(path + ".tmp", 'w') as f:
         f.writelines(lines)
     os.rename(path + ".tmp", path)
 
-sample = namedtuple('sample', ['time', 'load_avg', 'cpu_pc', 'mem_pc', 'mem_active', 'swap_pc', 'swap_tx', 'bytes_sent', 'bytes_recv', 'net_errors', 'net_dropped'])
+sample = namedtuple('sample', ['time', 'load_avg', 'cpu_user', 'cpu_sys', 'cpu_io', 'cpu_idle', 'mem_pc', 'mem_active', 'swap_pc', 'swap_tx', 'disk_pc', 'disk_tx', 'bytes_sent', 'bytes_recv', 'net_errors', 'net_dropped'])
 
 def parse_line(line):
-    time, load_avg, cpu, mempc, memact, swappc, swaptx, sent, recv, err, drop = line.strip().split('|')
-    return sample(parse_time(time), float(load_avg), float(cpu), float(mempc), int(memact), float(swappc), int(swaptx), int(sent), int(recv), int(err), int(drop))
+    time, load_avg, cpu_user, cpu_sys, cpu_io, cpu_idle, mempc, memact, swappc, swaptx, diskpc, disktx, sent, recv, err, drop = line.strip().split('|')
+    return sample(parse_time(time), float(load_avg), float(cpu_user), float(cpu_sys), float(cpu_io), float(cpu_idle), float(mempc), int(memact), float(swappc), int(swaptx), float(diskpc), int(disktx), int(sent), int(recv), int(err), int(drop))
 
 def get_bps(minutes_back=None):
     "max(sent, received) bytes per second during the requested interval"
