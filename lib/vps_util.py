@@ -286,14 +286,15 @@ def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', p
     if not pipeline:
         p.execute()
 
-def pull_from_srvq(region):
-    x = redis_shell.rpop(region + ':srvq')
+def pull_from_srvq(prefix, refill=True):
+    x = redis_shell.rpop(prefix + ':srvq')
     if x is None:
-        raise RuntimeError("No servers to pull from the queue of region %s" % region)
+        raise RuntimeError("No servers to pull from the %s queue" % prefix)
     ip, name, cfg = x.split('|')
     srv = redis_shell.incr('srvcount')
     p = redis_shell.pipeline()
-    p.lpush(region + ':srvreqq', srv)
+    if refill:
+        p.lpush(prefix + ':srvreqq', srv)
     p.hset('server->config', name, cfg)
     p.hset('srv->cfg', srv, cfg)
     p.hset('srv->name', srv, name)
