@@ -147,6 +147,7 @@ def actually_retire_proxy(name, ip, pipeline=None):
     if srv:
         actually_close_proxy(name, ip, srv, txn)
         txn.hdel('srv->cfg', srv)
+        txn.hdel('server->config', name)
         txn.hdel('srv->name', srv)
         txn.hdel('srv->srvip', srv)
         txn.hdel('name->srv', name)
@@ -285,10 +286,14 @@ def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', p
         p.execute()
 
 def pull_from_srvq(region):
-    import fetchcfg
+    x = redis_shell.rpop(region + ':srvq')
+    if x is None:
+        raise RuntimeError("No servers to pull from the queue of region %s" % region)
+    ip, name, cfg = x.split('|')
     srv = redis_shell.incr('srvcount')
-    ip, name, cfg = fetchcfg.fetch(region)
     p = redis_shell.pipeline()
+    p.lpush(region + ':srvreqq', srv)
+    p.hset('server->config', name, cfg)
     p.hset('srv->cfg', srv, cfg)
     p.hset('srv->name', srv, name)
     p.hset('name->srv', name, srv)
