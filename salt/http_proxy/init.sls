@@ -8,6 +8,7 @@
 # Be sure to also update sha (`shasum http-proxy`) when you bump up version
 {% set http_proxy_sha='1cc621f48358a6df44e9bf462382918300339fd4' %}
 {% from 'ip.sls' import external_ipv4 %}
+{% from 'ip.sls' import external_ipv6 %}
 
 fp-dirs:
   file.directory:

@@ -20,7 +20,8 @@ def log_exceptions(f):
 @log_exceptions
 def save_access_data():
     d_in = json.load(file('{{ fallback_json_file }}'))
-    d_out = {'addr': '%s:%s' % (d_in['ip'], d_in['port']),
+    d_out = {'addr': '%s:%s' % (d_in['ipv4'], d_in['port']),
+             'ipv6': d_in['ipv6'],
              'authtoken': d_in['auth_token']}
 
     {% if obfs4_port != 0 %}
@@ -28,12 +29,11 @@ def save_access_data():
     {% else %}
     add_http_access_data(d_out)
     {% endif %}
-        
+
     json.dump(d_out, file('/home/lantern/access_data.json', 'w'), indent=4)
 
 def add_http_access_data(d_out):
-    d_out['cert'] = subprocess.check_output(
-                 ["cat", "/home/lantern/cert.pem"])
+    d_out['cert'] = subprocess.check_output(["cat", "/home/lantern/cert.pem"])
 
 def add_obfs4_access_data(d_out):
     d_out['pluggabletransport'] = 'obfs4'
@@ -44,7 +44,7 @@ def add_obfs4_access_data(d_out):
             if m:
                 d_out['cert'] = m.group(1)
                 d_out['pluggabletransportsettings'] = {'iat-mode': m.group(2)}
-    
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         filename='/home/lantern/save_access_data.log',
