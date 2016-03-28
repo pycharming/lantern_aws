@@ -7,7 +7,7 @@
 {% set http_proxy_version ='obfs4test' %}
 # Be sure to also update sha (`shasum http-proxy`) when you bump up version
 {% set http_proxy_sha='1cc621f48358a6df44e9bf462382918300339fd4' %}
-{% from 'ip.sls' import external_ip %}
+{% from 'ip.sls' import external_ipv4 %}
 
 fp-dirs:
   file.directory:
@@ -51,7 +51,8 @@ include:
         - template: jinja
         - context:
             auth_token: {{ auth_token }}
-            external_ip: {{ external_ip(grains) }}
+            external_ipv4: {{ external_ipv4(grains) }}
+            external_ipv6: {{ external_ipv6(grains) }}
             proxy_port: {{ proxy_port }}
             obfs4_port: {{ obfs4_port }}
             traffic_check_period_minutes: {{ traffic_check_period_minutes }}

@@ -1,4 +1,5 @@
-{"ip" : "{{ external_ip }}",
+{"ip" : "{{ external_ipv4 }}",
+ "ipv6": "{{ external_ipv6 }}",
  "port" : "443",
  "auth_token" : "{{ auth_token }}",
  "protocol" : "tcp"

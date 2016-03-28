@@ -33,8 +33,8 @@ default_plan = {'vltok1': u'31',
 def ssh_tmpl(ssh_cmd):
     return "ssh -i /etc/salt/cloudmaster.id_rsa -o StrictHostKeyChecking=no root@%s " + ("'%s'" % ssh_cmd)
 
-#{% from 'ip.sls' import external_ip %}
-bootstrap_tmpl = ssh_tmpl("curl -L https://bootstrap.saltstack.com | sh -s -- -X -A {{ external_ip(grains) }} -i %s git {{ pillar['salt_version'] }}")
+#{% from 'ip.sls' import external_ipv4 %}
+bootstrap_tmpl = ssh_tmpl("curl -L https://bootstrap.saltstack.com | sh -s -- -X -A {{ external_ipv4(grains) }} -i %s git {{ pillar['salt_version'] }}")
 
 scpkeys_tmpl = "scp -p -C -i /etc/salt/cloudmaster.id_rsa -o StrictHostKeyChecking=no minion.pem minion.pub root@%s:/etc/salt/pki/minion/"
 

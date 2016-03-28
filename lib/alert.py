@@ -6,8 +6,8 @@ import requests
 
 
 instance_id = "{{ grains['id'] }}"
-# {% from 'ip.sls' import external_ip %}
-ip = "{{ external_ip(grains) }}"
+# {% from 'ip.sls' import external_ipv4 %}
+ip = "{{ external_ipv4(grains) }}"
 url = os.environ.get('SLACK_WEBHOOK_URL')
 
 

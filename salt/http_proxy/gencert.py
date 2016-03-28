@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-{% from 'ip.sls' import external_ip %}
+{% from 'ip.sls' import external_ipv4 %}
 
 import os
 from random import SystemRandom
@@ -90,7 +90,7 @@ def gen_cert_call():
 
     argstr = " ".join("-%s %s" % (key, val) for key, val in args.iteritems())
     # DRY: org.lantern.proxy.CertTrackingSslEngineSource in the client.
-    return "keytool -genkeypair -alias fallback -keypass 'Be Your Own Lantern' -storepass 'Be Your Own Lantern' -keystore /home/lantern/littleproxy_keystore.jks -ext san=ip:{{ external_ip(grains) }} " + argstr
+    return "keytool -genkeypair -alias fallback -keypass 'Be Your Own Lantern' -storepass 'Be Your Own Lantern' -keystore /home/lantern/littleproxy_keystore.jks -ext san=ip:{{ external_ipv4(grains) }} " + argstr
 
 
 if __name__ == '__main__':

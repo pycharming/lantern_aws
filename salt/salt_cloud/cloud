@@ -1,7 +1,7 @@
-{% from 'ip.sls' import external_ip %}
+{% from 'ip.sls' import external_ipv4 %}
 
 sync_after_install: all
 delete_sshkeys: True
 minion:
-  master: {{ external_ip(grains) }}
+  master: {{ external_ipv4(grains) }}
   startup_states: highstate

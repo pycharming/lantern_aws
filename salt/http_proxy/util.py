@@ -9,8 +9,8 @@ auth_token = "{{ pillar['cfgsrv_token'] }}"
 instance_id = "{{ grains['id'] }}"
 region = vps_util.region_by_name(instance_id)
 
-# {% from 'ip.sls' import external_ip %}
-ip = "{{ external_ip(grains) }}"
+# {% from 'ip.sls' import external_ipv4 %}
+ip = "{{ external_ipv4(grains) }}"
 close_flag_filename = "server_closed"
 retire_flag_filename = "server_retired"
 
