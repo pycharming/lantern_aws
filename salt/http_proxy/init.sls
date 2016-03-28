@@ -2,10 +2,11 @@
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
 {% set proxy_port=grains.get('proxy_port', 62443) %}
+{% set obfs4_port=pillar.get('obfs4_port', 0) %}
 {% set traffic_check_period_minutes=60 %}
-{% set http_proxy_version ='v0.0.15' %}
+{% set http_proxy_version ='obfs4test' %}
 # Be sure to also update sha (`shasum http-proxy`) when you bump up version
-{% set http_proxy_sha='4374a3693820ba93449b2cf282ed7c94b1bc49cd' %}
+{% set http_proxy_sha='1cc621f48358a6df44e9bf462382918300339fd4' %}
 {% from 'ip.sls' import external_ip %}
 
 fp-dirs:
@@ -52,6 +53,7 @@ include:
             auth_token: {{ auth_token }}
             external_ip: {{ external_ip(grains) }}
             proxy_port: {{ proxy_port }}
+            obfs4_port: {{ obfs4_port }}
             traffic_check_period_minutes: {{ traffic_check_period_minutes }}
         - user: {{ user }}
         - group: {{ user }}
@@ -89,12 +91,14 @@ save-access-data:
         - template: jinja
         - context:
             fallback_json_file: {{ fallback_json_file }}
+            obfs4_port: {{ obfs4_port }}
         - user: lantern
         - group: lantern
         - cwd: /home/lantern
         - require:
             - file: {{ fallback_json_file }}
             - cmd: convert-cert
+            - service: proxy-service
 
 zip:
     pkg.installed
@@ -198,6 +202,7 @@ proxy-service:
             - cmd: fallback-proxy-dirs-and-files
             - cmd: convert-cert
             - cmd: install-http-proxy
+            - file: /home/lantern/config.ini
         - require:
             - pkg: tcl
             - cmd: ufw-rules-ready
