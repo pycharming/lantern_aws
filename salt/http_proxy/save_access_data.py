@@ -24,15 +24,17 @@ def save_access_data():
     d_out = {'addr': '%s:%s' % (d_in['ipv4'], d_in['port']),
              'authtoken': d_in['auth_token']}
 
+    # While we currently use at most one IPv6 address per proxy, our providers
+    # allow us to use any in a range of addresses, which might come useful some
+    # day. So let's return a list to be forward compatible.
+    v6addrs = []
     # At least in DO, a VPS with IPv6 disabled will still get link-local
     # addresses reported in grains. These can only cause confusion to clients
     # so let's filter them out.
     ipv6 = d_in.get('ipv6')
     if ipv6 and not ipv6.startswith('fe80'):  # link-local address prefix
-        v6addr = '[%s]:%s' % (d_in['ipv6'], d_in['port'])
-    else:
-        v6addr = ""
-    d_out['v6addr'] = v6addr
+        v6addrs.append('[%s]:%s' % (d_in['ipv6'], d_in['port']))
+    d_out['v6addrs'] = v6addrs
 
     {% if obfs4_port != 0 %}
     add_obfs4_access_data(d_out)
