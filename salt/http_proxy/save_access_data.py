@@ -20,6 +20,7 @@ def log_exceptions(f):
 @log_exceptions
 def save_access_data():
     d_in = json.load(file('{{ fallback_json_file }}'))
+    # we call this 'addr' and not 'v4addr' for backwards compatibility reasons.
     d_out = {'addr': '%s:%s' % (d_in['ipv4'], d_in['port']),
              'v6addr': '[%s]:%s' % (d_in['ipv6'], d_in['port']),
              'authtoken': d_in['auth_token']}
