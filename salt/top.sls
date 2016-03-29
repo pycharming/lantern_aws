@@ -30,3 +30,6 @@ base:
         - http_proxy
     'pubsub-*':
         - pubsub
+    'ops-panel':
+        - lantern_build_prereqs
+        - proxy_ufw_rules
