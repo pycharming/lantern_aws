@@ -21,7 +21,7 @@ def log_exceptions(f):
 def save_access_data():
     d_in = json.load(file('{{ fallback_json_file }}'))
     d_out = {'addr': '%s:%s' % (d_in['ipv4'], d_in['port']),
-             'ipv6': d_in['ipv6'],
+             'v6addr': '[%s]:%s' % (d_in['ipv6'], d_in['port']),
              'authtoken': d_in['auth_token']}
 
     {% if obfs4_port != 0 %}
