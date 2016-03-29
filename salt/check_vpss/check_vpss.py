@@ -25,7 +25,9 @@ expected_vultr = vpss_from_cm('vltok1') | vpss_from_cm('vlfra1') | vpss_from_cm(
 actual_do = set(v.name for v in vps_util.vps_shell('do').all_vpss()
                 if not v.name.startswith('fp-')
                 or vps_util.is_production_proxy(v.name))
-actual_vultr = set(v.name for v in vps_util.vps_shell('vl').all_vpss())
+actual_vultr = set(v.name for v in vps_util.vps_shell('vl').all_vpss()
+                   if not v.name.startswith('fp-')
+                   or vps_util.is_production_proxy(v.name))
 
 errors = []
 for caption, vpss in [("Missing DO droplets", expected_do - actual_do),
