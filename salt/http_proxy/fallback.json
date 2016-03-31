@@ -1,5 +1,5 @@
 {"ip" : "{{ external_ip }}",
- "port" : "{{ grains.get('proxy_port', 443) }}",
+ "port" : "443",
  "auth_token" : "{{ auth_token }}",
  "protocol" : "tcp"
 }

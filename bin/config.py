@@ -6,11 +6,12 @@ import here
 
 # Values for production deployment.
 salt_version = 'v2015.5.5'
-production_cloudmasters = ['cm-doams3', 'cm-dosgp1', 'cm-donyc3', 'cm-vltok1', 'cm-vlfra1', 'cm-vlpar1']
+production_cloudmasters = ['cm-doams3', 'cm-dosgp1', 'cm-dosfo1', 'cm-donyc3', 'cm-vltok1', 'cm-vlfra1', 'cm-vlpar1']
 datacenter = os.getenv("DC", 'doams3')
 cloudmaster_name = 'cm-' + datacenter
 cloudmaster_address = {'doams3':  '188.166.35.238',
                        'dosgp1': '128.199.84.79',
+                       'dosfo1': '45.55.14.51',
                        'donyc3': '159.203.73.43',
                        'vltok1': '45.32.47.4',
                        'vlfra1': '45.63.116.130',

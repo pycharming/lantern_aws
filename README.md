@@ -37,13 +37,33 @@ Note that this downloads a private repository that is only accessible to the Lan
 
 ### Launching a cloud master
 
-You launch a cloud master using the following command:
+Currently this is a manual process.
 
-    bin/launch_cloudmaster.py
+ - Launch a VPS of the size you want in the provider and datacenter you want (2GB is currently recommended for production ones).  Some considerations:
+   - The name must follow the convention `cm-<datacenter><optionalextrastuff>`.  For example, if want to launch a test cloudmaster for yourself in the `donyc3` datacenter, call it `cm-donyc3myname`.  A production cloudmaster must not have any extra stuff attached to its name (for example, the production cloudmaster for that datacenter is just `cm-donyc3`).
+   - Remember to provide your own SSH key in addition to the cloudmaster ones.
+   - Although these are not currently being used, selecting the options for IPv6 support and private networking might be a good idea for forward compatibility.
+ - ssh into `root@<your-new-cloudmaster-ip>` and run:
 
-By default, this will launch an instance with name 'production-cloudmaster' in the `sgp1` (Singapore 1) Digital Ocean datacenter.  This instance will communicate with the production Lantern Controller (app engine ID `lanternctrl1-2`).  You can modify all the values described in this paragraph by creating `bin/config_overrides.py` to override values in `bin/config.py`.  Note that this file is not managed by git.
+```bash
+NAME="<your-cloudmaster's-name>"
+mkdir -p /srv/pillar
+touch /srv/pillar/$NAME.sls
+curl -L https://bootstrap.saltstack.com | sh -s -- -M -A 127.0.0.1 -i $NAME git v2015.5.5
+salt-key -ya $NAME
+```
+ - make a new file with contents similar to these:
 
-The cloud master will use the Salt configuration in your local `salt/` directory (i.e., not a git commit of any sort).  But you can only deploy to the production cloudmaster from a clean master checkout.
+```
+cloudmaster_name = "cm-donyc3myname"
+cloudmaster_address = "188.166.40.244"
+```
+
+- and place it in `~/git/lantern_aws/bin/config_overrides.py`.  You probably want to have it saved somewhere else too, since you'll be deleting and restoring `config_overrides.py` to alternate between the production deployment and one or more non-production ones.
+- `cd ~/git/lantern_aws/bin`
+- `./update.py && ./hscloudmaster.bash`
+
+Your cloudmaster should be ready now.  If it's not a production one (XXX: add instructions for making it a production one) it will be running against a local redis DB.
 
 #### Example `config_overrides.py`
 

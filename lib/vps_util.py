@@ -147,6 +147,7 @@ def actually_retire_proxy(name, ip, pipeline=None):
     if srv:
         actually_close_proxy(name, ip, srv, txn)
         txn.hdel('srv->cfg', srv)
+        txn.hdel('server->config', name)
         txn.hdel('srv->name', srv)
         txn.hdel('srv->srvip', srv)
         txn.hdel('name->srv', name)
@@ -224,6 +225,7 @@ _region_by_production_cm = {'donyc3': 'etc',
                             'vlfra1': 'ir',
                             'vlpar1': 'ir',
                             'dosgp1': 'sea',
+                            'dosfo1': 'sea',
                             'vltok1': 'sea'}
 def region_by_dc(dc):
     return _region_by_production_cm[dc]
@@ -284,11 +286,16 @@ def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', p
     if not pipeline:
         p.execute()
 
-def pull_from_srvq(region):
-    import fetchcfg
+def pull_from_srvq(prefix, refill=True):
+    x = redis_shell.rpop(prefix + ':srvq')
+    if x is None:
+        raise RuntimeError("No servers to pull from the %s queue" % prefix)
+    ip, name, cfg = x.split('|')
     srv = redis_shell.incr('srvcount')
-    ip, name, cfg = fetchcfg.fetch(region)
     p = redis_shell.pipeline()
+    if refill:
+        p.lpush(prefix + ':srvreqq', srv)
+    p.hset('server->config', name, cfg)
     p.hset('srv->cfg', srv, cfg)
     p.hset('srv->name', srv, name)
     p.hset('name->srv', name, srv)

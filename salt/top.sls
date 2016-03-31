@@ -16,6 +16,7 @@ base:
         - stats
         - logrotate
         - check_disk
+        - netdata
     'cm-vlfra1':
         - vps_sanity_checks
         - check_vpss
@@ -30,3 +31,6 @@ base:
         - http_proxy
     'pubsub-*':
         - pubsub
+    'ops-panel':
+        - lantern_build_prereqs
+        - proxy_ufw_rules

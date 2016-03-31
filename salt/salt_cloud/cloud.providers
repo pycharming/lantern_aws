@@ -2,5 +2,6 @@ do:
     provider: digital_ocean
     personal_access_token: {{ pillar['do_token'] }}
     private_networking: yes
+    ipv6: yes
     ssh_key_file: /etc/salt/cloudmaster.id_rsa
     ssh_key_names: cloudmaster

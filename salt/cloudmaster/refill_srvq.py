@@ -31,8 +31,8 @@ vps_shell = vps_util.vps_shell(CM)
 
 
 def run():
-    print "Serving user region", repr(REGION), ", MAXPROCS:", repr(MAXPROCS)
     qname = QPREFIX + ":srvreqq"
+    print "Serving queue", qname, ", MAXPROCS:", repr(MAXPROCS)
     quarantine = CM + ":quarantined_vpss"
     reqq = redisq.Queue(qname, redis_shell, LAUNCH_TIMEOUT)
     procq = multiprocessing.Queue()
