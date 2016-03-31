@@ -209,7 +209,9 @@ def cm_by_name(name):
     elif name.startswith('fp-jp-'):
         name = name.replace('jp', 'vltok1', 1)
 
-    return name.split('-')[1]
+    # We need to count from the right because we have HTTPS proxies both with
+    # and without the -https- part in their name.
+    return name.split('-')[-3]
 
 def region_by_name(name):
     return region_by_dc(dc_by_name(name))
