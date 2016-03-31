@@ -16,6 +16,7 @@ base:
         - stats
         - logrotate
         - check_disk
+        - netdata
     'cm-vlfra1':
         - vps_sanity_checks
         - check_vpss
