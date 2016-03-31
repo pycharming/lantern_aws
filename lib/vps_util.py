@@ -22,6 +22,7 @@ auth_token: %s
 install-from: git
 instance_id: %s
 proxy_protocol: tcp
+obfs4_port: %s
 """
 
 auth_token_alphabet = string.ascii_letters + string.digits
@@ -44,9 +45,10 @@ def random_auth_token():
     return ''.join(random.choice(auth_token_alphabet)
                    for _ in xrange(auth_token_length))
 
-def save_pillar(name):
+def save_pillar(name, req):
+    obfs4_port = req.get('obfs4_port', 0)
     with file("/srv/pillar/%s.sls" % name, 'w') as f:
-        f.write(pillar_tmpl % (random_auth_token(), name))
+        f.write(pillar_tmpl % (random_auth_token(), name, obfs4_port))
 
 def trycmd(cmd, tries=sys.maxsize):
     for x in xrange(tries):
@@ -207,7 +209,9 @@ def cm_by_name(name):
     elif name.startswith('fp-jp-'):
         name = name.replace('jp', 'vltok1', 1)
 
-    return name.split('-')[1]
+    # We need to count from the right because we have HTTPS proxies both with
+    # and without the -https- part in their name.
+    return name.split('-')[-3]
 
 def region_by_name(name):
     return region_by_dc(dc_by_name(name))
@@ -226,7 +230,8 @@ _region_by_production_cm = {'donyc3': 'etc',
                             'vlpar1': 'ir',
                             'dosgp1': 'sea',
                             'dosfo1': 'sea',
-                            'vltok1': 'sea'}
+                            'vltok1': 'sea',
+                            'vllan1': 'etc',}
 def region_by_dc(dc):
     return _region_by_production_cm[dc]
 
