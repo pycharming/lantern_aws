@@ -8,6 +8,7 @@ import time
 import traceback
 
 import yaml
+import json
 
 from alert import send_to_slack
 from redis_util import redis_shell
@@ -75,7 +76,7 @@ def run():
                     else:
                         p.incr(CM + ":unblocked_vps_count")  # stats
                         del pending[result['reqid']]
-                        upload_cfg(result['name'], result['access_data'])
+                        upload_cfg(result['name'], result['access_data'], result['srvq'])
                         register_vps(task['name'])
                     task['remove_req'](p)
                     p.execute()
@@ -83,17 +84,20 @@ def run():
                 print "Wat?"
                 break
         if len(pending) < MAXPROCS:
-            reqid, remover = reqq.next_job()
-            if reqid:
-                print "Got request", reqid
+            req_string, remover = reqq.next_job()
+            if req_string:
+                print "Got request", req_string
+                req = json.loads(req_string)
+                reqid = req['id']
                 if reqid in pending:
                     print "Killing task %s because of queue timeout" % reqid
                     kill_task(reqid)
-                name = get_lcs_name()
+                name = get_lcs_name(req)
                 proc = multiprocessing.Process(target=launch_one_server,
                                                args=(procq,
                                                      reqid,
-                                                     name))
+                                                     name,
+                                                     req_string))
                 proc.daemon = True
                 pending[reqid] = {
                     'name': name,
@@ -111,7 +115,7 @@ def run():
                     kill_task(reqid)
         time.sleep(10)
 
-def get_lcs_name():
+def get_lcs_name(req):
     date = vps_util.todaystr()
     if redis_shell.get(CM + ':lcsserial:date') == date:
         serial = redis_shell.incr(CM + ':lcsserial')
@@ -121,14 +125,17 @@ def get_lcs_name():
         pipe.set(CM + ':lcsserial', 1)
         pipe.execute()
         serial = 1
-    return 'fp-%s-%s-%03d' % (CM, date, serial)
+    type_prefix = 'obfs4' if 'obfs4_port' in req else 'https'
+    return 'fp-%s-%s-%s-%03d' % (type_prefix, CM, date, serial)
 
-def launch_one_server(q, reqid, name):
-    d = vps_shell.create_vps(name)
+def launch_one_server(q, reqid, name, req_string):
+    req = json.loads(req_string)
+    d = vps_shell.create_vps(name, req)
     ip = d['ip']
     msg = {'reqid': reqid,
            'name': name,
            'ip': ip,
+           'srvq': req['srvq'],
            'access_data': None}
     if redis_shell.sismember(REGION + ':blocked_ips', ip):
         msg['blocked'] = True
@@ -153,7 +160,7 @@ def launch_one_server(q, reqid, name):
             msg['access_data'] = access_data
     q.put(msg)
 
-def upload_cfg(name, access_data):
+def upload_cfg(name, access_data, srvq):
     ip = access_data['addr'].split(':')[0]
     # DRY: flashlight/genconfig/cloud.yaml.tmpl
     access_data.update(pipeline=True,
@@ -163,7 +170,7 @@ def upload_cfg(name, access_data):
     cfg = "\n    " + yaml.dump({'fallback-' + ip: access_data})
     txn = redis_shell.pipeline()
     txn.hset('server->config', name, cfg)
-    txn.lpush(QPREFIX + ":srvq", "%s|%s|%s" % (ip, name, cfg))
+    txn.lpush(srvq, "%s|%s|%s" % (ip, name, cfg))
     txn.execute()
 
 def register_vps(name):

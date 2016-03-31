@@ -23,11 +23,13 @@ cloudmaster_keyid = u'56aa5453eef0b'
 
 vultr_dcid = {'vltok1': u'25',
               'vlfra1': u'9',
-              'vlpar1': u'24'}
+              'vlpar1': u'24',
+              'vllan1': u'5',}
 
 default_plan = {'vltok1': u'31',
                 'vlfra1': u'29',
-                'vlpar1': u'29'}
+                'vlpar1': u'29',
+                'vllan1': u'29',}
 
 # XXX: feed cloudmaster's internal IP when we launch one in Tokyo.
 def ssh_tmpl(ssh_cmd):
@@ -59,7 +61,8 @@ def minion_id(prefix, n):
         datetime.now().date().isoformat().replace('-', ''),
         str(n).zfill(3))
 
-def create_vps(label):
+def create_vps(label, req):
+    vps_util.save_pillar(label, req)
     dc = vps_util.dc_by_cm(vps_util.my_cm())
     subid = vultr.server_create(vultr_dcid[dc],
                                 default_plan[dc],
@@ -130,7 +133,6 @@ def init_vps(d):
         os.rename('minion.pub', os.path.join('/etc/salt/pki/master/minions', name))
         print("Starting salt-minion...")
         trycmd(start_tmpl % ip)
-        vps_util.save_pillar(name)
         print("Calling highstate...")
         time.sleep(10)
         trycmd("salt -t 1800 %s state.highstate" % name)
