@@ -88,6 +88,11 @@ def run():
             if req_string:
                 print "Got request", req_string
                 req = json.loads(req_string)
+                if isinstance(req, int):
+                    # Transition: support the old format while we are updating
+                    # the config server etc.
+                    req = {'id': req, 'srvq': QPREFIX + ':srvq'}
+                    req_string = json.dumps(req)
                 reqid = req['id']
                 if reqid in pending:
                     print "Killing task %s because of queue timeout" % reqid
