@@ -18,3 +18,24 @@ ufw:
         - order: 2
         - require:
             - service: ufw
+
+disable-password-authentication:
+  file.replace:
+    - name: /etc/ssh/sshd_config
+    - pattern: "PasswordAuthentication\\s+\\w+"
+    - repl: "PasswordAuthentication no"
+    - append_if_not_found: yes
+
+disable-challenge-response-authentication:
+  file.replace:
+    - name: /etc/ssh/sshd_config
+    - pattern: "ChallengeResponseAuthentication\\s+\\w+"
+    - repl: "ChallengeResponseAuthentication no"
+    - append_if_not_found: yes
+
+reload-sshd-on-password-disable:
+  service.running:
+    - name: ssh
+    - watch:
+        - file: disable-password-authentication
+        - file: disable-challenge-response-authentication
