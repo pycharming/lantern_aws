@@ -17,6 +17,7 @@ base:
         - logrotate
         - check_disk
         - netdata
+        - sshalert
     'cm-vlfra1':
         - vps_sanity_checks
         - check_vpss
