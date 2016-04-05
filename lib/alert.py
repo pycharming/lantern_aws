@@ -1,7 +1,13 @@
 import json
 import os
+import sys
 
-import redis_util
+try:
+    import redis_util
+except ImportError:
+    # Some VPSs don't have redis configured. We still want to be able to send
+    # slack notifications from those.
+    print >> sys.stderr, "Couldn't import redis_util; alert() won't work."
 import requests
 
 
