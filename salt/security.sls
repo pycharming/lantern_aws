@@ -22,14 +22,14 @@ ufw:
 disable-password-authentication:
   file.replace:
     - name: /etc/ssh/sshd_config
-    - pattern: "PasswordAuthentication\\s+\\w+"
+    - pattern: "^PasswordAuthentication\\s+\\w+"
     - repl: "PasswordAuthentication no"
     - append_if_not_found: yes
 
 disable-challenge-response-authentication:
   file.replace:
     - name: /etc/ssh/sshd_config
-    - pattern: "ChallengeResponseAuthentication\\s+\\w+"
+    - pattern: "^ChallengeResponseAuthentication\\s+\\w+"
     - repl: "ChallengeResponseAuthentication no"
     - append_if_not_found: yes
 
