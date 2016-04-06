@@ -32,10 +32,10 @@ def save_access_data():
     json.dump(d_out, file('/home/lantern/access_data.json', 'w'), indent=4)
 
 def add_http_access_data(d_out):
-    # join PEM file to single line to prevent issues handling '\r' and '\n'
+    # normalize to single '\n' to prevent issues handling '\r' and '\n'
     with open('/home/lantern/cert.pem') as f:
         lines = [line.strip() for line in f]
-        d_out['cert'] = ''.join(lines)
+        d_out['cert'] = '\n'.join(lines)
 
 def add_obfs4_access_data(d_out):
     d_out['pluggabletransport'] = 'obfs4'
