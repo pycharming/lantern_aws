@@ -76,7 +76,7 @@ def run():
                     else:
                         p.incr(CM + ":unblocked_vps_count")  # stats
                         del pending[result['reqid']]
-                        upload_cfg(result['name'], result['access_data'], result['srvq'])
+                        vps_util.enqueue_cfg(result['name'], result['access_data'], result['srvq'])
                         register_vps(task['name'])
                     task['remove_req'](p)
                     p.execute()
@@ -165,18 +165,6 @@ def launch_one_server(q, reqid, name, req_string):
             msg['access_data'] = access_data
     q.put(msg)
 
-def upload_cfg(name, access_data, srvq):
-    ip = access_data['addr'].split(':')[0]
-    # DRY: flashlight/genconfig/cloud.yaml.tmpl
-    access_data.update(pipeline=True,
-                       trusted=True,
-                       qos=10,
-                       weight=1000000)
-    cfg = "\n    " + yaml.dump({'fallback-' + ip: access_data})
-    txn = redis_shell.pipeline()
-    txn.hset('server->config', name, cfg)
-    txn.lpush(srvq, "%s|%s|%s" % (ip, name, cfg))
-    txn.execute()
 
 def register_vps(name):
     print "Registering VPS", name
