@@ -323,3 +323,22 @@ def assign_clientip_to_new_own_srv(clientip, region):
 
 def is_production_proxy(name):
     return name.startswith('fp-') and cm_by_name(name) in _region_by_production_cm
+
+def destroy_until_dc(srvq, dc):
+    """
+    Pop proxies off the server queue, retire them and destroy them, until we
+    hit one with the desired DC.
+
+    This is used when we want to quickly start serving a user region from a
+    specific datacenter.
+    """
+    while True:
+        entry = redis_shell.rpop(srvq)
+        ip, name, cfg = entry.split('|')
+        print "popping", name
+        next_dc = dc_by_name(name)
+        if next_dc == dc:
+            print "pushing back", name
+            redis_shell.rpush(srvq, entry)
+            return
+        retire_proxy(name=name, ip=ip, reason="Flushing server queue")
