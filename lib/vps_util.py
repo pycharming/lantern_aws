@@ -390,4 +390,4 @@ def fix_live_servers():
             fixed_access_data = fix_cert_newlines(access_data)
             fixed_cfg = serialize_access_data(fixed_access_data, name)
             fixed[srv] = fixed_cfg
-    redis_shell.hmget('srv->cfg', fixed)
+    redis_shell.hmset('srv->cfg', fixed)
