@@ -324,6 +324,73 @@ def assign_clientip_to_new_own_srv(clientip, region):
 def is_production_proxy(name):
     return name.startswith('fp-') and cm_by_name(name) in _region_by_production_cm
 
+def serialize_access_data(access_data, name):
+    ad = access_data.copy()
+    # DRY: flashlight/genconfig/cloud.yaml.tmpl
+    ad.update(pipeline=True,
+              trusted=True,
+              qos=10,
+              weight=1000000)
+    return "\n    " + yaml.dump({name: ad})
+
+def enqueue_cfg(name, access_data, srvq):
+    "Upload a config to a server queue."
+    ip = access_data['addr'].split(':')[0]
+    cfg = serialize_access_data(access_data, name)
+    txn = redis_shell.pipeline()
+    txn.hset('server->config', name, cfg)
+    txn.lpush(srvq, "%s|%s|%s" % (ip, name, cfg))
+    txn.execute()
+
+def fix_cert_newlines(d):
+    d = d.copy()
+    d['cert'] = re.sub(r'[\r\n\\]+', '\n', d['cert'])
+    return d
+
+def fix_access_data(qentry, fixfn):
+    ip, name, cfg = qentry.split('|')
+    access_data = yaml.load(cfg).values()[0]
+    fixed_access_data = fixfn(access_data)
+    return '|'.join([ip, name, serialize_access_data(fixed_access_data, name)])
+
+def filter_queue(qname, fn):
+    bakname = qname + '.bak'
+    redis_shell.rename(qname, bakname)
+    p = redis_shell.pipeline()
+    for entry in redis_shell.lrange(bakname, 0, -1):
+        p.lpush(qname, fn(entry))
+    p.execute()
+
+def fix_queues():
+    regions = redis_shell.smembers('user-regions')
+    cloudmasters = redis_shell.smembers('cloudmasters')
+    for domain in regions | cloudmasters:
+        qname = domain + ':srvq'
+        if redis_shell.exists(qname):
+            print "fixing queue for %s..." % domain
+            fix_queue(qname)
+        else:
+            print "no queue for %s." % domain
+
+
+# Ad hoc application of the building blocks above. Leaving them around, should
+# they serve as inspiration for future fixing jobs.
+
+def fix_queue(qname):
+    filter_queue(qname, lambda s: fix_access_data(s, fix_cert_newlines))
+
+def fix_live_servers():
+    srv2cfg = redis_shell.hgetall('srv->cfg')
+    fixed = {}
+    for srv, cfg in srv2cfg.iteritems():
+        if '\\' in cfg:
+            name, access_data = yaml.load(cfg).items()[0]
+            print "fixing srv %s..." % name
+            fixed_access_data = fix_cert_newlines(access_data)
+            fixed_cfg = serialize_access_data(fixed_access_data, name)
+            fixed[srv] = fixed_cfg
+    redis_shell.hmset('srv->cfg', fixed)
+
 def destroy_until_dc(srvq, dc):
     """
     Pop proxies off the server queue, retire them and destroy them, until we
