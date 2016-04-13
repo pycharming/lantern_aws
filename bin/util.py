@@ -5,7 +5,7 @@ import yaml
 
 import config
 import here
-from misc_util import memoized
+from misc_util import memoized, whitelist_ssh
 
 
 def in_production():
@@ -66,6 +66,7 @@ def set_secret_permissions():
             os.chmod(os.path.join(path, name), stat.S_IREAD)
 
 def ssh_cloudmaster(cmd=None, out=None):
+    whitelist_ssh()
     full_cmd = "ssh -o StrictHostKeyChecking=no -i %s root@%s" % (
                     config.key_path,
                     config.cloudmaster_address)

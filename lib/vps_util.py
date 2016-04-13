@@ -13,7 +13,6 @@ import yaml
 
 import redis_util
 from redis_util import log2redis, nameipsrv, redis_shell
-import misc_util as util
 
 
 pillar_tmpl = """\
