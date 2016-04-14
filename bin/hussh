@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
+import subprocess
 import sys
 
 import misc_util
 
+
 misc_util.whitelist_ssh()
-ret, output = misc_util.cmd_error_and_output(['ssh'] + sys.argv[1:])
-if output:
-    sys.stdout.write(output)
-sys.exit(ret)
+sys.exit(subprocess.call(['ssh'] + sys.argv[1:]))
