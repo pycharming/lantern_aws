@@ -96,7 +96,11 @@ def pssh(ips, cmd, timeout=60, pool=None, whitelist=True):
         except AttributeError:
             pass
     if whitelist:
-        timeout = 60 + (5 * 60 * len(ips) // poolsize)
+        # Optimization: we do a single whitelist call instead of len(ips) ones.
+        #
+        # We set a conservative expiration for this one. The whole operation
+        # should have concluded or timed out by this time.
+        whitelist_ssh(time=60 + (timeout * len(ips) // poolsize))
     return pool.map(_single_arg_ssh, ((ip, cmd, timeout, False) for ip in ips))
 
 def confirm(msg):
