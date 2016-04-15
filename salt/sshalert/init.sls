@@ -6,6 +6,8 @@
 /etc/ssh/sshd_config:
   file.append:
     - text: "ForceCommand /usr/bin/sshalert.py"
+    # prevent spurious logs on VPS creation.
+    - order: last
     - require:
        - file: /usr/bin/sshalert.py
 

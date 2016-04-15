@@ -1,0 +1,10 @@
+#!/usr/bin/env python
+
+import subprocess
+import sys
+
+import misc_util
+
+
+misc_util.whitelist_ssh()
+sys.exit(subprocess.call(['ssh'] + sys.argv[1:]))
