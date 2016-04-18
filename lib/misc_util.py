@@ -60,6 +60,7 @@ def whitelist_ssh(time=60):
     try:
         from redis_util import redis_shell as redis_shell
     except ImportError:
+        traceback.print_exc()
         print >> sys.stderr, "No redis access; I won't be whitelisted in this SSH session"
         return
     ip = subprocess.check_output(['dig', '+short', 'myip.opendns.com', '@resolver1.opendns.com']).strip()
