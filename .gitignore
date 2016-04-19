@@ -12,3 +12,5 @@ hslog
 bin/result
 bin/status
 .#*
+venv
+.venv
