@@ -1,5 +1,5 @@
 python-dateutil
 python-digitalocean
 redis
-transit-python
-vultr
+transit-python==0.8.282
+vultr==0.1.2
