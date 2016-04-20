@@ -23,9 +23,15 @@ If the fallback proxy fails to set itself up, eventually the SQS message that tr
 
 ### Before you start
 
-You need a recent version of the Digital Ocean API Python wrapper to run the script that launches cloud masters.
+Install required packages to run the script that launches cloud masters and other util scripts.
 
-    sudo pip install -U python-digitalocean
+    sudo pip install -U -r requirements.txt
+
+Or if you want to run it in isolated environment:
+
+    virtualenv venv
+    . venv/bin/activate
+    pip install -U -r requirements.txt
 
 After you check out this repository, and unless you passed the `--recursive` flag to `git clone`, you need to run the following to fetch secrets required by Lantern:
 
