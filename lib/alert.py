@@ -17,16 +17,19 @@ ip = "{{ external_ip(grains) }}"
 url = os.environ.get('SLACK_WEBHOOK_URL')
 
 
-def send_to_slack(title, text, color='warning'):
+def send_to_slack(title, text, color='warning', channel=None):
     text = "%s (%s) reports:\n%s" % (instance_id, ip, text)
     payload = {"fallback": title + '\n' + text,
                "color": color,
                "title": title,
                "text": text,
                "mrkdwn_in": ['text']}
+    data = {'attachments': [payload]}
+    if channel:
+        data['channel'] = channel
     requests.post(url,
                   headers={'content-type': 'application/json'},
-                  data=json.dumps({'attachments': [payload]}))
+                  data=json.dumps(data))
 
 def alert(type, details, title=None, text=None, color='warning', pipeline=None):
     """
