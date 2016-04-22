@@ -24,7 +24,6 @@ if not whitelisted:
     # test cloudmaster).  You can easily lock yourself out of the test machine.
     # Keeping a backup of this file and a separate SSH session open while you
     # test this should help prevent such lockout.
-    force = False
     if not original_cmd:
         print >> sys.stderr, "Your IP is not whitelisted.  Please use lantern_aws/bin/hussh instead."
         print >> sys.stderr, "If you continue, ssh-alert noise will ensue.  You'll need to warn the"
