@@ -40,6 +40,9 @@ reload-sshd-on-password-disable:
         - file: disable-password-authentication
         - file: disable-challenge-response-authentication
 
+# On VPS creation, our VPS providers initialize the root account with a SSH key
+# (called `cloudmaster`) so we can perform initial setup. As soon as we first
+# run Salt configuration, this key becomes unnecessary, so let's remove it.
 /root/.ssh/authorized_keys:
   file.replace:
     - pattern: "ssh-rsa \\S+ lanterncyborg@gmail\\.com\n"
