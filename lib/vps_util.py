@@ -342,7 +342,8 @@ def serialize_access_data(access_data, name):
               trusted=True,
               qos=10,
               weight=1000000)
-    return "\n    " + yaml.dump({name: ad})
+    # Use safe_dump to avoid `!!python/unicode` markers for unicode strings.
+    return "\n    " + yaml.safe_dump({name: ad})
 
 def enqueue_cfg(name, access_data, srvq):
     "Upload a config to a server queue."
