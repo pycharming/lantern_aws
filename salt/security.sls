@@ -39,3 +39,10 @@ reload-sshd-on-password-disable:
     - watch:
         - file: disable-password-authentication
         - file: disable-challenge-response-authentication
+
+/root/.ssh/authorized_keys:
+  file.replace:
+    - pattern: "ssh-rsa \\S+ lanterncyborg@gmail\\.com\n"
+    - repl: ""
+    # Without this line salt-cloud setup will fail with a SSH login error.
+    - order: last

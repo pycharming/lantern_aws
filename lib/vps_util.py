@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime
 import itertools as it
+import json
 import os
 import random
 import re
@@ -9,6 +10,7 @@ import string
 import sys
 import tempfile
 import time
+
 import yaml
 
 import redis_util
@@ -67,36 +69,46 @@ def highstate_pid(name):
     return None
 
 # For good measure.
-def hammer_the_damn_thing_until_it_proxies(name, ssh_tmpl, fetchaccessdata_cmd):
-    reboot_cmd = ssh_tmpl % 'reboot'
-    kill_tmpl = ssh_tmpl % 'kill -9 %s'
+def hammer_the_damn_thing_until_it_proxies(name):
+    def saltcmd(cmd):
+        return "salt %s cmd.run '%s'" % (name, cmd)
+    def trysaltcmd(cmd):
+        return trycmd(saltcmd(cmd), 5)
     with tempdir(name):
         while True:
             print("Rebooting...")
-            trycmd(reboot_cmd)
-            time.sleep(10)
-            print("Fetching access data...")
-            if trycmd(fetchaccessdata_cmd, 5):
-                access_data = file('access_data.json').read()
-                file('fallbacks.json', 'w').write("[" + access_data + "]")
-                for tries in xrange(3):
-                    out = subprocess.check_output(['checkfallbacks',
-                                                   '-fallbacks', 'fallbacks.json',
-                                                   '-connections', '1'])
-                    if "[failed fallback check]" in out:
-                        print("Fallback check failed; retrying...")
-                    else:
-                        print("VPS up!")
-                        return yaml.load(access_data)
-                    time.sleep(10)
+            trysaltcmd('reboot')
+            for _ in xrange(10):
+                time.sleep(10)
+                print("Fetching access data...")
+                try:
+                    adstr = subprocess.check_output(['salt', name, 'cmd.run', 'cat /home/lantern/access_data.json'])
+                except subprocess.CalledProcessError:
+                    continue
+                if adstr:
+                    # Remove header line
+                    adstr = adstr.split('\n', 1)[1]
+                if adstr and not adstr.strip().startswith('Minion did not return.'):
+                    file('fallbacks.json', 'w').write("[" + adstr + "]")
+                    for tries in xrange(3):
+                        out = subprocess.check_output(['checkfallbacks',
+                                                       '-fallbacks', 'fallbacks.json',
+                                                       '-connections', '1'])
+                        if "[failed fallback check]" in out:
+                            print("Fallback check failed; retrying...")
+                        else:
+                            print("VPS up!")
+                            return json.loads(adstr)
+                        time.sleep(10)
             print("Minion seems to be misconfigured.  Let's try reapplying salt state...")
             pid = highstate_pid(name)
             if pid:
-                trycmd(kill_tmpl % pid, 5)
+                trysaltcmd("kill -9 %s" % pid)
             # Sometimes our hammering interrupts dpkg such that highstate will
-            # always fail to install any apt packages.
-            trycmd("salt %s cmd.run 'dpkg --configure -a'" % name)
-            trycmd("salt -t 1200 %s state.highstate" % name)
+            # always fail to install any apt packages. This dpkg command takes
+            # us out of that lock.
+            trysaltcmd("dpkg --configure -a")
+            trycmd("salt -t 1200 %s state.highstate" % name, 1)
 
 def cleanup_keys(do_shell=None, vultr_shell=None):
     vpss = all_vpss()

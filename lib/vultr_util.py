@@ -40,8 +40,6 @@ bootstrap_tmpl = ssh_tmpl("curl -L https://bootstrap.saltstack.com | sh -s -- -X
 
 scpkeys_tmpl = "scp -p -C -i /etc/salt/cloudmaster.id_rsa -o StrictHostKeyChecking=no minion.pem minion.pub root@%s:/etc/salt/pki/minion/"
 
-fetchaccessdata_tmpl = "scp -i /etc/salt/cloudmaster.id_rsa -o StrictHostKeyChecking=no root@%s:/home/lantern/access_data.json ."
-
 start_tmpl = ssh_tmpl("service salt-minion restart")
 
 vultr = Vultr(api_key)
@@ -136,10 +134,7 @@ def init_vps(d):
         print("Calling highstate...")
         time.sleep(10)
         trycmd("salt -t 1800 %s state.highstate" % name)
-        return vps_util.hammer_the_damn_thing_until_it_proxies(
-            name,
-            ssh_tmpl('%%s') % ip,
-            fetchaccessdata_tmpl % ip)
+        return vps_util.hammer_the_damn_thing_until_it_proxies(name)
 
 def destroy_vps(name,
                 server_cache=util.Cache(timeout=60*60,

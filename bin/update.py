@@ -55,9 +55,8 @@ def rsync_salt():
     return rsync(here.salt_states_path, '/srv/salt')
 
 def scp(src, dst):
-    error = os.system("scp -o StrictHostKeyChecking=no -i %s %s root@%s:%s"
-                      % (config.key_path,
-                         src,
+    error = os.system("scp -o StrictHostKeyChecking=no %s %s:%s"
+                      % (src,
                          config.cloudmaster_address,
                          dst))
     if not error:
@@ -65,10 +64,9 @@ def scp(src, dst):
     return error
 
 def rsync(src, dst):
-    error = os.system(("rsync -e 'ssh -o StrictHostKeyChecking=no -i %s'"
-                       + " -azLk %s/ root@%s:%s")
-                      % (config.key_path,
-                         src,
+    error = os.system(("rsync -e 'ssh -o StrictHostKeyChecking=no'"
+                       + " -azLk %s/ %s:%s")
+                      % (src,
                          config.cloudmaster_address,
                          dst))
     if not error:
@@ -79,8 +77,8 @@ def upload_master_config():
     util.ssh_cloudmaster(r"""(echo "timeout: 20" """
                          + r""" && echo "keep_jobs: 2" """
                          + r""" && echo "worker_threads: 20" """
-                         + r""" ) > /root/master""")
-    move_root_file('/root/master', '/etc/salt/master')
+                         + r""" ) > master""")
+    move_root_file('master', '/etc/salt/master')
 
 def move_root_file(src, dst):
     return util.ssh_cloudmaster(('sudo mv %s %s'
