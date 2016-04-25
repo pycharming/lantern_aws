@@ -11,8 +11,6 @@ import misc_util
 import vps_util
 
 
-ssh_tmpl = "ssh -o StrictHostKeyChecking=no -i /etc/salt/cloudmaster.id_rsa root@%s '%%s'"
-
 do_token = os.getenv("DO_TOKEN")
 do = digitalocean.Manager(token=do_token)
 
