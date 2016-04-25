@@ -39,3 +39,14 @@ reload-sshd-on-password-disable:
     - watch:
         - file: disable-password-authentication
         - file: disable-challenge-response-authentication
+
+# On initial launch, our VPS providers initialize the `root` user account with a
+# SSH key (called `cloudmaster`) so we can perform initial setup. As soon as we
+# first run Salt configuration, this key becomes unnecessary, so let's remove
+# it.
+/root/.ssh/authorized_keys:
+  file.replace:
+    - pattern: "ssh-rsa \\S+ lanterncyborg@gmail\\.com\n"
+    - repl: ""
+    # Without this line salt-cloud setup will fail with a SSH login error.
+    - order: last

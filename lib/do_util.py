@@ -11,9 +11,6 @@ import misc_util
 import vps_util
 
 
-ssh_tmpl = "ssh -o StrictHostKeyChecking=no -i /etc/salt/cloudmaster.id_rsa root@%s '%%s'"
-fetchaccessdata_tmpl = "scp -o StrictHostKeyChecking=no -i /etc/salt/cloudmaster.id_rsa root@%s:/home/lantern/access_data.json ."
-
 do_token = os.getenv("DO_TOKEN")
 do = digitalocean.Manager(token=do_token)
 
@@ -37,10 +34,7 @@ def init_vps(d):
         print("Highstate still running...")
         time.sleep(10)
     print("Highstate done!")
-    return vps_util.hammer_the_damn_thing_until_it_proxies(
-        name,
-        ssh_tmpl % ip,
-        fetchaccessdata_tmpl % ip)
+    return vps_util.hammer_the_damn_thing_until_it_proxies(name)
 
 def droplets_by_name():
     return {d.name: d
