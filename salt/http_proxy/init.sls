@@ -4,9 +4,9 @@
 {% set proxy_port=grains.get('proxy_port', 62443) %}
 {% set obfs4_port=pillar.get('obfs4_port', 0) %}
 {% set traffic_check_period_minutes=60 %}
-{% set http_proxy_version ='reporting-test' %}
+{% set http_proxy_version ='reporting-test-auth' %}
 # Be sure to also update sha (`shasum http-proxy`) when you bump up version
-{% set http_proxy_sha='b6d641dbe5d018aca9e39fba059e5824619c9d8b' %}
+{% set http_proxy_sha='eba2b649883ce02e6c3fae810827593c1a299911' %}
 {% from 'ip.sls' import external_ip %}
 
 fp-dirs:
