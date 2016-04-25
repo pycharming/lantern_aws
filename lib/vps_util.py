@@ -83,7 +83,10 @@ def hammer_the_damn_thing_until_it_proxies(name):
                 print("Fetching access data...")
                 try:
                     adstr = subprocess.check_output(['salt', name, 'cmd.run', 'cat /home/lantern/access_data.json'])
-                except subprocess.CalledProcessError:
+                except subprocess.CalledProcessError as e:
+                    print "Error %s fetching access data" % e.returncode
+                    print "Output was:"
+                    print e.output
                     continue
                 if adstr:
                     # Remove header line
