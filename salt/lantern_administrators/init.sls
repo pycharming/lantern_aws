@@ -23,7 +23,8 @@
       - require:
         - file: /home/{{ name }}
 
-/etc/sudoers.d/90-{{ name }}:
+# dots in the filename confuse sudo
+/etc/sudoers.d/90-{{ name|replace('.', '_') }}:
     file.managed:
       - source: salt://lantern_administrators/nopw_sudoers
       - user: root
