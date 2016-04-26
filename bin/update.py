@@ -64,7 +64,7 @@ def scp(src, dst):
     return error
 
 def rsync(src, dst):
-    error = os.system(("rsync -e 'ssh -o StrictHostKeyChecking=no'"
+    error = os.system(("rsync -e 'ssh -t -o StrictHostKeyChecking=no'"
                        + " -azLk %s/ %s:%s")
                       % (src,
                          config.cloudmaster_address,
