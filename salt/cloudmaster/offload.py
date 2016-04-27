@@ -21,8 +21,9 @@ def run():
         task, remover = q.next_job()
         if task:
             name, ip = task.split('|')
+            print "Offloading users from %s (%s)" % (name, ip)
             txn = redis_shell.pipeline()
-            vps_util.actually_offload_proxy(name, ip, txn)
+            vps_util.actually_offload_proxy(name, ip, pipeline=txn)
             remover(txn)
             cm = vps_util.cm_by_name(name)
             txn.lpush(cm + ':retireq', task)

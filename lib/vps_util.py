@@ -163,7 +163,7 @@ def actually_offload_proxy(name=None, ip=None, srv=None, pipeline=None):
     clients = set(pip
                   for pip, psrv in redis_shell.hgetall(client_table_key).iteritems()
                   if psrv == packed_srv)
-    dest = vps_util.pull_from_srvq(region)
+    dest = pull_from_srvq(region)
     # It's still possible that we'll crash or get rebooted here, so the
     # destination server will be left empty. The next closed proxy compaction
     # job will find this proxy and assign some users to it or mark it for
