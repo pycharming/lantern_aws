@@ -26,7 +26,7 @@ refill_srvq:
     - require:
        - service: refill_srvq
 
-{% for executable in ['refill_srvq', 'retire', 'destroy'] %}
+{% for executable in ['refill_srvq', 'offload', 'retire', 'destroy'] %}
 /usr/bin/{{ executable }}.py:
     file.managed:
         - source: salt://cloudmaster/{{ executable }}.py
@@ -37,6 +37,7 @@ refill_srvq:
 
 {% for svc, executable in [('refill_cm_srvq', 'refill_srvq'),
                            ('refill_region_srvq', 'refill_srvq'),
+                           ('offload', 'offload'),
                            ('retire', 'retire'),
                            ('destroy', 'destroy')] %}
 
