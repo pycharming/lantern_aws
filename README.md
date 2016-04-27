@@ -4,20 +4,15 @@ This project contains code and configuration scripts to launch and manage cloud-
 
 At this moment, three types of machines are launched and managed by this project:
 
-- **Fallback Proxies**: These run Lantern instances to offer access to the
-  free internet to Lantern users that have no available peers for this end.
+- **Chained Proxies**: These offer access to the free internet to Lantern users.
 
-- A single **Cloud Master**, which launches fallback proxies on request from the [Lantern Controller](https://github.com/getlantern/lantern-controller), or any of the other previously mentioned server types, on request from administrators (see `bin/fake_controller.py`).  Further operations on fallback proxies (especially 'batch' operations involving many such machines) are typically done through this cloud master.
+- **Cloudmasters**, which launches fallback proxies, runs checks on them, and allows to run batch jobs in them (in particular, updating their configuration).
 
 ## How does it work
 
-Whenever we determine a new server needs to be launched or destroyed, a new message is sent to an SQS queue encoding a request.  We can do this manually (see `bin/fake_controller.py`) or, in the case of fallbacks, the controller may do it on its own.  Cloud masters listen for such messages and perform the requested operations.
+Cloudmasters listen for requests to launch, retire, an destroy proxies in a reliable redis queue.  Upon serving them, and when necessary, they push their results (e.g., proxy configurations) to redis queues.  Currently, the main system interacting with the cloudmasters in this way is the config server.
 
-Fallback proxies download, build and run a Lantern client, with some command line arguments instructing it to proxy traffic to the uncensored internet.  When done with setup, they notify the Lantern Controller by sending a message to another SQS queue, and then they delete the original SQS message that triggered the whole operation.
-
-If the fallback proxy fails to set itself up, eventually the SQS message that triggered its launch will become visible again for the cloud master.  When a cloud master finds that an instance already exists with the same ID as that in a launch request, it will assume that it has failed to complete setup correctly due to temporary conditions, so it will kill it and launch a new one.
-
-[Salt](http://saltstack.com/) is used for configuration management.  The `salt` directory in this project contains the configuration for all the machines (you can see which modules apply to which machines in `salt/top.sls`).  [Salt Cloud](https://docs.saltstack.com/en/latest/topics/cloud/) is used to launch the machines, and the Cloud Master doubles as a Salt Master for launched peers, so they fetch their initial configuration from it.
+[Salt](http://saltstack.com/) is used for configuration management.  The `salt` directory in this project contains the configuration for all the machines (you can see which modules apply to which machines in `salt/top.sls`).  The Cloud Master doubles as a Salt Master for launched peers, so they fetch their configuration from it.
 
 ## Usage
 
@@ -39,56 +34,23 @@ After you check out this repository, and unless you passed the `--recursive` fla
 
 Note that this downloads a private repository that is only accessible to the Lantern core development team.
 
-(XXX:) Instructions to replace these secrets with your own equivalents will be added here on request to aranhoide@gmail.com.
+### Updating the salt configuration of a cloudmaster
 
-### Launching a cloud master
-
-Currently this is a manual process.
-
- - Launch a VPS of the size you want in the provider and datacenter you want (2GB is currently recommended for production ones).  Some considerations:
-   - The name must follow the convention `cm-<datacenter><optionalextrastuff>`.  For example, if want to launch a test cloudmaster for yourself in the `donyc3` datacenter, call it `cm-donyc3myname`.  A production cloudmaster must not have any extra stuff attached to its name (for example, the production cloudmaster for that datacenter is just `cm-donyc3`).
-   - Remember to provide your own SSH key in addition to the cloudmaster ones.
-   - Although these are not currently being used, selecting the options for IPv6 support and private networking might be a good idea for forward compatibility.
- - ssh into `root@<your-new-cloudmaster-ip>` and run:
-
-```bash
-NAME="<your-cloudmaster's-name>"
-mkdir -p /srv/pillar
-touch /srv/pillar/$NAME.sls
-curl -L https://bootstrap.saltstack.com | sh -s -- -M -A 127.0.0.1 -i $NAME git v2015.5.5
-salt-key -ya $NAME
-```
- - make a new file with contents similar to these:
-
-```
-cloudmaster_name = "cm-donyc3myname"
-cloudmaster_address = "188.166.40.244"
-```
-
-- and place it in `~/git/lantern_aws/bin/config_overrides.py`.  You probably want to have it saved somewhere else too, since you'll be deleting and restoring `config_overrides.py` to alternate between the production deployment and one or more non-production ones.
-- `cd ~/git/lantern_aws/bin`
-- `./update.py && ./hscloudmaster.bash`
-
-Your cloudmaster should be ready now.  If it's not a production one (XXX: add instructions for making it a production one) it will be running against a local redis DB.
-
-#### Example `config_overrides.py`
-
-```
-controller = 'oxlanternctrl'
-cloudmaster_name = 'oxcloudmaster'
-```
-
-### Updating a cloud master
-
-You can sync the Salt configuration of the cloud master (which is the one that all launched peers use) with the one in your local `salt/` directory (i.e., not a git commit of any sort), using the following command:
+Whether you want to change the configuration of the cloudmaster itself or the machines it manages, the first step is syncing the cloudmaster's Salt configuration with your local one.  To do this, run
 
     bin/update.py
 
 The values in `config.py` will be used to find the Cloud Master to update.
 
+If you want to deploy to a test cloudmaster or proxy, use a `config_overrides.py` (see the section on "Launching a cloudmaster" below).
+
+To update the Salt configuration of all production cloudmasters at once, make sure you have a clean checkout of the latest master and run:
+
+    bin/inallcms bin/update.py
+
 #### Applying the updated configuration
 
-Note that `bin/update.py` doesn't apply the changes to the machines managed by Salt.  Sometimes you only want to upload your salt config in order to update the fallback proxies (or even one particular proxy), or only the cloud master, or all of them.  You can do that after you sync the cloud master with your local Salt configuration.
+Note that `bin/update.py` doesn't apply the changes to the machines managed by Salt.  Sometimes you only want to upload your salt config in order to update the chained proxies (or even one particular proxy), or only the cloud master, or all of them.
 
 You apply the new configuration by using regular salt commands.  As a convenience, a `bin/ssh_cloudmaster.py [<command>]` script will find your cloud master and run the command you provide there, or just log you in as the root user if you provide no commands.
 
@@ -100,32 +62,72 @@ or, as a shortcut,
 
     bin/hscloudmaster.bash
 
+or, if you want to do this in all production cloudmasters in parallel,
+
+    bin/inallcms bin/hscloudmaster.bash
+
 If you are not sure whether a configuration change requires applying the
 changes in the cloudmaster itself, it can't hurt to just do it to be in the safe side.
 
-To sync all machines (including the cloud master itself):
+All chained proxies have salt IDs starting with 'fp-' (fp stands for "fallback proxy", an old name for these), so you can instruct the proxies, but not the cloud master, to apply the current configuration with
 
-    bin/ssh_cloudmaster.py 'salt -b 20 "*" state.highstate'
+    bin/ssh_cloudmaster.py 'salt -b 100 "fp-*" state.highstate'
 
-where the `-b 20` part does some batching to avoid overloading the cloudmaster.
+If you have many proxies in a clodumaster, they may have trouble updating all at once, since they all need to pull files from the master and other servers, and report progress to the master.  `-b 100` makes sure that at most 100 proxies are updated at once.
 
-All fallback proxies have salt IDs starting with 'fp-', so you can instruct the proxies, but not the cloud master, to apply the current configuration with
+To do this in the proxies managed by all production cloudmasters,
 
-    bin/ssh_cloudmaster.py 'salt -b 5 "fp-*" state.highstate'
+    bin/inallcms bin/ssh_cloudmaster.py 'salt -b 100 "fp-*" state.highstate'
+    
+This operation is not 100% reliable, so after running an important update you may need to verify that the update was performed in all machines.  How to do this is explained below, in the "Verify deployment" subsection.
 
-or, as a shortcut,
+To run an arbitrary command (as root) in all chained proxies:
 
-    bin/histate.bash
+    bin/ssh_cloudmaster.py 'salt --out=yaml "fp-*" cmd.run "ls /home/lantern/"'
 
-To run an arbitrary command (as root) in all fallback proxies:
+`--out=yaml` ensures that the output is valid YAML and is only needed if you are going to consume the output of this programmaticaly.
 
-    bin/ssh_cloudmaster.py 'salt "fp-*" cmd.run "ls /home/lantern/"'
 
-##### Common tasks
+#### Common tasks
 
 Tasks will be added here in a per need basis.  You may want to check out the `bin` folder for example scripts.
 
-###### Perform basic checks on newly launched minions
+##### Verify deployment
+
+There is not a general command to verify that all proxies have been updated correctly.  Even if all salt updates have been successful, some bad side effects may have happen.  For example, the `http-proxy` service may fail to restart.
+
+Verifying a deployment is currently a semi-manual process that needs to be performed in each cloudmaster separately.  It goes like this:
+
+First, find a command that will produce all the output you need to verify that your update has been performed in a proxy.  For example, when deploying a new `http-proxy` version we want to make sure that the binary on disk is the new one, and that `http-proxy` successfully started up again after the deployment.  Since there are two things to check, it's OK to use two commands, like so:
+
+    shasum /home/lantern/http-proxy ; service http-proxy status
+
+You may want to verify in a random proxy that this command works.
+
+Next, log into the cloudmaster as root (e.g., with `sudo su`) and apply your command to all proxies and collect the results, like so:
+
+    salt --out=yaml "fp-*" cmd.run "shasum /home/lantern/http-proxy ; service http-proxy status" | tee result
+
+All the parts of the above command are introduced in the "Applying the updated configuration" section above.
+
+To verify the output, call `check_deployment.py`.  It should show you a sample of the outputs and ask you to choose the one you expect.  If this doesn't happen, run `rm expected` and try again.
+
+This script prints out how many proxies produced good vs bad output.  It also saves the erroring proxies to a file called `bad`.  So you can try reapplying Salt state with
+
+    salt -b 100 -L $(cat bad) state.highstate
+    salt --out=yaml -L $(cat bad) cmd.run "shasum /home/lantern/http-proxy ; service http-proxy status" | tee result
+
+Then run `check_deployment.py` again.  This time around, it won't ask you for the expected result (it saved that to `expected` last time) and it will print out the new report.
+
+As soon as no bad results are reported, run `rm expected` to clean up and you're done.
+
+###### Common problems
+
+Sometimes a proxy will refuse to apply state.highstate because there's already a running process doing that.  You could wait for that to end, but sometimes that won't happen for a very long time.  It's quicker to just kill the process.  You can use [`kill_running_highstates.py`](https://github.com/getlantern/lantern_aws/blob/master/salt/cloudmaster/kill_running_highstates.py) for that.
+
+Sometimes proxies will reply with `Minion did not return. [not connected]`.  Most often, these are machines that are being launched.  These may have the new or old configurations applied.  You may want to check on these later.  Sometimes cloudmasters will fail to delete the keys of proxies after they're destroyed.  If the date in the name of the erroring proxy is not today, then this is most probably the case.  You may check in the Vultr or Digital Ocean page whether such a proxy exists.  If there's no such proxy, you can delete the key at the cloudmaster with `salt-key -d the-proxy-name`, so you won't get these again.  Otherwise, and if you're unsure what to do, ask in the dev channel or mailing list.
+
+##### Perform basic checks on newly launched minions
 
 Once you have launched a minion by any of the methods described below, the
 machine will start applying the Salt configuration on its own.  A common
@@ -147,7 +149,7 @@ then at least the syntax seems OK.  If you have nothing better to do, you can ma
 
     bin/ssh_cloudmaster.py 'salt <your-machine-id> cmd.run 'tail -n 40 /var/log/salt/minion'
 
-and making sure that new stuff keeps getting printed.
+and making sure that new stuff keeps getting printed.  If that's not the case, you may need to kill the process with the given PID in the proxy so Salt will let you try and reapply the config.
 
 The following will check for a running HTTP proxy:
 
@@ -157,120 +159,40 @@ If all you want to know is whether the machine(s) are done setting themselves
 up (e.g., you haven't made any config changes), you can run something like
 (e.g., for flashlight servers)
 
-    bin/ssh_cloudmaster.py 'salt "fl-20150327-*" cmd.run "service flashlight status"'
+    bin/ssh_cloudmaster.py 'salt "fl-20150327-*" cmd.run "service http-proxy status"'
 
 If you expect to run a lot of these it will be faster log into the
 cloudmaster (just 'bin/ssh_cloudmaster.py` without arguments) and run the
 commands from there.
 
-###### Listing nonresponding minions
+#### Less common tasks
 
-These may need further looking into.  It might be a good idea to run this before important updates.  That said, the cloudmaster checks these regularly and sends alarm emails to the Lantern team when they fail to respond.
+##### Launching a cloud master
 
-    bin/ssh_cloudmaster.py 'sudo salt-run manage.down'
+Currently this is a manual process.
 
-or, in short,
+ - Launch a VPS of the size you want in the provider and datacenter you want (2GB is currently recommended for production ones).  Some considerations:
+   - The name must follow the convention `cm-<datacenter><optionalextrastuff>`.  For example, if want to launch a test cloudmaster for yourself in the `donyc3` datacenter, call it `cm-donyc3myname`.  A production cloudmaster must not have any extra stuff attached to its name (for example, the production cloudmaster for that datacenter is just `cm-donyc3`).
+   - Remember to provide your own SSH key in addition to the cloudmaster ones.
+   - Although these are not currently being used, selecting the options for IPv6 support and private networking might be a good idea for forward compatibility.
+ - ssh into `root@<your-new-cloudmaster-ip>` and run:
 
-    bin/check_unresponsive_fallbacks.bash
-
-###### List the ips with wich each fallback proxy is running
-
-    bin/fp-ips.bash
-
-###### Launch a fallback proxy with fteproxy enabled
+```bash
+NAME="<your-cloudmaster's-name>"
+mkdir -p /srv/pillar
+touch /srv/pillar/$NAME.sls
+curl -L https://bootstrap.saltstack.com | sh -s -- -M -A 127.0.0.1 -i $NAME git v2015.5.5
+salt-key -ya $NAME
 ```
-bin/fake_controller.py launch "ox@getlantern.org" 102 '{"pt_type": "FTE", "pt_props": { "key": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000000000000000000F", "upstream-regex": "^GET\\ \\/([a-z\\.\\/]*) HTTP/1\\.1\\r\\n\\r\\n$", "downstream-regex": "^HTTP/1\\.1\\ 200 OK\\r\\nContent-Type:\\ ([a-z]+)\\r\\n\\r\\n\\C*$" }}'
+ - in your own computer, make a new file with contents similar to these:
+
 ```
-
-###### Launch a flashlight server
-```
-bin/fake_controller.py launch-fl fl-sg-20150226-001
-```
-
-The naming convention is `fl-<datacenter>-<date of launch>-<serial number>`,
-where
-
-- datacenter is some string uniquely identifying the datacenter where the server is launched (see below for instructions on how to launch minions to different data centers);
-- date of launch is in YYYYMMDD format; and
-- serial numbers are zero-filled to three positions (that is, `-001` rather than just `-1`), and reset to start at 001 for each launch day.
-
-**Launching to a particular datacenter**
-
-The list of currently available datacenter and size combinations is in `salt/salt_cloud/cloud.profiles`.  If the datacenter+size combination you want is already there, you can launch one minion there by adding the profile name as a third argument to `bin/fake_controller.py`, e.g.:
-
-    bin/fake_controller.py launch-fl fl-nl-20150226-001 do_nl
-
-If the location you want is not there, it shouldn't be hard to add a different
-one to `salt/salt_cloud/cloud.providers`.  To get a list of available Digital
-Ocean datacenters, try `bin/do_fps.py print_regions`.  If several datacenters
-are available in one location, the one with the highest number (e.g.
-"Amsterdam 3" as opposed to "Amsterdam 1") will be more likely to have private
-network capabilities and perhaps more modern hardware (but it can't hurt to
-try and compare).
-
-Once the location you want is in `cloud.providers`, if the size you want is
-not in `salt/salt_cloud/cloud.profiles` you need to add it; see the entries
-already there for reference.  If there is no entry with the size you want, try
-`bin/do_fps.py print_sizes` (or just take a guess if you feel lucky; they're
-named rather consistently).
-
-If you have changed either configuration file, you will need to push and apply
-your new configuration to the cloudmaster.  If you're deploying to the
-production cloudmaster, you will need to first commit, pull, and push your changes to the master branch, lest you accidentally roll back someone else's changes or vice versa.  Once you are done, do `bin/update.py && bin/hscloudmaster.bash`.  If no errors are reported, you're ready to deploy your new servers as explained above.
-
-###### Launch a waddell server
-```
-bin/fake_controller.py launch-wd wd-001-1
+cloudmaster_name = "cm-donyc3myname"
+cloudmaster_address = "188.166.40.244"
 ```
 
-###### Reinstalling lantern
+- and place it in `~/git/lantern_aws/bin/config_overrides.py`.  You probably want to have it saved somewhere else too, since you'll be deleting and restoring `config_overrides.py` to alternate between the production deployment and one or more non-production ones.
+- `cd ~/git/lantern_aws/bin`
+- `./update.py && ./hscloudmaster.bash`
 
-To reinstall lantern in the proxies after a new client version has been released, just uninstall the old package through `apt-get` and then run `state.highstate` to re-apply the configuration scripts.  This takes care of restarting the lantern service too.  `bin/reinstall_lantern.bash` (which see) does this.
-
-###### Regenerating flashlight/genconfig/fallback.json
-
-Whenever you launch or kill fallback proxies, you should update the list of
-chained servers in the configuration that gets pushed to Lantern clients.  This
-list lives in flashlight/genconfig/fallbacks.json.  To update it run
-
-    bin/ssh_cloudmaster.py 'regenerate-fallbacks-list <prefix>' > <flashlight-root>/genconfig/fallback.json
-
-Where
-
-- `<flashlight-root>` is where your checkout of the flashlight project
-lives (at the time of this writing, you may want to actually update the
-flashlight checkout within the `lantern` project instead), and
-
-- `<prefix>` is a prefix for the name of the fallback proxies you want to
-  include in this configuration.  For example, to compile a configuration of
-all the fallbacks in our tokyo datacenter, you'd say
-
-    bin/ssh_cloudmaster.py 'regenerate-fallbacks-list fp-jp-' > ~/src/lantern/src/github.com/flashlight/genconfig/fallback.json
-
-## Troubleshooting
-
-These pain points can and will be removed soon (TM).
-
-### The cloudmaster doesn't seem to be picking up my launch requests
-
-If this is a test cloudmaster and the associated controller doesn't exist,
-it's possible that the SQS queue doesn't exist.  Try creating one in the AWS
-console with the name `<your-controller-name>_request`, with the same
-parameters as the ones already there.
-
-If the queue is there and there is a buildup of messages, a likely cause is
-that a cloudmaster process died while holding the `/home/lantern/map.lock`.
-This could happen if the cloudmaster shuts down as required by unattended
-security updates.  To work around this:
-
-- Warn bns-ops about what you're about to do, so nobody steps on each other's
-  toes.
-- Log into the cloudmaster (`bin/ssh_cloudmaster.py`).
-- `cd /home/lantern`
-- Temporarily disable the `cloudmaster.py` cron job.  A brutish but effective
-  way to do this is `mv cloudmaster.py cloudmaster.bak`.
-- Kill all running cloudmaster.py or salt_cloud processes (find them with e.g. `ps aux | grep cloud`).
-- `rm map.lock production-cloudmaster-*.*` (replacing
-  'production-cloudmaster' with your cloudmaster's host name if necessary).
-- Reenable the cloudmaster cron job: `mv cloudmaster.bak cloudmaster.py`
-- Let bns-ops know that you're done.
+Your cloudmaster should be ready now.  If it's not a production one (XXX: add instructions for making it a production one) it will be running against a local redis DB.
