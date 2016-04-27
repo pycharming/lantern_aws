@@ -283,7 +283,7 @@ def all_vpss():
     return (set(vps_shell('vl').all_vpss())
             | set(vps_shell('do').all_vpss()))
 
-def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', pipeline=None):
+def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', pipeline=None, offload=False):
     name, ip, srv = nameipsrv(name, ip, srv)
     region = region_by_name(name)
     if redis_shell.sismember(region + ':fallbacks', srv):
@@ -295,7 +295,11 @@ def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', p
         print >> sys.stderr, "Please remove it as a honeypot first."
         return
     p = pipeline or redis_shell.pipeline()
-    p.rpush(cm_by_name(name) + ':retireq', '%s|%s' % (name, ip))
+    if offload:
+        qname = 'offloadq'
+    else:
+        qname = 'retireq'
+    p.rpush('%s:%s' % (cm_by_name(name), qname), '%s|%s' % (name, ip))
     log2redis({'op': 'retire',
                'name': name,
                'ip': ip,

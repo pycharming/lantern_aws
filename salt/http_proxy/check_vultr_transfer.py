@@ -77,9 +77,9 @@ def run():
               usage * 100))
     if usage > retire_threshold:
         print "Retiring because I", msg
-        util.offload_if_closed()
+        closed = util.am_I_closed()
         util.close_server(msg)
-        util.retire_server(msg)
+        util.retire_server(msg, offload=closed)
     elif t > significant_time and usage > significant_usage and usage > t:
         msg += " in %.2f%% of the current month" % (t * 100)
         print "closing because I", msg

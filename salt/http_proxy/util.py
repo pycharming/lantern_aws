@@ -2,7 +2,7 @@ import datetime
 import os
 
 from alert import alert, send_to_slack
-from redis_util import redis_shell, pack_srv
+from redis_util import redis_shell
 import vps_util
 
 auth_token = "{{ pillar['cfgsrv_token'] }}"
@@ -18,38 +18,16 @@ retire_flag_filename = "server_retired"
 def flag_as_done(flag_filename):
     file(flag_filename, 'w').write(str(datetime.datetime.utcnow()))
 
-def offload_if_closed():
-    # XXX: assumes that users will fit in the replacement server.
-    # As of this writing, while there are some 1GB Vultr proxies, their load
-    # should fit in a 768MB one, because that's what closed proxy compaction
-    # jobs normalize for.
-    # There are also some dedicated proxies serving way too many users for a
-    # 768MB one, but I'll offload and retire these manually.
+def am_I_closed():
     srv = redis_shell.hget('name->srv', instance_id)
     if srv is None:
-        print "I'm retired or a baked in proxy; I can't offload myself."
-        return
+        print "I'm retired or a baked in proxy"
+        return False
     if redis_shell.zscore(region + ':slices', srv) is not None:
-        print "I'm open, so no point in offloading myself"
-        return
-    print "Offloading clients before retiring myself..."
-    packed_srv = pack_srv(srv)
-    client_table_key = region + ':clientip->srv'
-    #XXX: a reverse index is sorely needed!
-    # Getting the set of clients assigned to this proxy takes a long time
-    # currently.  Let's get it done before pulling the replacement server,
-    # so we're less likely to be left with an empty server.
-    clients = set(pip
-                  for pip, psrv in redis_shell.hgetall(client_table_key).iteritems()
-                  if psrv == packed_srv)
-    dest = vps_util.pull_from_srvq(region)
-    # It's still possible that we'll crash or get rebooted here, so the
-    # destination server will be left empty. The next closed proxy compaction
-    # job will find this proxy and assign some users to it or mark it for
-    # retirement.
-    dest_psrv = pack_srv(dest.srv)
-    redis_shell.hmset(client_table_key, {pip: dest_psrv for pip in clients})
-    print "Offloaded clients to %s (%s)" % (dest.name, dest.ip)
+        print "I'm open"
+        return False
+    print "I'm closed"
+    return True
 
 def close_server(msg):
     if os.path.exists(close_flag_filename):
@@ -65,12 +43,16 @@ def close_server(msg):
     txn.execute()
     flag_as_done(close_flag_filename)
 
-def retire_server(msg):
+def retire_server(msg, offload=False):
     if os.path.exists(retire_flag_filename):
         print "Not retiring myself again."
         return
-    vps_util.retire_proxy(name=instance_id, ip=ip, reason=msg)
+    vps_util.retire_proxy(name=instance_id, ip=ip, reason=msg, offload=offload)
     flag_as_done(retire_flag_filename)
-    send_to_slack(title="Proxy retired",
-                  text="*Retired* because I " + msg,
-                  color='warning')
+    if offload:
+        offloaded = "*Offloading* and "
+    else:
+        offloaded = ""
+    send_to_slack(title="Proxy retiring",
+                  text=offloaded + "*Retiring* because I " + msg,
+                  color='good')
