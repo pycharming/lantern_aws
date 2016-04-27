@@ -317,10 +317,10 @@ def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', p
         return
     p = pipeline or redis_shell.pipeline()
     if offload:
-        qname = 'offloadq'
+        qname = '%s:offloadq' % region_by_name(name)
     else:
-        qname = 'retireq'
-    p.rpush('%s:%s' % (cm_by_name(name), qname), '%s|%s' % (name, ip))
+        qname = '%s:retireq' % cm_by_name(name)
+    p.rpush(qname, '%s|%s' % (name, ip))
     log2redis({'op': 'retire',
                'name': name,
                'ip': ip,
