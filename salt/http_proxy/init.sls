@@ -27,6 +27,7 @@ fp-dirs:
     ('/etc/init/', 'http-proxy.conf', 'http-proxy.conf', 'root', 644),
     ('/home/lantern/', 'util.py', 'util.py', 'lantern', 400),
     ('/home/lantern/', 'check_load.py', 'check_load.py', 'lantern', 700),
+    ('/home/lantern/', 'check_vultr_transfer.py', 'check_vultr_transfer.py', 'lantern', 700),
     ('/home/lantern/', 'auth_token.txt', 'auth_token.txt', 'lantern', 400),
     ('/home/lantern/', 'config.ini', 'config.ini', 'lantern', 400),
     ('/home/lantern/', 'fallback.json', 'fallback.json', 'lantern', 400)] %}
@@ -132,14 +133,6 @@ uptime:
     - user: lantern
 
 {% if pillar['datacenter'].startswith('vl') %}
-
-/home/lantern/check_vultr_transfer.py:
-    file.managed:
-        - source: salt://http_proxy/check_vultr_transfer.py
-        - template: jinja
-        - user: lantern
-        - group: lantern
-        - mode: 700
 
 {% set offset=[0, 1, 2]|random %}
 "/home/lantern/check_vultr_transfer.py 2>&1 | logger -t check_vultr_transfer":
