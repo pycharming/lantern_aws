@@ -106,9 +106,9 @@ You may want to verify in a random proxy that this command works.
 
 Next, log into the cloudmaster as root (e.g., with `sudo su`) and apply your command to all proxies and collect the results, like so:
 
-    salt --out=yaml "fp-*" cmd.run "shasum /home/lantern/http-proxy ; service http-proxy status" | tee result
+    salt --out=yaml "fp-*" cmd.run "shasum /home/lantern/http-proxy ; service http-proxy status | cut -d ' ' -f 2" | tee result
 
-All the parts of the above command are introduced in the "Applying the updated configuration" section above.
+All the parts of the above command are introduced in the "Applying the updated configuration" section above, except the `| cut -d ' ' -f 2` one.  On success, `service http-proxy status` prints out the PID of the `http-proxy` process, which will generally be different for each proxy.  We only care about whether the proxy is running or not, and as we'll see, we want the output to be the same for all successful proxies, so we use `cut` to ignore everything but the second word (which we expect to be `start/running`) in the output of that command.
 
 To verify the output, call `check_deployment.py`.  It should show you a sample of the outputs and ask you to choose the one you expect.  If this doesn't happen, run `rm expected` and try again.
 
