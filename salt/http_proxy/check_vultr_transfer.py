@@ -71,7 +71,7 @@ def run():
     vd = vultr_dict()
     usage = usage_portion(vd)
     t = time_portion()
-    msg = ("used %s out of %s allowed traffic quota (%.2f%%)"
+    msg = ("used %sGB out of %sGB allowed traffic quota (%.2f%%)"
            % (vd['current_bandwidth_gb'],
               vd['allowed_bandwidth_gb'],
               usage * 100))
