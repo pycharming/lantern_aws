@@ -15,9 +15,19 @@ close_flag_filename = "server_closed"
 retire_flag_filename = "server_retired"
 
 
-
 def flag_as_done(flag_filename):
     file(flag_filename, 'w').write(str(datetime.datetime.utcnow()))
+
+def am_I_closed():
+    srv = redis_shell.hget('name->srv', instance_id)
+    if srv is None:
+        print "I'm retired or a baked in proxy"
+        return False
+    if redis_shell.zscore(region + ':slices', srv) is not None:
+        print "I'm open"
+        return False
+    print "I'm closed"
+    return True
 
 def close_server(msg):
     if os.path.exists(close_flag_filename):
@@ -33,12 +43,16 @@ def close_server(msg):
     txn.execute()
     flag_as_done(close_flag_filename)
 
-def retire_server(msg):
+def retire_server(msg, offload=False):
     if os.path.exists(retire_flag_filename):
         print "Not retiring myself again."
         return
-    vps_util.retire_proxy(name=instance_id, ip=ip, reason=msg)
+    vps_util.retire_proxy(name=instance_id, ip=ip, reason=msg, offload=offload)
     flag_as_done(retire_flag_filename)
-    send_to_slack(title="Proxy retired",
-                  text="*Retired* because I " + msg,
-                  color='warning')
+    if offload:
+        offloaded = "*Offloading* and "
+    else:
+        offloaded = ""
+    send_to_slack(title="Proxy retiring",
+                  text=offloaded + "*Retiring* because I " + msg,
+                  color='good')

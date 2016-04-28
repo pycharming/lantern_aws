@@ -151,6 +151,27 @@ def actually_close_proxy(name=None, ip=None, srv=None, pipeline=None):
     if txn is not pipeline:
         txn.execute()
 
+def actually_offload_proxy(name=None, ip=None, srv=None, pipeline=None):
+    name, ip, srv = nameipsrv(name, ip, srv)
+    region = region_by_name(name)
+    client_table_key = region + ':clientip->srv'
+    packed_srv = redis_util.pack_srv(srv)
+    #XXX: a proxy -> {clients} index is sorely needed!
+    # Getting the set of clients assigned to this proxy takes a long time
+    # currently.  Let's get it done before pulling the replacement proxy,
+    # so we're less likely to be left with an empty proxy if interrupted.
+    clients = set(pip
+                  for pip, psrv in redis_shell.hgetall(client_table_key).iteritems()
+                  if psrv == packed_srv)
+    dest = pull_from_srvq(region)
+    # It's still possible that we'll crash or get rebooted here, so the
+    # destination server will be left empty. The next closed proxy compaction
+    # job will find this proxy and assign some users to it or mark it for
+    # retirement.
+    dest_psrv = redis_util.pack_srv(dest.srv)
+    redis_shell.hmset(client_table_key, {pip: dest_psrv for pip in clients})
+    print "Offloaded clients from %s (%s) to %s (%s)" % (name, ip, dest.name, dest.ip)
+
 def actually_retire_proxy(name, ip, pipeline=None):
     """
     While retire_proxy just enqueues the proxy for retirement, this actually
@@ -283,7 +304,7 @@ def all_vpss():
     return (set(vps_shell('vl').all_vpss())
             | set(vps_shell('do').all_vpss()))
 
-def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', pipeline=None):
+def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', pipeline=None, offload=False):
     name, ip, srv = nameipsrv(name, ip, srv)
     region = region_by_name(name)
     if redis_shell.sismember(region + ':fallbacks', srv):
@@ -295,7 +316,11 @@ def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', p
         print >> sys.stderr, "Please remove it as a honeypot first."
         return
     p = pipeline or redis_shell.pipeline()
-    p.rpush(cm_by_name(name) + ':retireq', '%s|%s' % (name, ip))
+    if offload:
+        qname = '%s:offloadq' % region_by_name(name)
+    else:
+        qname = '%s:retireq' % cm_by_name(name)
+    p.rpush(qname, '%s|%s' % (name, ip))
     log2redis({'op': 'retire',
                'name': name,
                'ip': ip,
@@ -386,7 +411,6 @@ def fix_queues():
             fix_queue(qname)
         else:
             print "no queue for %s." % domain
-
 
 # Ad hoc application of the building blocks above. Leaving them around, should
 # they serve as inspiration for future fixing jobs.
