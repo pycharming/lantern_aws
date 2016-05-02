@@ -64,7 +64,17 @@ def whitelist_ssh(time=60):
         print >> sys.stderr, "No redis access; I won't be whitelisted in this SSH session"
         return
     ip = subprocess.check_output(['dig', '+short', 'myip.opendns.com', '@resolver1.opendns.com']).strip()
-    redis_shell.setex('sshalert-whitelist:%s' % ip, 'admin', time)
+    key = 'sshalert-whitelist:%s' % ip
+    ttl = redis_shell.ttl(key)
+    # At least some versions of redispy return None. Let's be paranoid here and
+    # normalize to int(-1).
+    if ttl in [None, '-1', -1]:
+        if redis_shell.exists(key):
+            # Permanently whitelisted.
+            return
+        ttl = -1
+    if ttl < time:
+        redis_shell.setex(key, 'admin', time)
 
 def with_timeout(args, timeout=None):
     if timeout is None:
