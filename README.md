@@ -129,6 +129,35 @@ Sometimes proxies will reply with `Minion did not return. [Not connected]`.  Mos
 
 If, on the other hand, you see proxies replying with `Minion did not return. [No response]`, this may well be a failure when checking, so you can just run the check command again on those (or, more conveniently, on `-L $(cat bad)`) without running highstate again on them, and you'll often get a proper response from these.
 
+In cloudmasters with many proxies, it's not uncommon to get something like this:
+
+```
+Executing run on ['fp-https-vltok1-20160428-210', 'fp-https-vltok1-20160407-234', 'fp-https-vltok1-20160424-160', 'fp-https-vltok1-20160424-163', 'fp-https-vltok1-20160407-237', 'fp-https-vltok1-20160407-230', 'fp-https-vltok1-20160407-231', 'fp-https-vltok1-20160407-232', 'fp-https-vltok1-20160407-233', 'fp-https-vltok1-20160424-169', 'fp-https-vltok1-20160424-168']
+
+Traceback (most recent call last):
+  File "/usr/bin/salt", line 10, in <module>
+    salt_main()
+  File "/usr/lib/python2.7/dist-packages/salt/scripts.py", line 349, in salt_main
+    client.run()
+  File "/usr/lib/python2.7/dist-packages/salt/cli/salt.py", line 103, in run
+    for res in batch.run():
+  File "/usr/lib/python2.7/dist-packages/salt/cli/batch.py", line 155, in run
+    part = next(queue)
+  File "/usr/lib/python2.7/dist-packages/salt/client/__init__.py", line 714, in cmd_iter_no_block
+    **kwargs):
+  File "/usr/lib/python2.7/dist-packages/salt/client/__init__.py", line 934, in get_iter_returns
+    jinfo = self.gather_job_info(jid, tgt, tgt_type)
+  File "/usr/lib/python2.7/dist-packages/salt/client/__init__.py", line 202, in gather_job_info
+    timeout=timeout,
+  File "/usr/lib/python2.7/dist-packages/salt/client/__init__.py", line 290, in run_job
+    raise SaltClientError(general_exception)
+salt.exceptions.SaltClientError: Salt request timed out. The master is not responding. If this error persists after verifying the master is up, worker_threads may need to be increased.
+```
+
+This might be a sign that we need a bigger cloudmaster for this datacenter.  It's also possible that you've been unlucky and your update run at the same time as some resource-intensive test.
+
+Either way, you just need to keep running the update/verify procedure (perhaps with a lower `-b` argument).  The proxies that failed to update themselves this run will be retried in the next iteration.  Proxies that have already updated themselves will not need be retried, so the cloudmaster will be a little less burdened each iteration.
+
 ##### Perform basic checks on newly launched minions
 
 Once you have launched a minion by any of the methods described below, the
