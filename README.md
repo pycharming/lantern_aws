@@ -52,7 +52,7 @@ To update the Salt configuration of all production cloudmasters at once, make su
 
 Note that `bin/update.py` doesn't apply the changes to the machines managed by Salt.  Sometimes you only want to upload your salt config in order to update the chained proxies (or even one particular proxy), or only the cloud master, or all of them.
 
-You apply the new configuration by using regular salt commands.  As a convenience, a `bin/ssh_cloudmaster.py [<command>]` script will find your cloud master and run the command you provide there, or just log you in as the root user if you provide no commands.
+You apply the new configuration by using regular salt commands.  As a convenience, a `bin/ssh_cloudmaster.py [<command>]` script will find your cloud master and run the command you provide there, or just log you in if you provide no commands.  Note that although you have passwordless sudo, you're logged in as yourself and not as `root`, so if you intend to run any command with superuser privileges you need to prepend `sudo ` to it.
 
 So, for example, to sync the cloudmaster only to the current configuration:
 
@@ -71,19 +71,19 @@ changes in the cloudmaster itself, it can't hurt to just do it to be in the safe
 
 All chained proxies have salt IDs starting with 'fp-' (fp stands for "fallback proxy", an old name for these), so you can instruct the proxies, but not the cloud master, to apply the current configuration with
 
-    bin/ssh_cloudmaster.py 'salt -b 100 "fp-*" state.highstate'
+    bin/ssh_cloudmaster.py 'sudo salt -b 100 "fp-*" state.highstate'
 
-If you have many proxies in a clodumaster, they may have trouble updating all at once, since they all need to pull files from the master and other servers, and report progress to the master.  `-b 100` makes sure that at most 100 proxies are updated at once.
+If you have many proxies in a cloudmaster, they may have trouble updating all at once, since they all need to pull files from the master and other servers, and report progress to the master.  `-b 100` makes sure that at most 100 proxies are updated at once.
 
 To do this in the proxies managed by all production cloudmasters,
 
-    bin/inallcms bin/ssh_cloudmaster.py 'salt -b 100 "fp-*" state.highstate'
+    bin/inallcms bin/ssh_cloudmaster.py 'sudo salt -b 100 "fp-*" state.highstate'
     
 This operation is not 100% reliable, so after running an important update you may need to verify that the update was performed in all machines.  How to do this is explained below, in the "Verify deployment" subsection.
 
 To run an arbitrary command (as root) in all chained proxies:
 
-    bin/ssh_cloudmaster.py 'salt --out=yaml "fp-*" cmd.run "ls /home/lantern/"'
+    bin/ssh_cloudmaster.py 'sudo salt --out=yaml "fp-*" cmd.run "ls /home/lantern/"'
 
 `--out=yaml` ensures that the output is valid YAML and is only needed if you are going to consume the output of this programmaticaly.
 
@@ -94,7 +94,7 @@ Tasks will be added here in a per need basis.  You may want to check out the `bi
 
 ##### Verify deployment
 
-There is not a general command to verify that all proxies have been updated correctly.  Even if all salt updates have been successful, some bad side effects may have happen.  For example, the `http-proxy` service may fail to restart.
+There is not a general command to verify that all proxies have been updated correctly.  Even if all salt updates have been successful, some bad side effects may have happened.  For example, the `http-proxy` service may have failed to restart.
 
 Verifying a deployment is currently a semi-manual process that needs to be performed in each cloudmaster separately.  It goes like this:
 
@@ -137,7 +137,7 @@ problem when first testing configuration changes is that Salt rejects your .sls
 files altogether (for example, if you have some YAML or Jinja syntax error).
 One way to quickly detect that is to run
 
-    bin/ssh_cloudmaster.py 'salt <your-machine-id> state.highstate'
+    bin/ssh_cloudmaster.py 'sudo salt <your-machine-id> state.highstate'
 
 If your .sls files have errors, the output of this command will make that
 clear.  If, on the contrary, you get something like this:
@@ -149,19 +149,13 @@ clear.  If, on the contrary, you get something like this:
 
 then at least the syntax seems OK.  If you have nothing better to do, you can make sure progress is being made by periodically running:
 
-    bin/ssh_cloudmaster.py 'salt <your-machine-id> cmd.run 'tail -n 40 /var/log/salt/minion'
+    bin/ssh_cloudmaster.py 'sudo salt <your-machine-id> cmd.run 'tail -n 40 /var/log/salt/minion'
 
 and making sure that new stuff keeps getting printed.  If that's not the case, you may need to kill the process with the given PID in the proxy so Salt will let you try and reapply the config.
 
 The following will check for a running HTTP proxy:
 
-    bin/ssh_cloudmaster.py 'salt "fp-*" cmd.run "service http-proxy status"' | tee status
-
-If all you want to know is whether the machine(s) are done setting themselves
-up (e.g., you haven't made any config changes), you can run something like
-(e.g., for flashlight servers)
-
-    bin/ssh_cloudmaster.py 'salt "fl-20150327-*" cmd.run "service http-proxy status"'
+    bin/ssh_cloudmaster.py 'sudo salt "fp-*" cmd.run "service http-proxy status"' | tee status
 
 If you expect to run a lot of these it will be faster log into the
 cloudmaster (just 'bin/ssh_cloudmaster.py` without arguments) and run the
