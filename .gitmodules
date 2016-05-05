@@ -1,3 +1,6 @@
 [submodule "secret"]
 	path = secret
 	url = git@github.com:getlantern/too-many-secrets.git
+[submodule "secret_lib"]
+	path = secret_lib
+	url = git@github.com:getlantern/secret_lib
