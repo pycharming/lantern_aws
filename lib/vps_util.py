@@ -151,7 +151,11 @@ def actually_close_proxy(name=None, ip=None, srv=None, pipeline=None):
     if txn is not pipeline:
         txn.execute()
 
-def actually_offload_proxy(name=None, ip=None, srv=None, pipeline=None):
+def actually_offload_proxy(proportion=1.0, reassign=True, name=None, ip=None, srv=None, pipeline=None):
+    # Some of the stuff below is wasteful or breaks in this edge case.
+    if proportion <= 0:
+        print >> sys.stderr, "WARNING: actually_offload_proxy called with proportion %s; did you really mean this?" % proportion
+        return
     name, ip, srv = nameipsrv(name, ip, srv)
     region = region_by_name(name)
     client_table_key = region + ':clientip->srv'
@@ -160,17 +164,29 @@ def actually_offload_proxy(name=None, ip=None, srv=None, pipeline=None):
     # Getting the set of clients assigned to this proxy takes a long time
     # currently.  Let's get it done before pulling the replacement proxy,
     # so we're less likely to be left with an empty proxy if interrupted.
-    clients = set(pip
-                  for pip, psrv in redis_shell.hgetall(client_table_key).iteritems()
-                  if psrv == packed_srv)
-    dest = pull_from_srvq(region)
-    # It's still possible that we'll crash or get rebooted here, so the
-    # destination server will be left empty. The next closed proxy compaction
-    # job will find this proxy and assign some users to it or mark it for
-    # retirement.
-    dest_psrv = redis_util.pack_srv(dest.srv)
-    redis_shell.hmset(client_table_key, {pip: dest_psrv for pip in clients})
-    print "Offloaded clients from %s (%s) to %s (%s)" % (name, ip, dest.name, dest.ip)
+    clients = [pip
+               for pip, psrv in redis_shell.hgetall(client_table_key).iteritems()
+               if psrv == packed_srv]
+    if proportion == 1.0:
+        tomove = clients
+    else:
+        # Take a random sample so we're not biased towards offloading at either
+        # end of the IP space.  Thus, if this is a splitting server we don't
+        # overload one of the halves more than the other.
+        tomove = random.sample(clients, int(round(proportion * len(clients))))
+    rshell = pipeline or redis_shell
+    if reassign:
+        dest = pull_from_srvq(region)
+        # It's still possible that we'll crash or get rebooted here, so the
+        # destination server will be left empty. The next closed proxy compaction
+        # job will find this proxy and assign some users to it or mark it for
+        # retirement.
+        dest_psrv = redis_util.pack_srv(dest.srv)
+        rshell.hmset(client_table_key, {pip: dest_psrv for pip in tomove})
+        print "Offloaded %s clients from %s (%s) to %s (%s)." % (len(tomove), name, ip, dest.name, dest.ip)
+    else:
+        rshell.hdel(client_table_key, *tomove)
+        print "Offloaded %s clients from %s (%s) into the slice table." % (len(tomove), name, ip)
 
 def actually_retire_proxy(name, ip, pipeline=None):
     """
@@ -304,7 +320,24 @@ def all_vpss():
     return (set(vps_shell('vl').all_vpss())
             | set(vps_shell('do').all_vpss()))
 
-def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', pipeline=None, offload=False):
+def offload_proxy(proportion=1.0, replace=True, name=None, ip=None, srv=None):
+    name, ip, srv = nameipsrv(name, ip, srv)
+    region = region_by_name(name)
+    if redis_shell.sismember(region + ':fallbacks', srv):
+        print >> sys.stderr, "I'm *not offloading* %s (%s) because it is a fallback server for region '%s'." % (name, ip, region)
+        print >> sys.stderr, "Please remove it as a fallback first."
+        return
+    if redis_shell.sismember(region + ':honeypots', srv):
+        print >> sys.stderr, "I'm *not offloading* %s (%s) because it is a honeypot server for region '%s'." % (name, ip, region)
+        print >> sys.stderr, "Please remove it as a honeypot first."
+        return
+    redis_shell.lpush(region + ':offloadq',
+                      json.dumps({'proportion': proportion,
+                                  'replace': bool(replace),
+                                  'name': name,
+                                  'ip': ip}))
+
+def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', pipeline=None):
     name, ip, srv = nameipsrv(name, ip, srv)
     region = region_by_name(name)
     if redis_shell.sismember(region + ':fallbacks', srv):
@@ -316,11 +349,7 @@ def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', p
         print >> sys.stderr, "Please remove it as a honeypot first."
         return
     p = pipeline or redis_shell.pipeline()
-    if offload:
-        qname = '%s:offloadq' % region_by_name(name)
-    else:
-        qname = '%s:retireq' % cm_by_name(name)
-    p.rpush(qname, '%s|%s' % (name, ip))
+    p.rpush('%s:retireq' % cm_by_name(name), '%s|%s' % (name, ip))
     log2redis({'op': 'retire',
                'name': name,
                'ip': ip,

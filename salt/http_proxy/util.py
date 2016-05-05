@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 
 from alert import alert, send_to_slack
@@ -11,8 +12,13 @@ region = vps_util.region_by_name(instance_id)
 
 # {% from 'ip.sls' import external_ip %}
 ip = "{{ external_ip(grains) }}"
+last_offload_filename = "server_last_offloaded"
 close_flag_filename = "server_closed"
 retire_flag_filename = "server_retired"
+
+# Once we offload a proxy, we allow this many seconds for the proxy to cool
+# down before allowing it to offload itself again.
+offload_timeout = 4 * 60 * 60
 
 
 def flag_as_done(flag_filename):
@@ -43,10 +49,37 @@ def close_server(msg):
     txn.execute()
     flag_as_done(close_flag_filename)
 
+def _reset_last_offload():
+    json.dump(time.time(), file(last_offload_filename, 'w'))
+
+def _offloaded_recently():
+    try:
+        t = json.load(file(last_offload_filename))
+    except IOError:
+        return False
+    return time.time() - t < offload_timeout
+
+def _actually_offload(proportion, replace, name, ip):
+    "Bypasses offload timeout and slack logging."
+    _reset_last_offload()
+    vps_util.offload_proxy(proportion=proportion,
+                           replace=replace,
+                           name=name,
+                           ip=ip)
+
+def offload_server(msg, proportion, replace):
+    if not _offloaded_recently():
+        send_to_slack(title="Proxy offloading",
+                      text="*Offloading* because I " + msg,
+                      color='good')
+        _actually_offload(proportion, replace, instance_id, ip)
+
 def retire_server(msg, offload=False):
     if os.path.exists(retire_flag_filename):
         print "Not retiring myself again."
         return
+    if offload:
+        _actually_offload(proportion=1.0, replace=True, name=instance_id, ip=ip)
     vps_util.retire_proxy(name=instance_id, ip=ip, reason=msg, offload=offload)
     flag_as_done(retire_flag_filename)
     if offload:

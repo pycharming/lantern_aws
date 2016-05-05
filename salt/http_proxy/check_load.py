@@ -17,20 +17,25 @@ if uptime() < 60 * 45:
     sys.exit(0)
 
 cpus = cpu_count()
-retire_threshold = 3.5 * cpus
-report_threshold = 1.9 * cpus
-close_threshold = 1.6 * cpus
+# We believe that a proxy hitting this load is well utilized and shouldn't take
+# on more users.
+close_threshold = 0.9 * cpus
+# Once a proxy hits this load we want to be warned about it.
+report_threshold = 1.1 * cpus
+# A proxy that hits this load is probably overwhelmed and we want to take users
+# off it.
+offload_threshold = 1.3 * cpus
 
-
-# We don't want to retire overloaded servers while the refill queue is too
+# We don't want to offload overloaded servers while the refill queue is too
 # empty, because that will strain the remaining servers, which might cause a
-# cascade of fallbacks retiring themselves faster than we can launch them.
+# cascade of offloading faster than we can launch proxies to take the excess
+# load.
 #
 # We do this here and not in util.py, because that module is used by the
 # traffic checks too, and this reasoning doesn't apply to that case: if many
 # servers start running over quota, in the worst case we'd rather have some
 # temporary downtime for some users than practically unbounded traffic costs.
-min_q_size = 15
+min_q_size = 10
 
 
 # Using the 15m load average, because we have observed that 5m yields some
@@ -39,9 +44,7 @@ _, _, lavg = os.getloadavg()
 
 print "Starting with load average %s..." % lavg
 
-# Allow us to override any of the above locally in some machines. For example,
-# we may not want fallback proxies to retire themselves even if they're
-# overloaded.
+# Allow us to override any of the above locally in some machines.
 try:
     from check_load_overrides import *
 except ImportError:
@@ -54,10 +57,10 @@ if lavg > report_threshold:
           title='High load in proxy',
           text="Load average %s" % lavg)
 
-# We don't want to retire servers in the surge that made us close them, because
-# load usually eases after closing and we want to give it a chance to
+# We don't want to offload servers in the surge that made us close them, because
+# load usually eases after closing and we want to give the proxy a chance to
 # stabilize. So we check whether at least one day has elapsed since we closed
-# the server before we retire it because of load.
+# the server before we offload it.
 #
 # We do this here, and not in util.py, because that module is used by the
 # traffic checks too, and this reasoning doesn't apply to that case: once a
@@ -74,21 +77,32 @@ except ValueError:
     # contents that are not valid datetime isoformats.
     closed_long_ago = True
 
-retire = (closed_long_ago
-          and lavg > retire_threshold
-          and util.redis_shell.llen(util.region + ":srvq") >= min_q_size)
+offload = (closed_long_ago
+           and lavg > offload_threshold
+           and util.redis_shell.llen(util.region + ":srvq") >= min_q_size)
 
+
+msg = "reached load average %s" % lavg
 
 if lavg > close_threshold:
     print "Closing..."
-    util.close_server("reached load average %s" % lavg)
+    util.close_server(msg)
 else:
     print "Not closing."
 
-if retire:
-    print "Retiring..."
-    util.retire_server("reached load average %s" % lavg)
+if offload:
+    print "Offloading..."
+    if not util.am_I_closed():
+        # In the current logic this should never be true, because the close
+        # threshold is lower than the offload one. Anyway, adding this for
+        # robustness to change and to highlight the fact that trying to offload
+        # an open proxy to the slice table is silly, since users will come back
+        # to it.
+        util.close_server(msg)
+    util.offload_server(msg,
+                        proportion=0.33,
+                        replace=False)
 else:
-    print "Not retiring."
+    print "Not offloading."
 
 print "... done."

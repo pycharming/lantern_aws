@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 
+import json
 import os
 import time
 
@@ -20,13 +21,22 @@ def run():
     while True:
         task, remover = q.next_job()
         if task:
-            name, ip = task.split('|')
+            try:
+                task = json.loads(task)
+            except ValueError:
+                # transition
+                name, ip = task.split('|')
+                task = {'name': name, 'ip': ip, 'proportion': 1.0, 'replace': True}
             print "Offloading users from %s (%s)" % (name, ip)
             txn = redis_shell.pipeline()
-            vps_util.actually_offload_proxy(name, ip, pipeline=txn)
+            vps_util.actually_offload_proxy(proportion=task['proportion'],
+                                            replace=task['replace'],
+                                            name=task['name'],
+                                            ip=task['ip'],
+                                            pipeline=txn)
             remover(txn)
             cm = vps_util.cm_by_name(name)
-            txn.lpush(cm + ':retireq', task)
+            txn.lpush(cm + ':retireq', '%s|%s' % (task['name'], task['ip']))
             txn.execute()
         else:
             time.sleep(10)
