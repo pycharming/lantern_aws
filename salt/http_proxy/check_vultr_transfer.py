@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from __future__ import division
 
-from datetime import datetime as dt
 import os
 import random
 import time
@@ -45,17 +44,6 @@ def usage_portion(vd):
     allowed = int(vd['allowed_bandwidth_gb'])
     current = vd['current_bandwidth_gb']
     return current / allowed
-
-def time_portion():
-    now = dt.utcnow()
-    beginning_of_month = dt(year=now.year, month=now.month, day=1)
-    if now.month == 12:
-        beginning_of_next_month = dt(year=now.year+1, month=1, day=1)
-    else:
-        beginning_of_next_month = dt(year=now.year, month=now.month+1, day=1)
-    whole_month = beginning_of_next_month - beginning_of_month
-    elapsed = now - beginning_of_month
-    return elapsed.total_seconds() / whole_month.total_seconds()
 
 def run():
     print "Starting..."
