@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from __future__ import division
 
-from datetime import datetime as dt
 import os
 import random
 import time
@@ -22,15 +21,6 @@ api_key = "{{ pillar['vultr_apikey'] }}"
 if api_key.startswith("{"):
     api_key = os.getenv("VULTR_APIKEY")
 vultr = Vultr(api_key)
-
-# To avoid artifacts at the very beginning of the month, where the consumption
-# stats may not be reset, I don't close servers until a little over one day has
-# elapsed.
-significant_time = 0.05
-
-# For statistical significance, don't worry if we're out of quota until we've
-# consumed this much of our monthly allowance.
-significant_usage = 0.25
 
 # Servers reaching this threshold at any time of the month are closed and their
 # current users are reassigned to other servers.
@@ -55,22 +45,10 @@ def usage_portion(vd):
     current = vd['current_bandwidth_gb']
     return current / allowed
 
-def time_portion():
-    now = dt.utcnow()
-    beginning_of_month = dt(year=now.year, month=now.month, day=1)
-    if now.month == 12:
-        beginning_of_next_month = dt(year=now.year+1, month=1, day=1)
-    else:
-        beginning_of_next_month = dt(year=now.year, month=now.month+1, day=1)
-    whole_month = beginning_of_next_month - beginning_of_month
-    elapsed = now - beginning_of_month
-    return elapsed.total_seconds() / whole_month.total_seconds()
-
 def run():
     print "Starting..."
     vd = vultr_dict()
     usage = usage_portion(vd)
-    t = time_portion()
     msg = ("used %sGB out of %sGB allowed traffic quota (%.2f%%)"
            % (vd['current_bandwidth_gb'],
               vd['allowed_bandwidth_gb'],
@@ -80,12 +58,8 @@ def run():
         closed = util.am_I_closed()
         util.close_server(msg)
         util.retire_server(msg, offload=closed)
-    elif t > significant_time and usage > significant_usage and usage > t:
-        msg += " in %.2f%% of the current month" % (t * 100)
-        print "closing because I", msg
-        util.close_server(msg)
     else:
-        print "Usage portion: %s; time portion: %s; not closing." % (usage, t)
+        print "Usage portion: %s; not retiring." % usage
     print "Done."
 
 
