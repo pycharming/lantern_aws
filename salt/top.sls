@@ -35,3 +35,7 @@ base:
     'ops-panel':
         - lantern_build_prereqs
         - proxy_ufw_rules
+    'cs-*':
+        - lantern_build_prereqs
+        - proxy_ufw_rules
+        - redis
