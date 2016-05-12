@@ -30,7 +30,7 @@ open-borda-port:
 
             :PREROUTING ACCEPT - [0:0]
             # Redirect port 62443 to borda
-            -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 62443
+            -A PREROUTING -p tcp --dport 444 -j REDIRECT --to-port 62443
 
             COMMIT
 
