@@ -15,9 +15,10 @@ do_token = os.getenv("DO_TOKEN")
 do = digitalocean.Manager(token=do_token)
 
 
-def create_vps(name, req):
+def create_vps(name, req={}, plan=None):
     vps_util.save_pillar(name, req)
-    plan = vps_util.dc_by_cm(vps_util.my_cm()) + "_512MB"
+    if plan is None:
+        plan = vps_util.dc_by_cm(vps_util.my_cm()) + "_512MB"
     out = subprocess.check_output(["salt-cloud", "-p", plan, name])
     # Uberhack: XXX update with salt version...
     d = yaml.load(out[out.rfind(name + ":"):].replace("----------", "").replace("|_", "-")).values()[0]

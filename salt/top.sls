@@ -38,4 +38,4 @@ base:
     'cs-*':
         - lantern_build_prereqs
         - proxy_ufw_rules
-        - redis
+        - config_server

@@ -230,6 +230,22 @@ def todaystr():
     now = datetime.utcnow()
     return "%d%02d%02d" % (now.year, now.month, now.day)
 
+def new_vps_serial(prefix, cm=None, datestr=None):
+    if cm is None:
+        cm = my_cm()
+    if datestr is None:
+        datestr = todaystr()
+    key = 'serial:%s:%s:%s' % (cm, prefix, datestr)
+    p = redis_shell.pipeline()
+    p.incr(key)
+    p.expire(key, 25 * 60 * 60)
+    return p.execute()[0]
+
+def new_vps_name(prefix):
+    date = todaystr()
+    cm = my_cm()
+    return "-".join([prefix, cm, date, str(new_vps_serial(prefix, cm, date)).zfill(3)])
+
 def my_cm():
     """
     The name of the cloudmaster managing me, excluding the 'cm-' prefix.
