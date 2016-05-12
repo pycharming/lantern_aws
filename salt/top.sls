@@ -32,6 +32,8 @@ base:
         - http_proxy
     'pubsub-*':
         - pubsub
+    'borda-*':
+        - borda
     'ops-panel':
         - lantern_build_prereqs
         - proxy_ufw_rules
