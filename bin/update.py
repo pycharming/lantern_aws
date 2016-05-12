@@ -117,12 +117,12 @@ def upload_pillars():
             ' && echo "in_staging: %s" > global.sls '
             ' && echo "in_production: %s" >> global.sls '
             ' && echo "datacenter: %s" >> global.sls '
+            ' && echo "cfgsrv_redis_url: %s" >> global.sls'
             ' && echo "slack_webhook_url: %s" >> global.sls '
             ' && echo "cloudmaster_name: %s" >> global.sls '
             ' && echo "do_token: %s" > do_credential.sls'
             ' && echo "vultr_apikey: %s" > vultr_credential.sls'
             ' && echo "cfgsrv_token: %s" > cfgsrv_credential.sls'
-            ' && echo "cfgsrv_redis_url: %s" >> cfgsrv_credential.sls'
             ' && echo "cfgsrv_redis_test_pass: \"%s\"" >> cfgsrv_credential.sls'
             ' && echo "secondary_redis_url: \"%s\"" >> secondary_redis_credential.sls'
             ' && echo "github_token: %s" > github_token.sls'
@@ -135,12 +135,12 @@ def upload_pillars():
                  util.in_staging(),
                  util.in_production(),
                  config.datacenter,
+                 cfgsrv_redis_url,
                  slack_webhook_url,
                  config.cloudmaster_name,
                  do_token,
                  vultr_apikey,
                  cfgsrv_token,
-                 cfgsrv_redis_url,
                  cfgsrv_redis_test_pass,
                  secondary_redis_url,
                  github_token,
