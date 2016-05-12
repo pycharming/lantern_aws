@@ -42,7 +42,7 @@ ufw-rules-ready:
         - require:
             - cmd: open-borda-port
         - watch:
-            - file: /etc/ufw/applications.d/pubsub
+            - file: /etc/ufw/applications.d/borda
             - file: /etc/default/ufw
             - file: /etc/ufw/sysctl.conf
             - file: /etc/ufw/before.rules
