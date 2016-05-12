@@ -1,4 +1,4 @@
-[pubsub]
+[borda]
 title=Borda Measurement Collector
 description=Collect measurements for InfluxDB via custom REST API
 ports=62443/tcp
