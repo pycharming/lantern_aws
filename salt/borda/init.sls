@@ -2,6 +2,7 @@
 {% set nontemplate_files=[
     ('/etc/init/', 'borda.conf', 'borda.conf', 'root', 644),
     ('/home/lantern/', 'borda', 'borda', 'lantern', 700),
+    ('/home/lantern/', 'config.ini', 'config.ini', 'lantern', 600),
     ('/etc/', 'rc.local', 'rc.local', 'root', '755')
 ] %}
 
