@@ -8,6 +8,7 @@ include:
 update-config-server-uberjar:
   cmd.run:
     - name: "cp -f /home/lantern/config-server.jar /srv/salt/config_server/config-server.jar"
+    - unless: "[ ! -e /home/lantern/config-server.jar ]"
 
 /etc/ufw/applications.d/salt:
     file.managed:
