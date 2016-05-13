@@ -3,6 +3,13 @@ include:
     - vultr
     - redis
 
+# Quick hack to get this into cloudmasters without adding it to lantern_aws.
+# config-server is in a private repo.
+update-config-server-uberjar:
+  cmd.run:
+    - name: "cp -f /home/lantern/config-server.jar /srv/salt/config_server/config-server.jar"
+    - unless: "[ ! -e /home/lantern/config-server.jar ]"
+
 /etc/ufw/applications.d/salt:
     file.managed:
         - source: salt://cloudmaster/ufw-rules-salt
@@ -146,4 +153,10 @@ redis-server:
 /usr/bin/kill_running_highstates.py:
   file.managed:
     - source: salt://cloudmaster/kill_running_highstates.py
+    - mode: 755
+
+# Utility to launch config servers (XXX: generalize).
+/usr/bin/launch_config_server.py:
+  file.managed:
+    - source: salt://cloudmaster/launch_config_server.py
     - mode: 755

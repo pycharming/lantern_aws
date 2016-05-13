@@ -97,7 +97,7 @@ def run():
                 if reqid in pending:
                     print "Killing task %s because of queue timeout" % reqid
                     kill_task(reqid)
-                name = get_lcs_name(req)
+                name = new_proxy_name(req)
                 proc = multiprocessing.Process(target=launch_one_server,
                                                args=(procq,
                                                      reqid,
@@ -120,18 +120,9 @@ def run():
                     kill_task(reqid)
         time.sleep(10)
 
-def get_lcs_name(req):
-    date = vps_util.todaystr()
-    if redis_shell.get(CM + ':lcsserial:date') == date:
-        serial = redis_shell.incr(CM + ':lcsserial')
-    else:
-        pipe = redis_shell.pipeline()
-        pipe.set(CM + ':lcsserial:date', date)
-        pipe.set(CM + ':lcsserial', 1)
-        pipe.execute()
-        serial = 1
-    type_prefix = 'obfs4' if 'obfs4_port' in req else 'https'
-    return 'fp-%s-%s-%s-%03d' % (type_prefix, CM, date, serial)
+def new_proxy_name(req):
+    type_str = 'obfs4' if 'obfs4_port' in req else 'https'
+    return vps_util.new_vps_name('fp-' + type_str)
 
 def launch_one_server(q, reqid, name, req_string):
     req = json.loads(req_string)
