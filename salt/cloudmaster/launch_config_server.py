@@ -9,7 +9,7 @@ import vps_util
 def launch_config_server():
     # XXX: this doesn't perform a complete setup yet.
     name = vps_util.new_vps_name('cs')
-    d = do_util.create_vps(name, plan=vps_util.my_cm() + '_8GB')
+    d = do_util.create_vps(name, plan=vps_util.my_cm() + '_2GB')
     if not vps_util.highstate_pid(name):
         print("Highstate not running yet; waiting for a bit just in case...")
         time.sleep(10)
