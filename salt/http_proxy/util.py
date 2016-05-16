@@ -19,15 +19,7 @@ def flag_as_done(flag_filename):
     file(flag_filename, 'w').write(str(datetime.datetime.utcnow()))
 
 def am_I_closed():
-    srv = redis_shell.hget('name->srv', instance_id)
-    if srv is None:
-        print "I'm retired or a baked in proxy"
-        return False
-    if redis_shell.zscore(region + ':slices', srv) is not None:
-        print "I'm open"
-        return False
-    print "I'm closed"
-    return True
+    return vps_util.proxy_status(name=instance_id, ip=ip) == 'closed'
 
 def close_server(msg):
     if os.path.exists(close_flag_filename):

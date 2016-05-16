@@ -320,6 +320,18 @@ def all_vpss():
     return (set(vps_shell('vl').all_vpss())
             | set(vps_shell('do').all_vpss()))
 
+def proxy_status(name=None, ip=None, srv=None):
+    name, _, srv = nameipsrv(name, ip, srv)
+    if srv is None:
+        return 'baked-in'
+    elif redis_shell.zscore(region_by_name(name) + ':slices', srv) is None:
+        return 'closed'
+    else:
+        return 'open'
+
+def offload_if_closed(name=None, ip=None, srv=None, reason='failed_checkfallbacks', pipeline=None):
+    retire_proxy(name, ip, srv, reason, pipeline, proxy_status(name, ip, srv) == 'closed')
+
 def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', pipeline=None, offload=False):
     name, ip, srv = nameipsrv(name, ip, srv)
     region = region_by_name(name)
