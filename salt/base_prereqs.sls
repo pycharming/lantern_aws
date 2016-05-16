@@ -25,6 +25,11 @@ base-packages:
             - vim
         - reload_modules: yes
 
+requests:
+  pip.installed:
+    - upgrade: yes
+    - order: 1
+
 transit-python:
   pip.installed:
     - order: 2

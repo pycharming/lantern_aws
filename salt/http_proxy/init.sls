@@ -104,9 +104,6 @@ save-access-data:
 zip:
     pkg.installed
 
-requests:
-  pip.installed
-
 /home/lantern/report_stats.py:
     cron.absent:
         - user: lantern
@@ -124,7 +121,6 @@ uptime:
     - user: lantern
     - require:
         - file: /home/lantern/check_load.py
-        - pip: requests
         - pip: uptime
         - pkg: python-redis
 
