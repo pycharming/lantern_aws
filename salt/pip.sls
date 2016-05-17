@@ -9,5 +9,6 @@ pip==8.1.1:
   pip.installed:
     - order: 0
     - upgrade: yes
+    - force_reinstall: yes
     - require:
         - cmd: some-pip
