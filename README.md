@@ -78,7 +78,7 @@ If you have many proxies in a cloudmaster, they may have trouble updating all at
 To do this in the proxies managed by all production cloudmasters,
 
     bin/inallcms bin/ssh_cloudmaster.py 'sudo salt -b 100 "fp-*" state.highstate'
-    
+
 This operation is not 100% reliable, so after running an important update you may need to verify that the update was performed in all machines.  How to do this is explained below, in the "Verify deployment" subsection.
 
 To run an arbitrary command (as root) in all chained proxies:
@@ -162,7 +162,7 @@ Either way, you just need to keep running the update/verify procedure (perhaps w
 
 Once you have launched a minion by any of the methods described below, the
 machine will start applying the Salt configuration on its own.  A common
-problem when first testing configuration changes is that Salt rejects your .sls 
+problem when first testing configuration changes is that Salt rejects your .sls
 files altogether (for example, if you have some YAML or Jinja syntax error).
 One way to quickly detect that is to run
 
@@ -221,7 +221,7 @@ cloudmaster_address = "188.166.40.244"
 - `cd ~/git/lantern_aws/bin`
 - `./update.py`
 - back in the cloudmaster [2]:
-- `salt-call highstate | tee hslog`
+- `salt-call state.highstate | tee hslog`
 
 Your cloudmaster should be ready now.  If it's not a production one (XXX: add instructions for making it a production one) it will be running against a local redis DB.
 
