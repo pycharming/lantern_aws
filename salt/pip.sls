@@ -10,7 +10,7 @@ some-pip:
 pip8.1.1:
   cmd.run:
     - name: 'pip install --upgrade --force pip==8.1.1'
-    - unless: '[ $(pip --version | cut -d ' ' -f 2) = "8.1.1" ]'
+    - unless: '[ $(pip --version | cut -d " " -f 2) = "8.1.1" ]'
     - order: 0
     - require:
         - cmd: some-pip
