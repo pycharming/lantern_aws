@@ -8,5 +8,6 @@ some-pip:
 pip==8.1.1:
   pip.installed:
     - order: 0
+    - upgrade: yes
     - require:
         - cmd: some-pip
