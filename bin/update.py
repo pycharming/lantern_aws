@@ -66,7 +66,7 @@ def scp(src, dst):
 def rsync(src, dst):
     error = os.system(("rsync -e 'ssh -o StrictHostKeyChecking=no'"
                        + " --rsync-path='sudo rsync' " # we set --rsync-path to use sudo so that we can overwrite files owned by root
-                       + " -azLk %s/ %s:%s")
+                       + " -azLk %s/ root@%s:%s")
                       % (src,
                          config.cloudmaster_address,
                          dst))
