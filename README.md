@@ -237,8 +237,11 @@ This procedure is for upgrading to v2015.8.8.2.  It isn't guaranteed to work wit
 
 - upgrade all minions.  Just copying and pasting this command should work:
 
-    salt -C 'not E@cm-' cmd.run 'curl -L https://bootstrap.saltstack.com | sh -s -- -A $(salt-call grains.get master | tail -n 1 | tr -d "[[:space:]]") -i $(salt-call grains.get id | tail -n 1 | tr -d "[[:space:]]") git v2015.8.8.2'
-
+```
+salt -C 'not E@cm-' cmd.run 'curl -L https://bootstrap.saltstack.com | sh -s -- -A $(salt-call grains.get master | tail -n 1 | tr -d "[[:space:]]") -i $(salt-call grains.get id | tail -n 1 | tr -d "[[:space:]]") git v2015.8.8.2'
+```
 - upgrade the master itself (**NOTE: it's important to upgrade the minions before**), running a similar command locally:
 
-    curl -L https://bootstrap.saltstack.com | sh -s -- -M -A 127.0.0.1 -i $(salt-call grains.get id | tail -n 1 | tr -d "[[:space:]]") git v2015.8.8.2
+```
+curl -L https://bootstrap.saltstack.com | sh -s -- -M -A 127.0.0.1 -i $(salt-call grains.get id | tail -n 1 | tr -d "[[:space:]]") git v2015.8.8.2
+```
