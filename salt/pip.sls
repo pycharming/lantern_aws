@@ -7,6 +7,6 @@ some-pip:
 # breaks with the newest one as of this writing.
 pip==8.1.1:
   pip.installed:
-    - order: 1
+    - order: 0
     - require:
         - cmd: some-pip
