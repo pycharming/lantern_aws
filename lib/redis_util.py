@@ -1,6 +1,7 @@
 from collections import namedtuple
 from datetime import datetime
 import os
+import here
 from StringIO import StringIO
 
 import redis
@@ -11,8 +12,23 @@ from dateutil.tz import tzutc
 from transit.reader import Reader
 from transit.writer import Writer
 
+redis_url = os.getenv('REDIS_URL')
+redis_args = dict()
+if redis_url.startswith("rediss"):
+    # TLS connection
+    redis_args["ssl_ca_certs"] = os.path.join(here.secrets_path,
+                                              'redis',
+                                              'garantia_ca.pem')
 
-redis_shell = redis.from_url(os.getenv('REDIS_URL'))
+    redis_args["ssl_keyfile"] = os.path.join(here.secrets_path,
+                                             'redis',
+                                             'garantia_user_private.key')
+
+    redis_args["ssl_certfile"] = os.path.join(here.secrets_path,
+                                              'redis',
+                                              'garantia_user.crt')
+
+redis_shell = redis.from_url(os.getenv('REDIS_URL'), **redis_args)
 
 logkey = 'log'
 versionkey = 'version'
