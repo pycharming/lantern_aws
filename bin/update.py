@@ -42,51 +42,55 @@ def not_up_to_date():
     print
     sys.exit(1)
 
-def update():
+def update(as_root=False):
     util.set_secret_permissions()
     print "Uploading master config..."
-    upload_master_config()
+    upload_master_config(as_root)
     print "Uploading pillars..."
-    upload_pillars()
+    upload_pillars(as_root)
     print "Uploading states..."
-    rsync_salt()
+    rsync_salt(as_root)
 
-def rsync_salt():
-    return rsync(here.salt_states_path, '/srv/salt')
+def rsync_salt(as_root):
+    return rsync(here.salt_states_path, '/srv/salt', as_root)
 
-def scp(src, dst):
-    error = os.system("scp -o StrictHostKeyChecking=no %s %s:%s"
+def scp(src, dst, as_root=False):
+    error = os.system("scp -o StrictHostKeyChecking=no %s %s%s:%s"
                       % (src,
+                         ('root@' if as_root else ''),
                          config.cloudmaster_address,
                          dst))
     if not error:
         print "scp'd successfully."
     return error
 
-def rsync(src, dst):
+def rsync(src, dst, as_root=False):
     error = os.system(("rsync -e 'ssh -o StrictHostKeyChecking=no'"
-                       + " --rsync-path='sudo rsync' " # we set --rsync-path to use sudo so that we can overwrite files owned by root
-                       + " -azLk %s/ root@%s:%s")
+                       + ("" if as_root else " --rsync-path='sudo rsync' ") # we set --rsync-path to use sudo so that we can overwrite files owned by root
+                       + " -azLk %s/ %s%s:%s")
                       % (src,
+                         ('root@' if as_root else ''),
                          config.cloudmaster_address,
                          dst))
     if not error:
         print "Rsynced successfully."
     return error
 
-def upload_master_config():
+def upload_master_config(as_root=False):
     util.ssh_cloudmaster(r"""(echo "timeout: 20" """
                          + r""" && echo "keep_jobs: 2" """
                          + r""" && echo "worker_threads: 20" """
-                         + r""" ) > master""")
-    move_root_file('master', '/etc/salt/master')
+                         + r""" ) > master""",
+                         as_root=as_root)
+    move_root_file('master', '/etc/salt/master', as_root)
 
-def move_root_file(src, dst):
+def move_root_file(src, dst, as_root=False):
     return util.ssh_cloudmaster(('sudo mv %s %s'
                                  ' && sudo chown root:root %s'
-                                 ' && sudo chmod 600 %s') % (src, dst, dst, dst))
+                                 ' && sudo chmod 600 %s') % (src, dst, dst, dst),
+                                as_root=as_root)
 
-def upload_pillars():
+def upload_pillars(as_root=False):
     _, _, do_token = util.read_do_credential()
     vultr_apikey = util.read_vultr_credential()
     cfgsrv_token, cfgsrv_redis_url, cfgsrv_redis_test_pass \
@@ -144,8 +148,9 @@ def upload_pillars():
                  cfgsrv_redis_test_pass,
                  secondary_redis_url,
                  github_token,
-                 loggly_token))
+                 loggly_token),
+            as_root=as_root)
 
 if __name__ == '__main__':
     check_master_if_in_production()
-    update()
+    update('--as-root' in sys.argv)

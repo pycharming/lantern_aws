@@ -200,14 +200,15 @@ Currently this is a manual process.
    - The name must follow the convention `cm-<datacenter><optionalextrastuff>`.  For example, if want to launch a test cloudmaster for yourself in the `donyc3` datacenter, call it `cm-donyc3myname`.  A production cloudmaster must not have any extra stuff attached to its name (for example, the production cloudmaster for that datacenter is just `cm-donyc3`).
    - Remember to provide your own SSH key in addition to the cloudmaster ones.
    - Although these are not currently being used, selecting the options for IPv6 support and private networking might be a good idea for forward compatibility.
- - ssh into `root@<your-new-cloudmaster-ip>` and run:
+ - ssh into `root@<your-new-cloudmaster-ip>` and run [1]:
 
 ```bash
 NAME="<your-cloudmaster's-name>"
 mkdir -p /srv/pillar
 touch /srv/pillar/$NAME.sls
-curl -L https://bootstrap.saltstack.com | sh -s -- -M -A 127.0.0.1 -i $NAME git v2015.5.5
+curl -L https://bootstrap.saltstack.com | sh -s -- -M -A 127.0.0.1 -i $NAME git v2015.8.8.2
 salt-key -ya $NAME
+salt-cloud -u
 ```
  - in your own computer, make a new file with contents similar to these:
 
@@ -218,6 +219,12 @@ cloudmaster_address = "188.166.40.244"
 
 - and place it in `~/git/lantern_aws/bin/config_overrides.py`.  You probably want to have it saved somewhere else too, since you'll be deleting and restoring `config_overrides.py` to alternate between the production deployment and one or more non-production ones.
 - `cd ~/git/lantern_aws/bin`
-- `./update.py && ./hscloudmaster.bash`
+- `./update.py`
+- back in the cloudmaster [2]:
+- `salt-call highstate | tee hslog`
 
 Your cloudmaster should be ready now.  If it's not a production one (XXX: add instructions for making it a production one) it will be running against a local redis DB.
+
+[1] Please double-check in [bin/config.py](https://github.com/getlantern/lantern_aws/blob/master/bin/config.py) that this version is current.  Also, the `salt-cloud -u` line is only required due to a bug in `v2015.8.8.2`.
+
+[2] You can't use `bin/hscloudmaster.bash` here because it hasn't been adapted to work as root, which is only needed during this bootstrap procedure.
