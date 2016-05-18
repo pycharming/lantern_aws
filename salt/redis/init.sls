@@ -1,7 +1,7 @@
 {% set nontemplate_files=[
-    ('/etc/lantern/redis/', 'garantia_ca.pem', 'redis/garantia_ca.pem', 'root', 644),
-    ('/etc/lantern/redis/secondary-redis/', 'garantia_user_private.key', 'redis/secondary-redis/garantia_user_private.key', 'root', 644),
-    ('/etc/lantern/redis/secondary-redis/', 'garantia_user.crt', 'redis/secondary-redis/garantia_user.crt', 'root', 644)] %}
+    ('/etc/secret/redis/', 'garantia_ca.pem', 'redis/garantia_ca.pem', 'root', 644),
+    ('/etc/secret/redis/secondary-redis/', 'garantia_user_private.key', 'redis/secondary-redis/garantia_user_private.key', 'root', 644),
+    ('/etc/secret/redis/secondary-redis/', 'garantia_user.crt', 'redis/secondary-redis/garantia_user.crt', 'root', 644)] %}
 
 redis-env:
   file.append:
@@ -19,7 +19,7 @@ python-redis:
 cert-dirs:
   file.directory:
     - names:
-        - /etc/lantern/redis/secondary-redis
+        - /etc/secret/redis/secondary-redis
     - user: root
     - group: root
     - mode: 755

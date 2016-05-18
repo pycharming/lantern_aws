@@ -1,7 +1,7 @@
 from collections import namedtuple
 from datetime import datetime
 import os
-import here
+import paths
 from StringIO import StringIO
 
 import redis
@@ -16,16 +16,18 @@ redis_url = os.getenv('REDIS_URL')
 redis_args = dict()
 if redis_url.startswith("rediss"):
     # TLS connection
-    redis_args["ssl_ca_certs"] = os.path.join(here.secrets_path,
+    redis_args["ssl_ca_certs"] = os.path.join(paths.secrets,
                                               'redis',
                                               'garantia_ca.pem')
 
-    redis_args["ssl_keyfile"] = os.path.join(here.secrets_path,
+    redis_args["ssl_keyfile"] = os.path.join(paths.secrets,
                                              'redis',
+                                             'cfgsrv',
                                              'garantia_user_private.key')
 
-    redis_args["ssl_certfile"] = os.path.join(here.secrets_path,
+    redis_args["ssl_certfile"] = os.path.join(paths.secrets,
                                               'redis',
+                                              'cfgsrv',
                                               'garantia_user.crt')
 
 redis_shell = redis.from_url(os.getenv('REDIS_URL'), **redis_args)
