@@ -219,7 +219,7 @@ cloudmaster_address = "188.166.40.244"
 
 - and place it in `~/git/lantern_aws/bin/config_overrides.py`.  You probably want to have it saved somewhere else too, since you'll be deleting and restoring `config_overrides.py` to alternate between the production deployment and one or more non-production ones.
 - `cd ~/git/lantern_aws/bin`
-- `./update.py`
+- `./update.py --as-root` (you only need to run --as-root the first time)
 - back in the cloudmaster [2]:
 - `salt-call state.highstate | tee hslog`
 
