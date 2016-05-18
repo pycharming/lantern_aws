@@ -9,7 +9,7 @@ cfgsrv-env:
         {% if not pillar['in_production'] %}
           REDISCLOUD_URL='{{ pillar['cfgsrv_redis_url'].split('@')[0] }}@localhost:6379'
         {% else %}
-          REDISCLOUD_URL='{{ pillar['cfgsrv_redis_url'] }}@localhost:6379'
+          REDISCLOUD_URL='{{ pillar['cfgsrv_redis_url'] }}'
         {% endif %}
         PRODUCTION=true
         PORT=62000
