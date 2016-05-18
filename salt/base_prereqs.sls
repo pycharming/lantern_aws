@@ -23,6 +23,7 @@ base-packages:
             - python-dateutil
             - htop
             - vim
+            - python-dev
         - reload_modules: yes
 
 requests:
