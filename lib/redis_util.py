@@ -22,12 +22,10 @@ if redis_url.startswith("rediss"):
 
     redis_args["ssl_keyfile"] = os.path.join(paths.secrets,
                                              'redis',
-                                             'cfgsrv',
                                              'garantia_user_private.key')
 
     redis_args["ssl_certfile"] = os.path.join(paths.secrets,
                                               'redis',
-                                              'cfgsrv',
                                               'garantia_user.crt')
 
 redis_shell = redis.from_url(os.getenv('REDIS_URL'), **redis_args)
