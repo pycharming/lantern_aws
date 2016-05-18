@@ -1,12 +1,21 @@
+# This is a no-op, used only to factor out dependencies for reuse across states.
+stunnel4-deps:
+  cmd.wait:
+    - name: ":"
+    - watch:
+        - file: enable-stunnel
+        - file: /etc/stunnel/*
+
 stunnel4:
   pkg.installed:
     - refresh: True
 
   service.running:
     - enable: yes
+    - require:
+        - pkg: stunnel4
     - watch:
-        - file: /etc/default/stunnel4
-        - file: /etc/stunnel/*
+        - cmd: stunnel4-deps
 
 enable-stunnel:
   file.replace:
