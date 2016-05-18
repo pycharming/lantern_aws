@@ -160,3 +160,15 @@ redis-server:
   file.managed:
     - source: salt://cloudmaster/launch_config_server.py
     - mode: 755
+
+# This transitional module has been phased out, but apparently Salt still picks
+# it up as the Digital Ocean driver if present from an old installation.
+#
+# This suggests making sure to nuke the old installation altogether when
+# upgrading Salt, but as of this writing this problem had crept into many
+# cloudmasters.
+delete-obsolete-digital-ocean-v2-driver:
+  file.absent:
+    - names:
+        - /usr/lib/python2.7/dist-packages/salt/cloud/clouds/digital_ocean_v2.py
+        - /usr/lib/python2.7/dist-packages/salt/cloud/clouds/digital_ocean_v2.pyc
