@@ -44,3 +44,6 @@ base:
         - proxy_ufw_rules
         - stunnel4
         - config_server
+    'redis-*':
+        - stunnel4
+        - redis_server
