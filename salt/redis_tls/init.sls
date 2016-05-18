@@ -11,7 +11,5 @@
     - group: root
     - mode: 644
     - makedirs: True
-    - require:
-        - file: cert-dirs
 
 {% endfor %}
