@@ -18,6 +18,7 @@ base:
         - check_disk
         - netdata
         - redis
+        - redis_tls
         - sshalert
     'cm-vlfra1':
         - vps_sanity_checks
