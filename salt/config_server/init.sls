@@ -10,12 +10,9 @@ cfgsrv-env:
         PRODUCTION=true
         PORT=62000
 
-stunnel4:
-  pkg.installed
-
-/etc/stunnel/stunnel.conf:
+/etc/stunnel/stunnel_client.conf:
   file.managed:
-    - source: salt://config_server/stunnel.conf
+    - source: salt://config_server/stunnel_client.conf
     - template: jinja
     - context:
         redis_host: {{ pillar['cfgsrv_redis_url'].split('@')[1] }}
@@ -25,19 +22,6 @@ stunnel4:
     - makedirs: True
     - require:
       - pkg: stunnel4
-
-enable-stunnel:
-  file.replace:
-    - name: /etc/default/stunnel4
-    - pattern: "ENABLED=0"
-    - repl: "ENABLED=1"
-    - append_if_not_found: yes
-    - require:
-      - pkg: stunnel4
-
-restart-stunnel:
-  cmd.run:
-    - name: /etc/init.d/stunnel4 restart
 
 /home/lantern/config-server.jar:
   file.managed:
@@ -57,4 +41,4 @@ config-server:
     - watch:
         - file: /home/lantern/config-server.jar
         - file: /etc/init/config-server.conf
-        - cmd: restart-stunnel
+        - service: stunnel4
