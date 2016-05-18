@@ -1,6 +1,6 @@
 some-pip:
   cmd.run:
-    - name: "apt-get install python-pip"
+    - name: "apt-get install -q python-pip"
     - unless: "which pip"
 
 # Salt v2015.8.8.2 requires a newer version than the one in Ubuntu 14.04, but it
