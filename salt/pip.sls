@@ -5,10 +5,12 @@ some-pip:
 
 # Salt v2015.8.8.2 requires a newer version than the one in Ubuntu 14.04, but it
 # breaks with the newest one as of this writing.
-pip==8.1.1:
-  pip.installed:
+# We can't use salt's own pip state because it requires an "importable" pip, which
+# apparently the one that comes in Ubuntu 14.04 isn't.
+pip8.1.1:
+  cmd.run:
+    - name: 'pip install --upgrade --force pip==8.1.1'
+    - unless: '[ $(pip --version | cut -d " " -f 2) = "8.1.1" ]'
     - order: 0
-    - upgrade: yes
-    - force_reinstall: yes
     - require:
         - cmd: some-pip
