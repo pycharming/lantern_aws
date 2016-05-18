@@ -1,5 +1,5 @@
 do:
-    provider: digital_ocean
+    driver: digital_ocean
     personal_access_token: {{ pillar['do_token'] }}
     private_networking: yes
     ipv6: yes
