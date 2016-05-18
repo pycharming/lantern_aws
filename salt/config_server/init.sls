@@ -6,11 +6,7 @@ cfgsrv-env:
     - name: /etc/environment
     - text: |
         AUTH_TOKEN='{{ pillar['cfgsrv_token'] }}'
-        {% if not pillar['in_production'] %}
-          REDISCLOUD_URL='{{ pillar['cfgsrv_redis_url'].split('@')[0] }}@localhost:6379'
-        {% else %}
-          REDISCLOUD_URL='{{ pillar['cfgsrv_redis_url'] }}'
-        {% endif %}
+        REDISCLOUD_URL='{{ pillar['cfgsrv_redis_url'] }}'
         PRODUCTION=true
         PORT=62000
 
