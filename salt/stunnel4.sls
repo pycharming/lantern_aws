@@ -1,3 +1,4 @@
+# This is a no-op, used only to factor out dependencies for reuse across states.
 stunnel4-deps:
   cmd.wait:
     - name: ":"
