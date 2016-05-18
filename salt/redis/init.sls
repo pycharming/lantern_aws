@@ -16,6 +16,20 @@ python-redis:
     - require:
         - pkg: python-hiredis
 
+cert-dirs:
+  file.directory:
+    - names:
+        - /etc/lantern/redis/secondary-redis
+    - user: root
+    - group: root
+    - mode: 755
+    - makedirs: yes
+    - recurse:
+        - user
+        - group
+        - mode
+
+
 {% for dir,dst_filename,src_filename,user,mode in nontemplate_files %}
 {{ dir+dst_filename }}:
     file.managed:
@@ -24,5 +38,5 @@ python-redis:
         - group: {{ user }}
         - mode: {{ mode }}
         - require:
-            - file: fp-dirs
+            - file: cert-dirs
 {% endfor %}
