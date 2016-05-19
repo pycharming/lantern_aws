@@ -1,5 +1,6 @@
 include:
     - digitalocean
+    - linode
     - vultr
     - redis
 

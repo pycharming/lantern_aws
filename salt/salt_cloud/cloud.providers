@@ -12,3 +12,10 @@ linode:
   password: {{ pillar['linode_password'] }}
   ssh_pubkey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDK0keCIt3XjoCBlXD6aAiL5zmJeYgEd9bwWlWb/UwhkRTM80gGB1Z5O6uQ6O+agJ3SJTBZUMwL+rEr7PIdGAdjVJORckYBxflcym22AJgT0YdtlBrMt1xLapA4P+zYMjU+GvBqKfehiIuMJvnjotSYk3gS8rj7Rf4mHh84BbhRyl0H74QIX+Om2+zbLPbF48pK6Ig7mdbEoEfCyApkurEoUYv/vJ0f+TFh48X/2jorKjS22PiqB9VhLtS5CV6Tun0k9XkNTJOzFGx/wJuV+RG+QewcSUIyIoBscApXJiN3zFlLpSbye2jGx43RUMYYhEKes6qDP1N7ZWZvJDxqNfKv lanterncyborg@gmail.com
   ssh_keyfile: /etc/salt/cloudmaster.id_rsa
+
+linode_tokyo:
+  driver: linode
+  apikey: {{ pillar['linode_tokyo_apikey'] }}
+  password: {{ pillar['linode_password'] }}
+  ssh_pubkey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDK0keCIt3XjoCBlXD6aAiL5zmJeYgEd9bwWlWb/UwhkRTM80gGB1Z5O6uQ6O+agJ3SJTBZUMwL+rEr7PIdGAdjVJORckYBxflcym22AJgT0YdtlBrMt1xLapA4P+zYMjU+GvBqKfehiIuMJvnjotSYk3gS8rj7Rf4mHh84BbhRyl0H74QIX+Om2+zbLPbF48pK6Ig7mdbEoEfCyApkurEoUYv/vJ0f+TFh48X/2jorKjS22PiqB9VhLtS5CV6Tun0k9XkNTJOzFGx/wJuV+RG+QewcSUIyIoBscApXJiN3zFlLpSbye2jGx43RUMYYhEKes6qDP1N7ZWZvJDxqNfKv lanterncyborg@gmail.com
+  ssh_keyfile: /etc/salt/cloudmaster.id_rsa

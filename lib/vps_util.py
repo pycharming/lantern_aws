@@ -282,7 +282,9 @@ _region_by_production_cm = {'donyc3': 'etc',
                             'dosgp1': 'sea',
                             'dosfo1': 'sea',
                             'vltok1': 'sea',
-                            'vllan1': 'etc',}
+                            'lisgp1': 'sea',
+                            'litok1': 'sea',
+                            'vllan1': 'etc'}
 def region_by_dc(dc):
     return _region_by_production_cm[dc]
 

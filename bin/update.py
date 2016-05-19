@@ -93,7 +93,7 @@ def move_root_file(src, dst, as_root=False):
 def upload_pillars(as_root=False):
     _, _, do_token = util.read_do_credential()
     vultr_apikey = util.read_vultr_credential()
-    linode_password, linode_apikey = util.read_linode_credential()
+    linode_password, linode_apikey, linode_tokyo_apikey = util.read_linode_credential()
     cfgsrv_token, cfgsrv_redis_url, cfgsrv_redis_test_pass \
         = util.read_cfgsrv_credential()
     secondary_redis_url = util.read_secondary_redis_credential()
@@ -129,6 +129,7 @@ def upload_pillars(as_root=False):
             ' && echo "vultr_apikey: %s" > vultr_credential.sls'
             ' && echo "linode_password: \'%s\'" > linode_credential.sls '
             ' && echo "linode_apikey: %s" >> linode_credential.sls '
+            ' && echo "linode_tokyo_apikey: %s" >> linode_credential.sls '
             ' && echo "cfgsrv_token: %s" > cfgsrv_credential.sls'
             ' && echo "cfgsrv_redis_test_pass: \"%s\"" >> cfgsrv_credential.sls'
             ' && echo "secondary_redis_url: \"%s\"" >> secondary_redis_credential.sls'
@@ -149,6 +150,7 @@ def upload_pillars(as_root=False):
                  vultr_apikey,
                  linode_password,
                  linode_apikey,
+                 linode_tokyo_apikey,
                  cfgsrv_token,
                  cfgsrv_redis_test_pass,
                  secondary_redis_url,

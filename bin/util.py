@@ -27,7 +27,7 @@ def read_vultr_credential():
 @memoized
 def read_linode_credential():
     return secrets_from_yaml(['linode.md'],
-                             ['pass', 'api_key'])
+                             ['pass', 'api_key', 'tokyo_api_key'])
 
 @memoized
 def read_cfgsrv_credential():
