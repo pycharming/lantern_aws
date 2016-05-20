@@ -30,11 +30,6 @@ def read_cfgsrv_credential():
                              ['auth_token', 'redis_url', 'redis_test_pass'])
 
 @memoized
-def read_secondary_redis_credential():
-    return secrets_from_yaml(['lantern_aws', 'secondary_redis.yaml'],
-                             ['secondary_redis_url'])[0]
-
-@memoized
 def read_github_token():
     return secrets_from_yaml(['github.md'],
                              ['repo-token'])[0]

@@ -16,17 +16,13 @@ redis_url = os.getenv('REDIS_URL')
 redis_args = dict()
 if redis_url.startswith("rediss"):
     # TLS connection
-    redis_args["ssl_ca_certs"] = os.path.join(paths.secrets,
-                                              'redis',
-                                              'garantia_ca.pem')
-
     redis_args["ssl_keyfile"] = os.path.join(paths.secrets,
                                              'redis',
-                                             'garantia_user_private.key')
+                                             'client_key.pem')
 
     redis_args["ssl_certfile"] = os.path.join(paths.secrets,
                                               'redis',
-                                              'garantia_user.crt')
+                                              'client_cert.pem')
 
 redis_shell = redis.from_url(os.getenv('REDIS_URL'), **redis_args)
 
