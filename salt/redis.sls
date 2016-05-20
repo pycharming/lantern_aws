@@ -4,9 +4,17 @@ redis-env:
     - text: "REDIS_URL={{ pillar['cfgsrv_redis_url'] }}"
 
 python-hiredis:
-  pkg.installed
+  pkg.removed
 
 python-redis:
-  pkg.installed:
+  pkg.removed
+
+hiredis:
+  pip.installed:
+    - upgrade: yes
+
+redis:
+  pip.installed:
+    - upgrade: yes
     - require:
-        - pkg: python-hiredis
+        - pip: hiredis

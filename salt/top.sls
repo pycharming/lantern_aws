@@ -18,6 +18,7 @@ base:
         - check_disk
         - netdata
         - redis
+        - redis_tls
         - sshalert
     'cm-vlfra1':
         - vps_sanity_checks
@@ -41,4 +42,5 @@ base:
     'cs-*':
         - lantern_build_prereqs
         - proxy_ufw_rules
+        - stunnel4
         - config_server
