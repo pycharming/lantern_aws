@@ -12,35 +12,25 @@ install-python-software-properties:
   cmd.run:
     - name: apt-get install -q python-software-properties
 
-/etc/redis/redis_base.conf:
-  file.managed:
-    - order: 2
-    - source: salt://redis_server/redis_base.conf
-    - user: root
-    - group: root
-    - mode: 644
-    - makedirs: True
-
 /etc/redis/redis_auth.conf:
   file.managed:
-    - order: 2
     - source: salt://redis_server/redis_auth.conf
     - user: root
     - group: root
     - mode: 644
     - makedirs: True
 
-redis-includes:
-    file.append:
-      - name: /etc/redis/redis.conf
-      - text: |
-          include /etc/redis/redis_base.conf
-          include /etc/redis/redis_auth.conf
+/etc/redis/redis.conf:
+  file.managed:
+    - source: salt://redis_server/redis.conf
+    - user: root
+    - group: root
+    - mode: 644
+    - makedirs: True
 
 {% if pillar.get('master', False) %}
 /etc/redis/redis_master.conf:
   file.managed:
-    - order: 2
     - source: salt://redis_server/redis_master.conf
     - user: root
     - group: root
@@ -65,7 +55,6 @@ exclude-slave:
 
 /etc/redis/redis_slave.conf:
   file.managed:
-    - order: 2
     - source: salt://redis_server/redis_slave.conf
     - user: root
     - group: root
@@ -87,6 +76,13 @@ exclude-master:
       - repl:
 {% endif %}
 
+redis-ulimit:
+    file.append:
+      - name: /etc/security/limits.conf
+      - text: |
+          redis            soft    nofile            128000
+          redis            hard    nofile            128000
+
 redis-server:
   pkgrepo.managed:
     - ppa: chris-lea/redis-server
@@ -104,12 +100,12 @@ redis-server:
         - pkg: stunnel4
     - watch:
         - file: /etc/redis/*
+        - cmd: stunnel4-deps
 
 {% set rulefiles=['user.rules', 'user6.rules'] %}
 {% for file in rulefiles %}
 /lib/ufw/{{ file }}:
   file.managed:
-    - order: 2
     - source: salt://redis_server/{{ file }}
     - user: root
     - group: root
@@ -117,10 +113,11 @@ redis-server:
     - makedirs: True
 {% endfor %}
 
-ufw enable:
+ufw reload:
   cmd.run:
     - require:
       - pkg: ufw
+    - watch:
       {% for file in rulefiles %}
       - file: /lib/ufw/{{ file }}
       {% endfor %}
