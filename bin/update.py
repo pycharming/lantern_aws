@@ -129,7 +129,7 @@ def upload_pillars(as_root=False):
             ' && echo "cfgsrv_redis_test_pass: \"%s\"" >> cfgsrv_credential.sls'
             ' && echo "github_token: %s" > github_token.sls'
             ' && echo "loggly_token: %s" > loggly_token.sls'
-            r' && echo "base: {\"*\": [salt, global], \"fp-*\": [cfgsrv_credential, vultr_credential, github_token, loggly_token], \"cm-*\": [do_credential, vultr_credential, cfgsrv_credential], \"cs-*\": [cfgsrv_credential]}" > top.sls '
+            r' && echo "base: {\"fp-*\": [cfgsrv_credential, vultr_credential, github_token, loggly_token], \"cm-*\": [do_credential, vultr_credential, cfgsrv_credential], \"cs-*\": [cfgsrv_credential], \"*\": [global, salt]}" > top.sls '
             ' && sudo mv salt.sls global.sls top.sls do_credential.sls vultr_credential.sls cfgsrv_credential.sls github_token.sls loggly_token.sls $(hostname).sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
