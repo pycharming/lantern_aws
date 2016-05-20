@@ -13,9 +13,6 @@ cfgsrv-env:
 /etc/stunnel/stunnel_client.conf:
   file.managed:
     - source: salt://config_server/stunnel_client.conf
-    - template: jinja
-    - context:
-        redis_host: {{ pillar['cfgsrv_redis_url'].split('@')[1] }}
     - user: root
     - group: root
     - mode: 644

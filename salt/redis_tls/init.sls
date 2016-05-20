@@ -1,4 +1,4 @@
-{% set files=['garantia_user_private.key', 'garantia_user.crt', 'redis.getlantern.org/fullchain.pem', 'redis.getlantern.org/cert.pem', 'redis.getlantern.org/privkey.pem'] %}
+{% set files=['client_key.pem', 'client_cert.pem', 'redis.getlantern.org/fullchain.pem', 'redis.getlantern.org/cert.pem', 'redis.getlantern.org/privkey.pem'] %}
 
 {% for file in files %}
 
