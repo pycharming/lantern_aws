@@ -24,7 +24,7 @@
     - mode: 644
     - makedirs: True
 
-{% if pillar.get('master', False) %}
+{% if pillar.get('is_redis_master', False) %}
 /etc/redis/redis_master.conf:
   file.managed:
     - source: salt://redis_server/redis_master.conf
