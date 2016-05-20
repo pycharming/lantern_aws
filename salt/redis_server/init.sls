@@ -80,8 +80,8 @@ redis-ulimit:
     file.append:
       - name: /etc/security/limits.conf
       - text: |
-          redis            soft    nofile            128000
-          redis            hard    nofile            128000
+          *            soft    nofile            128000
+          *            hard    nofile            128000
 
 redis-server:
   pkgrepo.managed:
