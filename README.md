@@ -229,6 +229,26 @@ Your cloudmaster should be ready now.  If it's not a production one (XXX: add in
 
 [2] You can't use `bin/hscloudmaster.bash` here because it hasn't been adapted to work as root, which is only needed during this bootstrap procedure.
 
+##### Launching a redis server
+For replication purposes, Redis servers can be either masters or slaves.  At any
+one time, there should be only one master, and DNS should be configured so that
+redis.getlantern.org resolves to the master.
+
+The only difference between masters and slaves is that masters have the pillar
+`is_redis_master: "True"`.
+
+To launch a redis server named `redis-donyc3-001` in the `donyc3` datacenter:
+
+On the cloudmaster `cm-donyc3`:
+
+```
+sudo touch /srv/pillar/redis-donyc3-001
+# If you want this to be a redis master
+sudo echo 'is_redis_master: "True"' > /srv/pillar/redis-donyc3-001
+sudo salt-cloud -p donyc3_4GB redis-donyc3-001
+sudo salt "redis-donyc3-001" state.highstate
+```
+
 ##### Upgrading a cloudmaster's Salt version
 
 This procedure is for upgrading to v2015.8.8.2.  It isn't guaranteed to work with every version, but it should be a good baseline.
