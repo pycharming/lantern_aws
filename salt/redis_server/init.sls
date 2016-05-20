@@ -113,6 +113,7 @@ redis-server-running:
     - require:
         - pkg: stunnel4
         - pkg: redis-server
+        - cmd: disable-redis-server-sysv
     - watch:
         - file: /etc/redis/*
         - file: /etc/init/redis-server.conf
