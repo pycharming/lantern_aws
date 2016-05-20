@@ -91,6 +91,7 @@ redis-server:
     - name: redis-server
     - refresh: True
     - version: 3:3.0.7-1chl1~trusty1
+    - require:
       - pkgrepo: redis-server
 
 disable-redis-server-sysv:
