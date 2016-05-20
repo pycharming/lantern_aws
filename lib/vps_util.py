@@ -220,6 +220,9 @@ def vps_shell(provider_etc):
     elif provider_etc.startswith('vl'):
         import vultr_util
         return vultr_util
+    elif provider_etc.startswith('li'):
+        import linode_util
+        return linode_util
     else:
         assert False, repr(provider_etc)
 
@@ -320,7 +323,8 @@ class vps:
 
 def all_vpss():
     return (set(vps_shell('vl').all_vpss())
-            | set(vps_shell('do').all_vpss()))
+            | set(vps_shell('do').all_vpss())
+            | set(vps_shell('li').all_vpss()))
 
 def proxy_status(name=None, ip=None, srv=None):
     name, _, srv = nameipsrv(name, ip, srv)

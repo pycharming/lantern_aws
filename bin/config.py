@@ -15,7 +15,9 @@ cloudmaster_address = {'doams3':  '188.166.35.238',
                        'donyc3': '159.203.73.43',
                        'vltok1': '45.32.47.4',
                        'vlfra1': '45.63.116.130',
-                       'vlpar1': '104.238.188.202'}[datacenter]
+                       'vlpar1': '104.238.188.202',
+                       'lisgp1': '139.162.60.251',
+                       'litok1': '106.185.34.20'}[datacenter]
 
 # To override values locally, put them in config_overrides.py (not version controlled)
 try:
