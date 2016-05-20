@@ -8,10 +8,6 @@
     - require:
       - pkg: stunnel4
 
-install-python-software-properties:
-  cmd.run:
-    - name: apt-get install -q python-software-properties
-
 /etc/redis/redis_auth.conf:
   file.managed:
     - source: salt://redis_server/redis_auth.conf
@@ -87,7 +83,7 @@ redis-server:
   pkgrepo.managed:
     - ppa: chris-lea/redis-server
     - require:
-      - cmd: install-python-software-properties
+      - pkg: python-software-properties
 
   pkg.installed:
     - name: redis-server
