@@ -242,9 +242,9 @@ To launch a redis server named `redis-donyc3-001` in the `donyc3` datacenter:
 On the cloudmaster `cm-donyc3`:
 
 ```
-sudo touch /srv/pillar/redis-donyc3-001
+sudo touch /srv/pillar/redis-donyc3-001.sls
 # If you want this to be a redis master
-sudo echo 'is_redis_master: "True"' > /srv/pillar/redis-donyc3-001
+sudo /bin/sh -exec "echo 'is_redis_master: \"True\"' > /srv/pillar/redis-donyc3-001"
 sudo salt-cloud -p donyc3_4GB redis-donyc3-001
 sudo salt "redis-donyc3-001" state.highstate
 ```
