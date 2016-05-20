@@ -82,8 +82,6 @@ redis-ulimit:
 redis-server:
   pkgrepo.managed:
     - ppa: chris-lea/redis-server
-    - require:
-      - pkg: python-software-properties
 
   pkg.installed:
     - name: redis-server
