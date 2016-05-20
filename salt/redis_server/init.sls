@@ -97,8 +97,6 @@ redis-server:
 disable-redis-server-sysv:
   cmd.run:
     - name: /etc/init.d/redis-server stop ; update-rc.d redis-server disable ; update-rc.d redis-server remove ; rm /etc/init.d/redis-server ; echo "done"
-    - require:
-      - pkg: redis-server
 
 /etc/init/redis-server.conf:
   file.managed:
