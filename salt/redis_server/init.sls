@@ -1,6 +1,10 @@
 /etc/stunnel/stunnel_server.conf:
   file.managed:
     - source: salt://redis_server/stunnel_server.conf
+    - template: jinja
+    - context:
+        redis_host: {{ pillar['cfgsrv_redis_url'].split('@')[1] }}
+        redis_domain: {{ pillar['cfgsrv_redis_url'].split('@')[1].split(":")[0] }}
     - user: root
     - group: root
     - mode: 644
@@ -90,7 +94,7 @@ redis-server:
 
 disable-redis-server-sysv:
   cmd.run:
-    - name: /etc/init.d/redis-server stop ; update-rc.d redis-server disable ; rm /etc/init.d/redis-server
+    - name: /etc/init.d/redis-server stop ; update-rc.d redis-server disable ; rm /etc/init.d/redis-server ; echo "done"
 
 /etc/init/redis-server.conf:
   file.managed:
