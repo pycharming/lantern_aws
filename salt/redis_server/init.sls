@@ -88,12 +88,26 @@ redis-server:
     - refresh: True
     - version: 3:3.0.7-1chl1~trusty1
 
+disable-redis-server-sysv:
+  cmd.run:
+    - name: /etc/init.d/redis-server stop ; update-rc.d redis-server disable ; rm /etc/init.d/redis-server
+
+/etc/init/redis-server.conf:
+  file.managed:
+    - source: salt://redis_server/redis-server.conf
+    - user: root
+    - group: root
+    - mode: 644
+
+redis-server-running:
   service.running:
+    - name: redis-server
     - enable: yes
     - require:
         - pkg: stunnel4
     - watch:
         - file: /etc/redis/*
+        - file: /etc/init/redis-server.conf
         - cmd: stunnel4-deps
 
 {% set rulefiles=['user.rules', 'user6.rules'] %}
