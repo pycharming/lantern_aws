@@ -10,12 +10,14 @@ stunnel4:
   pkg.installed:
     - refresh: True
 
-  service.running:
-    - enable: yes
-    - require:
-        - pkg: stunnel4
-    - watch:
-        - cmd: stunnel4-deps
+# Disabled because it breaks highstate.
+#
+#  service.running:
+#    - enable: yes
+#    - require:
+#        - pkg: stunnel4
+#    - watch:
+#        - cmd: stunnel4-deps
 
 enable-stunnel:
   file.replace:

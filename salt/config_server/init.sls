@@ -40,8 +40,9 @@ config-server:
   service.running:
     - order: last
     - enable: yes
-    - require:
-        - service: stunnel4
+# Disabled because it fails.
+#    - require:
+#        - service: stunnel4
     - watch:
         - file: /home/lantern/config-server.jar
         - file: /etc/init/config-server.conf
