@@ -42,7 +42,7 @@ base:
     'cs-*':
         - lantern_build_prereqs
         - proxy_ufw_rules
-        - stunnel4
+#        - stunnel4
         - config_server
     'redis-*':
         - stunnel4
