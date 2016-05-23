@@ -63,6 +63,7 @@ if limit_devices != 0:
 
 print "Statistics limited to:", num_devices, "devices with minimum", min_transfer, "Mb"
 print "Average:", total_tx / num_devices, "Mb/device"
+print "Median:", with_rank[len(with_rank)/2][1], "Mb/device"
 print "Max transfer by a single device:", with_rank[0][1], "Mb"
 print "Min transfer by a single device (in sample):", with_rank[len(with_rank)-1][1], "Mb"
 
