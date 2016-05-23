@@ -249,6 +249,17 @@ sudo salt-cloud -p donyc3_4GB redis-donyc3-001
 sudo salt "redis-donyc3-001" state.highstate
 ```
 
+The first time you run highstate, redis may fail to install. To resolve this,
+ssh to the machine and then run the following:
+
+```
+sudo rm /var/lib/dpkg/lock
+sudo dpkg --configure -a
+sudo apt-get install redis-server=3:3.0.7-1chl1~trusty1
+```
+
+After this point, `state.highstate` should run successfully.
+
 ##### Upgrading a cloudmaster's Salt version
 
 This procedure is for upgrading to v2015.8.8.2.  It isn't guaranteed to work with every version, but it should be a good baseline.

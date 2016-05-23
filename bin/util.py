@@ -14,6 +14,9 @@ def in_production():
 def in_staging():
     return config.cloudmaster_name.endswith('staging')
 
+def in_dev():
+    return not in_production() and not in_staging()
+
 @memoized
 def read_do_credential():
     return secrets_from_yaml(['lantern_aws', 'do_credential'],

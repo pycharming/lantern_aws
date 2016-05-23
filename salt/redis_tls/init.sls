@@ -1,4 +1,6 @@
-{% set files=['client_key.pem', 'client_cert.pem', 'redis.getlantern.org/fullchain.pem', 'redis.getlantern.org/cert.pem', 'redis.getlantern.org/privkey.pem'] %}
+{% set files=['client_key.pem', 'client_cert.pem',
+              'redis.getlantern.org/fullchain.pem', 'redis.getlantern.org/cert.pem', 'redis.getlantern.org/privkey.pem',
+              'redis-staging.getlantern.org/fullchain.pem', 'redis-staging.getlantern.org/cert.pem', 'redis-staging.getlantern.org/privkey.pem'] %}
 
 {% for file in files %}
 

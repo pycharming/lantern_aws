@@ -14,3 +14,4 @@ bin/status
 .#*
 venv
 .venv
+salt/config_server/config-server.jar

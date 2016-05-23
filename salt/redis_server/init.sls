@@ -3,8 +3,8 @@
     - source: salt://redis_server/stunnel_server.conf
     - template: jinja
     - context:
-        redis_host: {{ pillar['cfgsrv_redis_url'].split('@')[1] }}
-        redis_domain: {{ pillar['cfgsrv_redis_url'].split('@')[1].split(":")[0] }}
+        redis_host: {{ pillar['redis_host'] }}
+        redis_domain: {{ pillar['redis_domain'] }}
     - user: root
     - group: root
     - mode: 644
@@ -14,7 +14,11 @@
 
 /etc/redis/redis_auth.conf:
   file.managed:
+    {% if pillar["in_production"] %}
     - source: salt://redis_server/redis_auth.conf
+    {% else %}
+    - source: salt://redis_server/redis_auth_test.conf
+    {$ end if %}
     - user: root
     - group: root
     - mode: 644
@@ -98,7 +102,7 @@ redis-server:
 
 disable-redis-server-sysv:
   cmd.run:
-    - name: /etc/init.d/redis-server stop ; update-rc.d redis-server disable ; update-rc.d redis-server remove ; rm /etc/init.d/redis-server ; echo "done"
+    - name: /etc/init.d/redis-server stop && update-rc.d redis-server disable
 
 /etc/init/redis-server.conf:
   file.managed:
