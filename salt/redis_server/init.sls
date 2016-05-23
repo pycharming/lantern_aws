@@ -18,7 +18,7 @@
     - source: salt://redis_server/redis_auth.conf
     {% else %}
     - source: salt://redis_server/redis_auth_test.conf
-    {$ end if %}
+    {% endif %}
     - user: root
     - group: root
     - mode: 644
