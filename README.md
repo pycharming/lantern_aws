@@ -250,15 +250,19 @@ sudo salt "redis-donyc3-001" state.highstate
 ```
 
 The first time you run highstate, redis may fail to install. To resolve this,
-ssh to the machine and then run the following:
+ssh to the machine as lantern and then run the following:
 
 ```
+ssh lantern@<ip>
 sudo rm /var/lib/dpkg/lock
 sudo dpkg --configure -a
 sudo apt-get install redis-server=3:3.0.7-1chl1~trusty1
+sudo rm /var/cache/salt/minion/proc/*
 ```
 
-After this point, `state.highstate` should run successfully.
+After this point, run `state.highstate` again and it should run successfully
+from here on out. The machine may still be running a Redis instance started by
+the old init.d script. You can fix this by rebooting the machine.
 
 ##### Upgrading a cloudmaster's Salt version
 
