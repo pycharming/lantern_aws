@@ -103,7 +103,9 @@ def upload_pillars(as_root=False):
         slack_webhook_url = util.read_slack_staging_webhook_url()
 
     if util.in_staging():
-        cfgsrv_redis_url = "rediss://:testing@redis-staging.getlantern.org:6380"
+        #cfgsrv_redis_url = "rediss://:testing@redis-staging.getlantern.org:6380"
+        # This is the Redis on the Amsterdam staging cloudmaster.
+        cfgsrv_redis_url = "redis://redis:%s@%s:6379" % (cfgsrv_redis_test_pass, '188.166.55.168')
 
     redis_host = cfgsrv_redis_url.split('@')[1]
     redis_domain = redis_host.split(":")[0]
