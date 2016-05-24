@@ -69,11 +69,7 @@ print "Min transfer by a single device (in sample):", with_rank[len(with_rank)-1
 
 print "Generating plot..."
 
-with open("with_rank.csv", "wb") as f:
-    writer = csv.writer(f)
-    writer.writerows(with_rank)
-
-df = pd.read_csv("with_rank.csv")
+df = pd.DataFrame(with_rank)
 df.columns = ['Rank', 'Mb']
 
 ax = df.plot(logy=True, kind='line',x='Rank',y='Mb')
