@@ -46,7 +46,7 @@ def all_vpss():
             ipbyid[l['LINODEID']].append(l['IPADDRESS'])
     for k, v in ipbyid.items():
         if len(v) != 1:
-            print >> sys.stderr, "*** WARNING: linode %s has %s public IPs. ***"
+            print >> sys.stderr, "*** WARNING: linode %s has %s public IPs. ***" % (k, len(v))
             print >> sys.stderr, "Picking an arbitrary one!"
         ipbyid[k] = v[0]
     ret = []
