@@ -65,12 +65,16 @@ if limit_devices != 0:
 
 mean=total_tx / used_devices
 median=with_rank[len(with_rank)/2][1]
+percentile90=with_rank[int(0.1*used_devices)][1]
+percentile95=with_rank[int(0.05*used_devices)][1]
 
 print "Statistics limited to:", used_devices, "devices with minimum", humanize.naturalsize(min_transfer)
 if min_transfer != 0:
     print discarded_devices, "devices transferred less or equal to", humanize.naturalsize(min_transfer)
 print "Mean:", humanize.naturalsize(mean)
 print "Median:", humanize.naturalsize(median)
+print "95 percentile:", humanize.naturalsize(percentile95)
+print "90 percentile:", humanize.naturalsize(percentile90)
 print "Max transfer by a single device:", humanize.naturalsize(with_rank[0][1])
 print "Min transfer by a single device (in sample):", humanize.naturalsize(with_rank[len(with_rank)-1][1])
 
@@ -108,11 +112,15 @@ font = {'family': 'Arial',
         'size': 16,
 }
 
-plt.axhline(y=mean, linewidth=2, color='orange', linestyle='dashed')
-plt.text(10, mean, "Mean", fontdict=font)
+plt.axhline(y=mean, linewidth=2, color='#FF9100', linestyle='dashed')
+plt.text(10, mean, "Mean " + humanize.naturalsize(mean), fontdict=font)
 
 plt.axhline(y=median, linewidth=2, color='red', linestyle='dashed')
-plt.text(10, median, "Median", fontdict=font)
+plt.text(10, median, "Median " + humanize.naturalsize(median), fontdict=font)
+
+plt.axhline(y=percentile95, linewidth=2, color='#ffb300', linestyle='dashed')
+plt.text(10, percentile95, "95 percentile " + humanize.naturalsize(percentile95), fontdict=font)
+
 
 fig = ax.get_figure()
 fig.set_size_inches(12, 8)
