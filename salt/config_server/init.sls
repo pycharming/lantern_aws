@@ -6,7 +6,7 @@ cfgsrv-env:
     - name: /etc/environment
     - text: |
         AUTH_TOKEN='{{ pillar['cfgsrv_token'] }}'
-        REDISCLOUD_URL='{{ pillar['cfgsrv_redis_url'] }}'
+        REDISCLOUD_URL='{{ pillar['redis_via_stunnel_url'] }}'
         PRODUCTION=true
         PORT=62000
 
@@ -45,4 +45,5 @@ config-server:
     - watch:
        - file: /home/lantern/config-server.jar
        - file: /etc/init/config-server.conf
+       - file: /etc/environment
        - cmd: stunnel4-deps

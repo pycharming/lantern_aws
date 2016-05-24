@@ -107,14 +107,14 @@ def upload_pillars(as_root=False):
 
     redis_host = cfgsrv_redis_url.split('@')[1]
     redis_domain = redis_host.split(":")[0]
-
-    # Temporarily revert to the old Amsterdam staging cloudmaster redis.
-    cfgsrv_redis_url = "redis://redis:%s@%s:6379" % (cfgsrv_redis_test_pass, '188.166.55.168')
+    redis_via_stunnel_url = cfgsrv_redis_url.split('@')[0].replace("rediss", "redis") + "@localhost:6380"
 
     if util.in_dev():
         redis_host = "%s:6379" % config.cloudmaster_address
         cfgsrv_redis_url = "redis://redis:%s@%s" % (cfgsrv_redis_test_pass, redis_host)
         redis_domain = "redis-staging.getlantern.org"
+        # Bypass stunnel in dev environments because we're not encrypting connections to Redis
+        redis_via_stunnel_url = cfgsrv_redis_url
 
     util.ssh_cloudmaster((
             'echo "salt_version: %s" > salt.sls '
@@ -127,6 +127,7 @@ def upload_pillars(as_root=False):
             ' && echo "in_production: %s" >> global.sls '
             ' && echo "datacenter: %s" >> global.sls '
             ' && echo "cfgsrv_redis_url: %s" >> global.sls'
+            ' && echo "redis_via_stunnel_url: %s" >> global.sls'
             ' && echo "redis_host: %s" >> global.sls'
             ' && echo "redis_domain: %s" >> global.sls'
             ' && echo "slack_webhook_url: %s" >> global.sls '
@@ -147,6 +148,7 @@ def upload_pillars(as_root=False):
                  util.in_production(),
                  config.datacenter,
                  cfgsrv_redis_url,
+                 redis_via_stunnel_url,
                  redis_host,
                  redis_domain,
                  slack_webhook_url,
