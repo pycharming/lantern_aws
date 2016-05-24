@@ -8,6 +8,7 @@ import csv
 
 matplotlib.use('Agg')
 
+import humanize
 import matplotlib.pyplot as plt
 import numpy as np
 import misc_util
@@ -32,7 +33,7 @@ def clean_data():
     with open("dump.csv", "rb") as f:
         reader = csv.reader(f)
         for device, tx in reader:
-            yield float(tx) / 1024.0 / 1024.0
+            yield float(tx)
 
 rev = reversed([row for row in clean_data()])
 
@@ -47,32 +48,72 @@ except:
 
 
 with_rank = []
-total_tx, num_devices = 0, 0
+total_tx, used_devices, discarded_devices = 0, 0, 0
 for tx in rev:
     if tx < min_transfer:
+        discarded_devices += 1
         continue
-    num_devices += 1
+    used_devices += 1
     total_tx += tx
-    with_rank += [[num_devices, tx]]
+    with_rank += [[used_devices, tx]]
 
-print "Total number of devices:", num_devices
+print "Total number of devices:", used_devices
 
 if limit_devices != 0:
-    num_devices = min(num_devices, limit_devices)
+    used_devices = min(used_devices, limit_devices)
 
 
-print "Statistics limited to:", num_devices, "devices with minimum", min_transfer, "Mb"
-print "Average:", total_tx / num_devices, "Mb/device"
-print "Median:", with_rank[len(with_rank)/2][1], "Mb/device"
-print "Max transfer by a single device:", with_rank[0][1], "Mb"
-print "Min transfer by a single device (in sample):", with_rank[len(with_rank)-1][1], "Mb"
+mean=total_tx / used_devices
+median=with_rank[len(with_rank)/2][1]
+
+print "Statistics limited to:", used_devices, "devices with minimum", humanize.naturalsize(min_transfer)
+if min_transfer != 0:
+    print discarded_devices, "devices transferred less or equal to", humanize.naturalsize(min_transfer)
+print "Mean:", humanize.naturalsize(mean)
+print "Median:", humanize.naturalsize(median)
+print "Max transfer by a single device:", humanize.naturalsize(with_rank[0][1])
+print "Min transfer by a single device (in sample):", humanize.naturalsize(with_rank[len(with_rank)-1][1])
 
 print "Generating plot..."
 
 df = pd.DataFrame(with_rank)
-df.columns = ['Rank', 'Mb']
+df.columns = ['Rank', 'Mb/device']
 
-ax = df.plot(logy=True, kind='line',x='Rank',y='Mb')
+ax = df.plot(logy=True, kind='line',x='Rank',y='Mb/device')
+
+
+font = {'family': 'Arial',
+        'color':  'black',
+        'weight': 'normal',
+        'size': 16,
+}
+
+plt.text(0.98, 0.88,
+         str(used_devices) + " devices with min " + humanize.naturalsize(min_transfer),
+         fontdict=font,
+         horizontalalignment='right',
+         verticalalignment='center',
+         transform=ax.transAxes)
+
+plt.text(0.98, 0.84,
+         str(discarded_devices) + " devices discarded",
+         fontdict=font,
+         horizontalalignment='right',
+         verticalalignment='center',
+         transform=ax.transAxes)
+
+font = {'family': 'Arial',
+        'color':  'grey',
+        'weight': 'normal',
+        'size': 16,
+}
+
+plt.axhline(y=mean, linewidth=2, color='orange', linestyle='dashed')
+plt.text(10, mean, "Mean", fontdict=font)
+
+plt.axhline(y=median, linewidth=2, color='red', linestyle='dashed')
+plt.text(10, median, "Median", fontdict=font)
 
 fig = ax.get_figure()
+fig.set_size_inches(12, 8)
 fig.savefig('device_tx_plot.png')
