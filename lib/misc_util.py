@@ -59,7 +59,7 @@ def ssh(ip, cmd, timeout=30, whitelist=True):
     if whitelist:
         whitelist_ssh()
     return cmd_error_and_output(
-        ['ssh', '-o', 'StrictHostKeyChecking=no', 'lantern@' + ip, cmd],
+        ['ssh', '-o', 'StrictHostKeyChecking=no', '-o', 'BatchMode=yes', 'lantern@' + ip, cmd],
         timeout)
 
 def whitelist_ssh(time=60):
