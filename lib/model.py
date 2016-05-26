@@ -19,7 +19,7 @@ def check_srv2cfg(interactive=False, cache=None):
     if cache is None:
         cache = make_cache()
     errors = []
-    cache.vpss = cache.vpss or vps_util.all_vpss()
+    cache.all_vpss = cache.all_vpss or vps_util.all_vpss()
     cache.srv2cfg = cache.srv2cfg or redis_shell.hgetall('srv->cfg')
     # With configs YAML-parsed.
     cache.srv2cfgd = cache.srv2cfgd or {srv: yaml.load(cfg).values()[0]
