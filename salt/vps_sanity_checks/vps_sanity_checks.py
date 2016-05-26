@@ -5,7 +5,7 @@ from alert import alert
 from redis_util import redis_shell
 
 
-def slice_srvs_in_cfgbysrv(region, cfgbysrv):
+def slice_srvs_in_srv2cfg(region, srv2cfg):
     key = region + ':slices'
     issues = [(k, score)
               for k, score in redis_shell.zrangebyscore(key,
@@ -14,7 +14,7 @@ def slice_srvs_in_cfgbysrv(region, cfgbysrv):
                                                           withscores=True)
               if not k.startswith('<empty')
               and not k.startswith('<locked')
-              and k.split('|')[0] not in cfgbysrv]
+              and k.split('|')[0] not in srv2cfg]
     for k, score in issues[:]:
         # Double-check to avoid race conditions.
         if redis_shell.hexists('srv->cfg', k.split('|')[0]):
@@ -28,12 +28,12 @@ def slice_srvs_in_cfgbysrv(region, cfgbysrv):
     return ["Key %s in %s's slice table but no config for it." % (k, region)
             for k, _ in issues]
 
-def configs_start_with_newline(cfgbysrv):
+def configs_start_with_newline(srv2cfg):
     """At some point we've found configurations that don't start with a newline.
     These will pass fallback checks, but they won't merge nicely into the config
     passed to users. Here we check against that."""
     return ["Server %s's config doesn't start with a newline" % srv
-            for srv, cfg in cfgbysrv.iteritems()
+            for srv, cfg in srv2cfg.iteritems()
             if not cfg.startswith("\n")]
 
 def check_srvq_size(region):
@@ -44,13 +44,13 @@ def check_srvq_size(region):
     else:
         return []
 
-def fallbacks_and_honeypots_in_srv_table(region, cfgbysrv):
+def fallbacks_and_honeypots_in_srv_table(region, srv2cfg):
     ret = []
     for srv in redis_shell.smembers(region + ':fallbacks'):
-        if srv not in cfgbysrv:
+        if srv not in srv2cfg:
             ret.append("Fallback server %s for region %s is not in srv->cfg" % (srv, region))
     for srv in redis_shell.smembers(region + ':honeypots'):
-        if srv not in cfgbysrv:
+        if srv not in srv2cfg:
             ret.append("Honeypot server %s for region %s is not in srv->cfg" % (srv, region))
     return ret
 
@@ -67,15 +67,15 @@ def report(errors):
           color='danger')
 
 def run_all_checks():
-    cfgbysrv = redis_shell.hgetall('srv->cfg')
-    errors = configs_start_with_newline(cfgbysrv)
+    srv2cfg = redis_shell.hgetall('srv->cfg')
+    errors = configs_start_with_newline(srv2cfg)
     regions = redis_shell.smembers('user-regions')
     for region in regions:
-        errors.extend(slice_srvs_in_cfgbysrv(region, cfgbysrv))
+        errors.extend(slice_srvs_in_srv2cfg(region, srv2cfg))
     for region in regions:
         errors.extend(check_srvq_size(region))
     for region in regions:
-        errors.extend(fallbacks_and_honeypots_in_srv_table(region, cfgbysrv))
+        errors.extend(fallbacks_and_honeypots_in_srv_table(region, srv2cfg))
     report(errors)
 
 
