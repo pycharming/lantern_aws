@@ -177,7 +177,7 @@ def actually_retire_proxy(name, ip, srv=None, pipeline=None):
     While retire_proxy just enqueues the proxy for retirement, this actually
     updates the redis tables.
     """
-    name, ip, srv = nameipsrv(name=name, ip=ip)
+    name, ip, srv = nameipsrv(name=name, ip=ip, srv=srv)
     cm = cm_by_name(name)
     region = region_by_name(name)
     txn = pipeline or redis_shell.pipeline()
