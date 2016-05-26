@@ -3,3 +3,4 @@ salt/http-proxy/http-proxy filter=lfs diff=lfs merge=lfs -text
 salt/http_proxy/http-proxy filter=lfs diff=lfs merge=lfs -text
 config-server.jar filter=lfs diff=lfs merge=lfs -text
 salt/config_server/config-server.jar filter=lfs diff=lfs merge=lfs -text
+salt/pubsub/broker filter=lfs diff=lfs merge=lfs -text
