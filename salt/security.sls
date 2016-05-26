@@ -44,9 +44,11 @@ reload-sshd-on-password-disable:
 # SSH key (called `cloudmaster`) so we can perform initial setup. As soon as we
 # first run Salt configuration, this key becomes unnecessary, so let's remove
 # it.
-/root/.ssh/authorized_keys:
-  file.replace:
-    - pattern: "ssh-rsa \\S+ lanterncyborg@gmail\\.com\n"
-    - repl: ""
-    # Without this line salt-cloud setup will fail with a SSH login error.
-    - order: last
+# XXX: disabled since this often prevents proxies from completing setup.  I'll
+#      make cloudmasters delete this one on successful setup.
+#/root/.ssh/authorized_keys:
+#  file.replace:
+#    - pattern: "ssh-rsa \\S+ lanterncyborg@gmail\\.com\n"
+#    - repl: ""
+#    # Without this line salt-cloud setup will fail with a SSH login error.
+#    - order: last
