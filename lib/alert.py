@@ -18,7 +18,7 @@ url = os.environ.get('SLACK_WEBHOOK_URL')
 
 # Allow for testing in developer machines. You still need to set
 # SLACK_WEBHOOK_URL locally, of course.
-if instance_id.startswith('{{'):
+if instance_id.startswith('{'):
     import getpass
     instance_id = getpass.getuser()
     ip = "<developer machine>"
