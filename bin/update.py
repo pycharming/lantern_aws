@@ -91,6 +91,9 @@ def move_root_file(src, dst, as_root=False):
                                 as_root=as_root)
 
 def upload_pillars(as_root=False):
+    if not util.in_dev() and not util.in_staging() and not util.in_production():
+        assert util.in_production(), "Environment unknown!"
+
     _, _, do_token = util.read_do_credential()
     vultr_apikey = util.read_vultr_credential()
     cfgsrv_token, cfgsrv_redis_url, cfgsrv_redis_test_pass \
@@ -102,20 +105,23 @@ def upload_pillars(as_root=False):
     else:
         slack_webhook_url = util.read_slack_staging_webhook_url()
 
-    redis_host = cfgsrv_redis_url.split('@')[1]
-    redis_domain = redis_host.split(":")[0]
     redis_via_stunnel_url = cfgsrv_redis_url.split('@')[0].replace("rediss", "redis") + "@localhost:6380"
+    environment = "production"
 
     if util.in_staging():
+        environment = "staging"
         cfgsrv_redis_url = "rediss://:testing@redis-staging.getlantern.org:6380"
-    elif util.in_dev():
+
+    redis_host = cfgsrv_redis_url.split('@')[1]
+    redis_domain = redis_host.split(":")[0]
+
+    if util.in_dev():
+        environment = "dev"
         redis_host = "%s:6379" % config.cloudmaster_address
         cfgsrv_redis_url = "redis://redis:%s@%s" % (cfgsrv_redis_test_pass, redis_host)
         redis_domain = "redis-staging.getlantern.org"
         # Bypass stunnel in dev environments because we're not encrypting connections to Redis
         redis_via_stunnel_url = cfgsrv_redis_url
-    else:
-        assert util.in_production(), "If we're not in dev or staging, we must be in production!"
 
     util.ssh_cloudmaster((
             'echo "salt_version: %s" > salt.sls '
@@ -123,8 +129,9 @@ def upload_pillars(as_root=False):
             # named with the <instance_name>.sls scheme.
             r' && echo "include: [{{ grains[\"id\"] }}]" >> salt.sls '
             ' && echo "" > $(hostname).sls""'
+            ' && echo "environment: %s" > global.sls '
             ' && echo "in_dev: %s" >> global.sls '
-            ' && echo "in_staging: %s" > global.sls '
+            ' && echo "in_staging: %s" >> global.sls '
             ' && echo "in_production: %s" >> global.sls '
             ' && echo "datacenter: %s" >> global.sls '
             ' && echo "cfgsrv_redis_url: %s" >> global.sls'
@@ -144,6 +151,7 @@ def upload_pillars(as_root=False):
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.salt_version,
+                 environment,
                  util.in_dev(),
                  util.in_staging(),
                  util.in_production(),

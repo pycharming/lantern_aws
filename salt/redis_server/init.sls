@@ -124,6 +124,45 @@ redis-server-running:
         - file: /etc/init/redis-server.conf
         - cmd: stunnel4-deps
 
+{% if not pillar["in_dev"] and pillar.get("is_redis_master", False) %}
+s3cmd:
+  pkg.installed
+
+pgpgpg:
+  pkg.installed
+
+/home/lantern/.s3cfg:
+  file.managed:
+    - source: salt://redis_server/.s3cfg-{{ pillar['environment'] }}
+    - user: lantern
+    - group: lantern
+    - mode: 600
+    - makedirs: True
+
+/home/lantern/s3backup.bash:
+  file.managed:
+    - source: salt://redis_server/s3backup.bash
+    - template: jinja
+    - context:
+        environment: {{ pillar['environment'] }}
+    - user: lantern
+    - group: lantern
+    - mode: 755
+    - makedirs: True
+
+/home/lantern/s3backup.bash 2>&1 | logger -t s3backup":
+  cron.present:
+    - identifier: s3backup
+    - hour: "0,12"
+    - minute: 0
+    - user: lantern
+    - require:
+        - file: /home/lantern/.s3cfg
+        - file: /home/lantern/s3backup.bash
+        - pkg: s3cmd
+        - pkg: pgpgpg
+{% endif %}
+
 {% set rulefiles=['user.rules', 'user6.rules'] %}
 {% for file in rulefiles %}
 /lib/ufw/{{ file }}:
