@@ -5,7 +5,7 @@ from alert import alert
 from redis_util import redis_shell
 
 
-def srvs_in_cfgbysrv(region, cfgbysrv):
+def slice_srvs_in_cfgbysrv(region, cfgbysrv):
     key = region + ':slices'
     issues = [(k, score)
               for k, score in redis_shell.zrangebyscore(key,
@@ -71,7 +71,7 @@ def run_all_checks():
     errors = configs_start_with_newline(cfgbysrv)
     regions = redis_shell.smembers('user-regions')
     for region in regions:
-        errors.extend(srvs_in_cfgbysrv(region, cfgbysrv))
+        errors.extend(slice_srvs_in_cfgbysrv(region, cfgbysrv))
     for region in regions:
         errors.extend(check_srvq_size(region))
     for region in regions:
