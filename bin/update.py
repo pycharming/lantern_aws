@@ -102,19 +102,20 @@ def upload_pillars(as_root=False):
     else:
         slack_webhook_url = util.read_slack_staging_webhook_url()
 
-    if util.in_staging():
-        cfgsrv_redis_url = "rediss://:testing@redis-staging.getlantern.org:6380"
-
     redis_host = cfgsrv_redis_url.split('@')[1]
     redis_domain = redis_host.split(":")[0]
     redis_via_stunnel_url = cfgsrv_redis_url.split('@')[0].replace("rediss", "redis") + "@localhost:6380"
 
-    if util.in_dev():
+    if util.in_staging():
+        cfgsrv_redis_url = "rediss://:testing@redis-staging.getlantern.org:6380"
+    elif util.in_dev():
         redis_host = "%s:6379" % config.cloudmaster_address
         cfgsrv_redis_url = "redis://redis:%s@%s" % (cfgsrv_redis_test_pass, redis_host)
         redis_domain = "redis-staging.getlantern.org"
         # Bypass stunnel in dev environments because we're not encrypting connections to Redis
         redis_via_stunnel_url = cfgsrv_redis_url
+    else:
+        assert util.in_production(), "If we're not in dev or staging, we must be in production!"
 
     util.ssh_cloudmaster((
             'echo "salt_version: %s" > salt.sls '
