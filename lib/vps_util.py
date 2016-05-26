@@ -172,7 +172,7 @@ def actually_offload_proxy(name=None, ip=None, srv=None, pipeline=None):
     redis_shell.hmset(client_table_key, {pip: dest_psrv for pip in clients})
     print "Offloaded clients from %s (%s) to %s (%s)" % (name, ip, dest.name, dest.ip)
 
-def actually_retire_proxy(name, ip, pipeline=None):
+def actually_retire_proxy(name, ip, srv=None, pipeline=None):
     """
     While retire_proxy just enqueues the proxy for retirement, this actually
     updates the redis tables.

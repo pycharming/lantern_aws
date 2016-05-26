@@ -1,9 +1,37 @@
 #!/usr/bin/env python
 
+import traceback
 
-from alert import alert
+import alert
+import model
 from redis_util import redis_shell
+import vps_util
 
+
+def alert_exception(op):
+    traceback.print_exc()
+    alert.send_to_slack(
+        "**Exception** trying to %s" % op,
+        ("The following exception happened while trying to %s:\n%s"
+         % (op, traceback.format_exc())),
+        color='danger')
+
+def srv2cfg_consistent_with_vps_list(srv2cfg, all_vpss, cache=None):
+    if cache is None:
+        cache = model.make_cache()
+    cache.srv2cfg = srv2cfg
+    cache.all_vpss = all_vpss
+    errors = model.check_srv2cfg(cache=cache)
+    for err_type, err_cases in errors:
+        if err_type == 'bad IP in srv->cfg':
+            names = redis_shell.hmget('srv->name', err_cases.keys())
+            for name, (srv, ip) in zip(names, err_cases.iteritems()):
+                try:
+                    print "Retiring", name, ip, srv
+                    vps_util.actually_retire_proxy(name=name, ip=ip, srv=srv)
+                except:
+                    alert_exception("retire non-existing proxy %s (%s), srvid %s" % (name, ip, srv))
+    return errors
 
 def slice_srvs_in_srv2cfg(region, srv2cfg):
     key = region + ':slices'
@@ -61,14 +89,24 @@ def report(errors):
     print "Got errors:"
     for error in errors:
         print "   ", error
-    alert(type='sanity-check-failures',
-          details={'errors': errors},
-          text='\n'.join(errors),
-          color='danger')
+    alert.alert(type='sanity-check-failures',
+                details={'errors': errors},
+                text='\n'.join(map(str, errors)),
+                color='danger')
 
 def run_all_checks():
+    print "Fetching config data..."
     srv2cfg = redis_shell.hgetall('srv->cfg')
-    errors = configs_start_with_newline(srv2cfg)
+    print "Fetching VPS data..."
+    all_vpss = vps_util.all_vpss()
+    print "Performing checks..."
+    # This is new code, so let's test it in a cushion to start with.
+    try:
+        errors = srv2cfg_consistent_with_vps_list(srv2cfg, all_vpss)
+    except:
+        alert_exception("trying to check consistency between srv->cfg and all_vpss")
+        errors = []
+    errors.extend(configs_start_with_newline(srv2cfg))
     regions = redis_shell.smembers('user-regions')
     for region in regions:
         errors.extend(slice_srvs_in_srv2cfg(region, srv2cfg))
