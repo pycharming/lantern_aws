@@ -26,7 +26,7 @@ def check_srv2cfg(interactive=False, cache=None):
                                         for srv, cfg in cache.srv2cfg.iteritems()}
     srv2ip = {srv: cfgd['addr'].split(':')[0]
               for srv, cfgd in cache.srv2cfgd.iteritems()}
-    vps_ips = set(f.ip for f in cache.vpss)
+    vps_ips = set(f.ip for f in cache.all_vpss)
     badipentries = {srv: ip
                     for srv, ip in srv2ip.iteritems()
                     if ip not in vps_ips}
