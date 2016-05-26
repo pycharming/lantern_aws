@@ -29,7 +29,9 @@ def run():
                 print "Not retiring baked-in server %s (%s)" % (name, ip)
             else:
                 print "Retiring", name, ip
-                vps_util.actually_retire_proxy(name, ip, txn)
+                vps_util.actually_retire_proxy(name=name,
+                                               ip=ip,
+                                               pipeline=txn)
             remover(txn)
             if not is_baked_in:
                 # Introduce the job with the timestamp already filled in, so it will

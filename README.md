@@ -1,3 +1,6 @@
+NOTE - this repo manages large files using [git lfs](https://git-lfs.github.com/).
+Please install the git lfs client in order to use this repo.
+
 # Lantern Cloud
 
 This project contains code and configuration scripts to launch and manage cloud-hosted infrastructure for the [Lantern](https://github.com/getlantern/lantern) censorship circumvention tool.
