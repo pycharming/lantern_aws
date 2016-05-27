@@ -54,6 +54,48 @@ def no_duplicate_names(cache=None):
     else:
         return []
 
+def srvq_integrity(region, cache=None):
+    """
+    perform sanity checks on the region's server queue.
+
+    (i) all VPSs listed there actually exist.
+
+    (ii) the IPs and names of the VPSs match those recorded in the queue.
+
+    An actual proxying check is not performed. As of this writing, there's a
+    ticket to make checkfallbacks do that.
+
+    This assumes that you have checked for duplicate proxies.
+    """
+    if cache is None:
+        cache = model.make_cache()
+    if cache.srvq is None:
+        cache.srvq = {}
+    if region not in cache.srvq:
+        cache.srvq[region] = redis_shell.lrange(region + ':srvq', 0, -1)
+    cache.all_vpss = cache.all_vpss or vps_util.all_vpss()
+    vps_by_name = {v.name: v for v in cache.all_vpss}
+    not_ours = []
+    bad_ip = []
+    for entry in cache.srvq[region]:
+        ip, name, cfg = entry.split('|')
+        if name not in vps_by_name:
+            not_ours.append((ip, name, entry))
+            # XXX: factor out fixes from here.
+            r.lrem(region + ':srvq', entry)
+            continue
+        actual_ip = vps_by_name[name].ip
+        if actual_ip != ip:
+            # XXX: factor out fixes from here.
+            r.lrem(region + ':srvq', entry)
+            bad_ip.append((ip, actual_ip, name, entry))
+    ret = []
+    if not_ours:
+        ret.append(('Queued proxy no longer ours', not_ours))
+    if bad_ip:
+        ret.append(('Inconsistent IP in queued proxy', bad_ip))
+    return ret
+
 def slice_srvs_in_srv2cfg(region, srv2cfg):
     key = region + ':slices'
     issues = [(k, score)
@@ -85,7 +127,7 @@ def configs_start_with_newline(srv2cfg):
             for srv, cfg in srv2cfg.iteritems()
             if not cfg.startswith("\n")]
 
-def check_srvq_size(region):
+def srvq_size(region):
     size = redis_shell.llen(region + ':srvq')
     if size < 20:
         return ["Server queue for region '%s' has %s servers only."
@@ -142,7 +184,11 @@ def run_all_checks():
     print "Checking server queue size..."
     for region in regions:
         print "    (region %s)..." % region
-        errors.extend(check_srvq_size(region))
+        errors.extend(srvq_size(region))
+    print "Checking server queue integrity..."
+    for region in regions:
+        print "    (region %s)..." % region
+        errors.extend(srvq_integrity(region, cache=cache))
     print "Check that regional fallbacks and honeypots are in srv->cfg..."
     for region in regions:
         print "    (region %s)..." % region
