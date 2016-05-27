@@ -22,8 +22,8 @@ DESTDIR='{{ pillar["environment"] }}'
 BACKUP_FILE=${SRCDIR}/${NOWDATE}_redis_dump.rdb
 echo $BACKUP_FILE
 
-# make the temp directory if it doesn't exist
-mkdir -p $SRCDIR || die "Could not create temp directory"
+# make the temp directory in case it doesn't exist
+mkdir -p $SRCDIR
 
 # make a compressed copy of the redis dump
 cp /var/lib/redis/dump.rdb $BACKUP_FILE || die "Could not copy dump.rdb"
