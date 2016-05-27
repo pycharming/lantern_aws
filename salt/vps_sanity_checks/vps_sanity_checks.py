@@ -82,12 +82,12 @@ def srvq_integrity(region, cache=None):
         if name not in vps_by_name:
             not_ours.append((ip, name, entry))
             # XXX: factor out fixes from here.
-            r.lrem(region + ':srvq', entry)
+            redis_shell.lrem(region + ':srvq', entry)
             continue
         actual_ip = vps_by_name[name].ip
         if actual_ip != ip:
             # XXX: factor out fixes from here.
-            r.lrem(region + ':srvq', entry)
+            redis_shell.lrem(region + ':srvq', entry)
             bad_ip.append((ip, actual_ip, name, entry))
     ret = []
     if not_ours:
