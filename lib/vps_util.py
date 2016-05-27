@@ -236,6 +236,9 @@ def vps_shell(provider_etc):
     elif provider_etc.startswith('vl'):
         import vultr_util
         return vultr_util
+    elif provider_etc.startswith('li'):
+        import linode_util
+        return linode_util
     else:
         assert False, repr(provider_etc)
 
@@ -298,7 +301,9 @@ _region_by_production_cm = {'donyc3': 'etc',
                             'dosgp1': 'sea',
                             'dosfo1': 'sea',
                             'vltok1': 'sea',
-                            'vllan1': 'etc',}
+                            'lisgp1': 'sea',
+                            'litok1': 'sea',
+                            'vllan1': 'etc'}
 def region_by_dc(dc):
     return _region_by_production_cm[dc]
 
@@ -334,7 +339,8 @@ class vps:
 
 def all_vpss():
     return (set(vps_shell('vl').all_vpss())
-            | set(vps_shell('do').all_vpss()))
+            | set(vps_shell('do').all_vpss())
+            | set(vps_shell('li').all_vpss()))
 
 def offload_proxy(proportion=1.0, replace=True, name=None, ip=None, srv=None):
     name, ip, srv = nameipsrv(name, ip, srv)

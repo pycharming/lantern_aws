@@ -1,7 +1,7 @@
 {% from 'install_from_release.sls' import install_from_release %}
 
 {# define cmd: checkfallbacks-installed #}
-{{ install_from_release('checkfallbacks', '2.1.1') }}
+{{ install_from_release('checkfallbacks', '2.1.1', 'b3d988327f51ba752ab03edb22b30c558ecf7144') }}
 
 /usr/bin/checkfallbacks.py:
   file.managed:

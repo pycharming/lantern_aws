@@ -10,7 +10,7 @@ def vpss_from_cm(cm):
         local_version = file(cm + '_vpss_version').read()
     except IOError:
         local_version = None
-    remote_version = redis_shell.get(cm + ':vpss:version')
+    remote_version = redis_shell.get(cm + ':vpss:version') or '0'
     if local_version == remote_version:
         return set(map(str.strip, file(cm + '_vpss')))
     else:
@@ -19,23 +19,27 @@ def vpss_from_cm(cm):
         file(cm + '_vpss_version', 'w').write(remote_version)
         return set(ret)
 
-expected_do = vpss_from_cm('doams3') | vpss_from_cm('dosgp1') | vpss_from_cm('donyc3') | vpss_from_cm('dosfo1')
-expected_vultr = vpss_from_cm('vltok1') | vpss_from_cm('vlfra1') | vpss_from_cm('vlpar1')
+dcs = {'do': ['doams3', 'dosgp1', 'donyc3', 'dosfo1'],
+       'vl': ['vltok1', 'vlfra1', 'vlpar1'],
+       'li': ['lisgp1', 'litok1']}
 
-actual_do = set(v.name for v in vps_util.vps_shell('do').all_vpss()
-                if not v.name.startswith('fp-')
-                or vps_util.is_production_proxy(v.name))
-actual_vultr = set(v.name for v in vps_util.vps_shell('vl').all_vpss()
-                   if not v.name.startswith('fp-')
-                   or vps_util.is_production_proxy(v.name))
+expected = {provider: set.union(*map(vpss_from_cm, provider_dcs))
+            for provider, provider_dcs in dcs.iteritems()}
+
+actual = {provider: set(v.name
+                        for v in vps_util.vps_shell(provider).all_vpss()
+                        if not v.name.startswith('fp-')
+                        or vps_util.is_production_proxy(v.name))
+          for provider in dcs}
 
 errors = []
-for caption, vpss in [("Missing DO droplets", expected_do - actual_do),
-                      ("Unexpected DO droplets", actual_do - expected_do),
-                      ("Missing Vultr VPSs", expected_vultr - actual_vultr),
-                      ("Unexpected Vultr VPSs", actual_vultr - expected_vultr)]:
-    if vpss:
-        errors.append(caption + ": " + ", ".join(sorted(vpss)))
+for provider in dcs:
+    for caption, vpss in [(("Missing %s droplets" % provider.upper()),
+                           expected[provider] - actual[provider]),
+                          (("Unexpected %s droplets" % provider.upper()),
+                           actual[provider] - expected[provider])]:
+        if vpss:
+            errors.append(caption + ": " + ", ".join(sorted(vpss)))
 
 if errors:
     for error in errors:
