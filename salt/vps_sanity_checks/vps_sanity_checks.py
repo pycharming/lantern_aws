@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# XXX: unify cache concept.
+
+from collections import defaultdict
 import traceback
 
 import alert
@@ -16,14 +19,16 @@ def alert_exception(op):
          % (op, traceback.format_exc())),
         color='danger')
 
-def srv2cfg_consistent_with_vps_list(srv2cfg, all_vpss, cache=None):
+def srv2cfg_consistent_with_vps_list(srv2cfg=None, cache=None):
     if cache is None:
         cache = model.make_cache()
-    cache.srv2cfg = srv2cfg
-    cache.all_vpss = all_vpss
+    # XXX contrived because of legacy reasons; I'll clean it up soon(TM)...
+    cache.srv2cfg = cache.srv2cfg or srv2cfg or redis_shell.hgetall('srv->cfg')
+    cache.all_vpss = cache.all_vpss or vps_util.all_vpss()
     errors = model.check_srv2cfg(cache=cache)
     for err_type, err_cases in errors:
         if err_type == 'bad IP in srv->cfg':
+            # Delete entries pointing to proxies that are no longer ours.
             names = redis_shell.hmget('srv->name', err_cases.keys())
             for name, (srv, ip) in zip(names, err_cases.iteritems()):
                 try:
@@ -32,6 +37,22 @@ def srv2cfg_consistent_with_vps_list(srv2cfg, all_vpss, cache=None):
                 except:
                     alert_exception("retire non-existing proxy %s (%s), srvid %s" % (name, ip, srv))
     return errors
+
+def no_duplicate_names(cache=None):
+    if cache is None:
+        cache = make_cache()
+    cache.all_vpss = cache.all_vpss or vps_util.all_vpss()
+    by_name = defaultdict(list)
+    for v in cache.all_vpss:
+        by_name[v.name].append(v)
+    duplicates = []
+    for name, vpss in by_name.iteritems():
+        if len(vpss) > 1:
+            duplicates.append((name, [v.ip for v in vpss]))
+    if duplicates:
+        return [('duplicate names', duplicates)]
+    else:
+        return []
 
 def slice_srvs_in_srv2cfg(region, srv2cfg):
     key = region + ':slices'
@@ -97,22 +118,34 @@ def report(errors):
 def run_all_checks():
     print "Fetching config data..."
     srv2cfg = redis_shell.hgetall('srv->cfg')
-    print "Fetching VPS data..."
-    all_vpss = vps_util.all_vpss()
     print "Performing checks..."
+    cache = model.make_cache()
     # This is new code, so let's test it in a cushion to start with.
     try:
-        errors = srv2cfg_consistent_with_vps_list(srv2cfg, all_vpss)
+        print "Checking that srv->cfg table is consistent with the VPS listing..."
+        errors = srv2cfg_consistent_with_vps_list(srv2cfg, cache)
     except:
         alert_exception("trying to check consistency between srv->cfg and all_vpss")
         errors = []
+    try:
+        print "Check that we don't have duplicate names"
+        errors.extend(no_duplicate_names(cache))
+    except:
+        alert_exception("trying to check for duplicate VPS names")
+    print "Checking that configs start with a newline..."
     errors.extend(configs_start_with_newline(srv2cfg))
     regions = redis_shell.smembers('user-regions')
+    print "Checking that slice server entries are in srv->cfg..."
     for region in regions:
+        print "    (region %s)..." % region
         errors.extend(slice_srvs_in_srv2cfg(region, srv2cfg))
+    print "Checking server queue size..."
     for region in regions:
+        print "    (region %s)..." % region
         errors.extend(check_srvq_size(region))
+    print "Check that regional fallbacks and honeypots are in srv->cfg..."
     for region in regions:
+        print "    (region %s)..." % region
         errors.extend(fallbacks_and_honeypots_in_srv_table(region, srv2cfg))
     report(errors)
 
