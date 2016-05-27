@@ -1,3 +1,6 @@
+NOTE - this repo manages large files using [git lfs](https://git-lfs.github.com/).
+Please install the git lfs client in order to use this repo.
+
 # Lantern Cloud
 
 This project contains code and configuration scripts to launch and manage cloud-hosted infrastructure for the [Lantern](https://github.com/getlantern/lantern) censorship circumvention tool.
@@ -238,6 +241,26 @@ Your cloudmaster should be ready now.  If it's not a production one (XXX: add in
 [1] Please double-check in [bin/config.py](https://github.com/getlantern/lantern_aws/blob/master/bin/config.py) that this version is current.  Also, the `salt-cloud -u` line is only required due to a bug in `v2015.8.8.2`.
 
 [2] You can't use `bin/hscloudmaster.bash` here because it hasn't been adapted to work as root, which is only needed during this bootstrap procedure.
+
+##### Launching a redis server
+For replication purposes, Redis servers can be either masters or slaves.  At any
+one time, there should be only one master, and DNS should be configured so that
+redis.getlantern.org resolves to the master.
+
+The only difference between masters and slaves is that masters have the pillar
+`is_redis_master: "True"`.
+
+To launch a redis server named `redis-donyc3-001` in the `donyc3` datacenter:
+
+On the cloudmaster `cm-donyc3`:
+
+```
+sudo touch /srv/pillar/redis-donyc3-001.sls
+# If you want this to be a redis master
+sudo /bin/sh -exec "echo 'is_redis_master: \"True\"' > /srv/pillar/redis-donyc3-001.sls"
+sudo salt-cloud -p donyc3_4GB redis-donyc3-001
+sudo salt "redis-donyc3-001" state.highstate
+```
 
 ##### Upgrading a cloudmaster's Salt version
 

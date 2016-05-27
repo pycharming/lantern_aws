@@ -96,7 +96,6 @@ def upload_pillars(as_root=False):
     linode_password, linode_apikey, linode_tokyo_apikey = util.read_linode_credential()
     cfgsrv_token, cfgsrv_redis_url, cfgsrv_redis_test_pass \
         = util.read_cfgsrv_credential()
-    secondary_redis_url = util.read_secondary_redis_credential()
     github_token = util.read_github_token()
     loggly_token = util.read_loggly_token()
     if util.in_production():
@@ -132,11 +131,10 @@ def upload_pillars(as_root=False):
             ' && echo "linode_tokyo_apikey: %s" >> linode_credential.sls '
             ' && echo "cfgsrv_token: %s" > cfgsrv_credential.sls'
             ' && echo "cfgsrv_redis_test_pass: \"%s\"" >> cfgsrv_credential.sls'
-            ' && echo "secondary_redis_url: \"%s\"" >> secondary_redis_credential.sls'
             ' && echo "github_token: %s" > github_token.sls'
             ' && echo "loggly_token: %s" > loggly_token.sls'
-            r' && echo "base: {\"*\": [salt, global], \"fp-*\": [cfgsrv_credential, vultr_credential, secondary_redis_credential, github_token, loggly_token], \"cm-*\": [do_credential, vultr_credential, linode_credential, cfgsrv_credential], \"cs-*\": [cfgsrv_credential]}" > top.sls '
-            ' && sudo mv salt.sls global.sls top.sls do_credential.sls vultr_credential.sls linode_credential.sls cfgsrv_credential.sls secondary_redis_credential.sls github_token.sls loggly_token.sls $(hostname).sls /srv/pillar/ '
+            r' && echo "base: {\"fp-*\": [cfgsrv_credential, vultr_credential, github_token, loggly_token], \"cm-*\": [do_credential, vultr_credential, linode_credential, cfgsrv_credential], \"cs-*\": [cfgsrv_credential], \"*\": [global, salt]}" > top.sls '
+            ' && sudo mv salt.sls global.sls top.sls do_credential.sls vultr_credential.sls cfgsrv_credential.sls github_token.sls loggly_token.sls $(hostname).sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.salt_version,
@@ -153,7 +151,6 @@ def upload_pillars(as_root=False):
                  linode_tokyo_apikey,
                  cfgsrv_token,
                  cfgsrv_redis_test_pass,
-                 secondary_redis_url,
                  github_token,
                  loggly_token),
             as_root=as_root)

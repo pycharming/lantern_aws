@@ -4,9 +4,6 @@
 {% set proxy_port=grains.get('proxy_port', 62443) %}
 {% set obfs4_port=pillar.get('obfs4_port', 0) %}
 {% set traffic_check_period_minutes=60 %}
-{% set http_proxy_version ='v0.0.19' %}
-# Be sure to also update sha (`shasum http-proxy`) when you bump up version
-{% set http_proxy_sha='539133dfb0c9e87393bb675ff2d98414bb5946b9' %}
 {% from 'ip.sls' import external_ip %}
 
 fp-dirs:
@@ -34,6 +31,7 @@ fp-dirs:
 
 # To copy verbatim.
 {% set nontemplate_files=[
+    ('/home/lantern/', 'http-proxy', 'http-proxy', 'lantern', 755),
     ('/usr/local/bin/', 'badvpn-udpgw', 'badvpn-udpgw', 'root', 755),
     ('/etc/init.d/', 'badvpn-udpgw', 'udpgw-init', 'root', 755),
     ('/etc/', 'rc.local', 'rc.local', 'root', '755')] %}
@@ -164,16 +162,6 @@ generate-cert:
         - require:
             - pkg: wamerican
 
-install-http-proxy:
-    cmd.script:
-        - source: salt://http_proxy/install_http_proxy.py
-        - unless: "[ $(shasum /home/lantern/http-proxy | cut -d ' ' -sf 1) = {{ http_proxy_sha }} ]"
-        - template: jinja
-        - context:
-            http_proxy_version: {{ http_proxy_version }}
-        - user: lantern
-        - group: lantern
-
 convert-cert:
     cmd.script:
         - source: salt://http_proxy/convcert.sh
@@ -190,7 +178,7 @@ proxy-service:
         - watch:
             - cmd: fallback-proxy-dirs-and-files
             - cmd: convert-cert
-            - cmd: install-http-proxy
+            - file: /home/lantern/http-proxy
             - file: /home/lantern/config.ini
         - require:
             - pkg: tcl

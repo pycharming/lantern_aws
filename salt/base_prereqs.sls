@@ -26,10 +26,13 @@ base-packages:
             - python-dev
         - reload_modules: yes
 
-requests:
+base-pips:
   pip.installed:
     - upgrade: yes
     - order: 1
+    - names:
+        - requests
+        - subprocess32
 
 transit-python:
   pip.installed:
