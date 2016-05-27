@@ -1,14 +1,35 @@
 include:
   - redis
 
-cfgsrv-env:
-  file.append:
+cfgsrv-env-authtoken:
+  file.replace:
     - name: /etc/environment
-    - text: |
-        AUTH_TOKEN='{{ pillar['cfgsrv_token'] }}'
-        REDISCLOUD_URL='{{ pillar['redis_via_stunnel_url'] }}'
-        PRODUCTION=true
-        PORT=62000
+    - append_if_not_found: True
+    - pattern: "^AUTH_TOKEN=.+$"
+    - repl: AUTH_TOKEN='{{ pillar['cfgsrv_token'] }}'
+
+cfgsrv-env-rediscloud:
+  file.replace:
+    - name: /etc/environment
+    - append_if_not_found: True
+    - pattern: "^REDISCLOUD_URL=.+$"
+    - repl: REDISCLOUD_URL='{{ pillar['redis_via_stunnel_url'] }}'
+
+cfgsrv-env-production:
+  file.replace:
+    - name: /etc/environment
+    - append_if_not_found: True
+    - pattern: "^PRODUCTION=.+$"
+    # Note - the below flag doesn't do much, and it's okay to have it set to
+    # true even in non-production environments.
+    - repl: PRODUCTION=true
+
+cfgsrv-env-port:
+  file.replace:
+    - name: /etc/environment
+    - append_if_not_found: True
+    - pattern: "^PORT=.+$"
+    - repl: PORT=62000
 
 /etc/stunnel/stunnel_client.conf:
   file.managed:

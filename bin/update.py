@@ -105,7 +105,6 @@ def upload_pillars(as_root=False):
     else:
         slack_webhook_url = util.read_slack_staging_webhook_url()
 
-    redis_via_stunnel_url = cfgsrv_redis_url.split('@')[0].replace("rediss", "redis") + "@localhost:6380"
     environment = "production"
 
     if util.in_staging():
@@ -114,6 +113,7 @@ def upload_pillars(as_root=False):
 
     redis_host = cfgsrv_redis_url.split('@')[1]
     redis_domain = redis_host.split(":")[0]
+    redis_via_stunnel_url = cfgsrv_redis_url.split('@')[0].replace("rediss", "redis") + "@localhost:6380"
 
     if util.in_dev():
         environment = "dev"
