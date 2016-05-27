@@ -133,3 +133,15 @@ def unpack2int(s):
     if len(s) == 7 and ret > 2 ** 55:
         ret -= 2 ** 56
     return ret
+
+def pack_int(i):
+    """
+    Pack an int representing an IPv4 address.
+
+    *** USE ONLY FOR TESTING ***
+
+    This is not the inverse of unpack2int. Indeed, no such inverse exists,
+    because IPv6 addresses are projected into an int space that collides with
+    the IPv4 one.
+    """
+    return chr(i >> 24) + chr((i >> 16) & 0xff) + chr((i >> 8) & 0xff) + chr(i & 0xff)
