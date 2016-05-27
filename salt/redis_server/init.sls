@@ -150,7 +150,7 @@ pgpgpg:
     - mode: 755
     - makedirs: True
 
-/home/lantern/s3backup.bash 2>&1 | logger -t s3backup":
+/home/lantern/s3backup.bash 2>&1 | logger -t s3backup:
   cron.present:
     - identifier: s3backup
     - hour: "0,12"
