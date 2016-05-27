@@ -3,6 +3,7 @@
 redis-env:
   file.replace:
     - name: /etc/environment
+    - append_if_not_found: True
     - pattern: "^REDIS_URL=.+$"
     - repl: "REDIS_URL={{ pillar['cfgsrv_redis_url'] }}"
 
