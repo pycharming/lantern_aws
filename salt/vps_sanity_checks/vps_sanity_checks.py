@@ -188,7 +188,10 @@ def run_all_checks():
     print "Checking server queue integrity..."
     for region in regions:
         print "    (region %s)..." % region
-        errors.extend(srvq_integrity(region, cache=cache))
+        try:
+            errors.extend(srvq_integrity(region, cache=cache))
+        except:
+            alert_exception("trying to check server queue integrity")
     print "Check that regional fallbacks and honeypots are in srv->cfg..."
     for region in regions:
         print "    (region %s)..." % region
