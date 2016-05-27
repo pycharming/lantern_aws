@@ -42,56 +42,59 @@ def not_up_to_date():
     print
     sys.exit(1)
 
-def update():
+def update(as_root=False):
     util.set_secret_permissions()
     print "Uploading master config..."
-    upload_master_config()
+    upload_master_config(as_root)
     print "Uploading pillars..."
-    upload_pillars()
+    upload_pillars(as_root)
     print "Uploading states..."
-    rsync_salt()
+    rsync_salt(as_root)
 
-def rsync_salt():
-    return rsync(here.salt_states_path, '/srv/salt')
+def rsync_salt(as_root):
+    return rsync(here.salt_states_path, '/srv/salt', as_root)
 
-def scp(src, dst):
-    error = os.system("scp -o StrictHostKeyChecking=no %s %s:%s"
+def scp(src, dst, as_root=False):
+    error = os.system("scp -o StrictHostKeyChecking=no %s %s%s:%s"
                       % (src,
+                         ('root@' if as_root else ''),
                          config.cloudmaster_address,
                          dst))
     if not error:
         print "scp'd successfully."
     return error
 
-def rsync(src, dst):
+def rsync(src, dst, as_root=False):
     error = os.system(("rsync -e 'ssh -o StrictHostKeyChecking=no'"
-                       + " --rsync-path='sudo rsync' " # we set --rsync-path to use sudo so that we can overwrite files owned by root
-                       + " -azLk %s/ %s:%s")
+                       + ("" if as_root else " --rsync-path='sudo rsync' ") # we set --rsync-path to use sudo so that we can overwrite files owned by root
+                       + " -azLk %s/ %s%s:%s")
                       % (src,
+                         ('root@' if as_root else ''),
                          config.cloudmaster_address,
                          dst))
     if not error:
         print "Rsynced successfully."
     return error
 
-def upload_master_config():
+def upload_master_config(as_root=False):
     util.ssh_cloudmaster(r"""(echo "timeout: 20" """
                          + r""" && echo "keep_jobs: 2" """
                          + r""" && echo "worker_threads: 20" """
-                         + r""" ) > master""")
-    move_root_file('master', '/etc/salt/master')
+                         + r""" ) > master""",
+                         as_root=as_root)
+    move_root_file('master', '/etc/salt/master', as_root)
 
-def move_root_file(src, dst):
+def move_root_file(src, dst, as_root=False):
     return util.ssh_cloudmaster(('sudo mv %s %s'
                                  ' && sudo chown root:root %s'
-                                 ' && sudo chmod 600 %s') % (src, dst, dst, dst))
+                                 ' && sudo chmod 600 %s') % (src, dst, dst, dst),
+                                as_root=as_root)
 
-def upload_pillars():
+def upload_pillars(as_root=False):
     _, _, do_token = util.read_do_credential()
     vultr_apikey = util.read_vultr_credential()
     cfgsrv_token, cfgsrv_redis_url, cfgsrv_redis_test_pass \
         = util.read_cfgsrv_credential()
-    secondary_redis_url = util.read_secondary_redis_credential()
     github_token = util.read_github_token()
     loggly_token = util.read_loggly_token()
     if util.in_production():
@@ -117,35 +120,34 @@ def upload_pillars():
             ' && echo "in_staging: %s" > global.sls '
             ' && echo "in_production: %s" >> global.sls '
             ' && echo "datacenter: %s" >> global.sls '
+            ' && echo "cfgsrv_redis_url: %s" >> global.sls'
             ' && echo "slack_webhook_url: %s" >> global.sls '
             ' && echo "cloudmaster_name: %s" >> global.sls '
             ' && echo "do_token: %s" > do_credential.sls'
             ' && echo "vultr_apikey: %s" > vultr_credential.sls'
             ' && echo "cfgsrv_token: %s" > cfgsrv_credential.sls'
-            ' && echo "cfgsrv_redis_url: %s" >> cfgsrv_credential.sls'
             ' && echo "cfgsrv_redis_test_pass: \"%s\"" >> cfgsrv_credential.sls'
-            ' && echo "secondary_redis_url: \"%s\"" >> secondary_redis_credential.sls'
             ' && echo "github_token: %s" > github_token.sls'
             ' && echo "loggly_token: %s" > loggly_token.sls'
-            r' && echo "base: {\"*\": [salt, global], \"fp-*\": [cfgsrv_credential, vultr_credential, secondary_redis_credential, github_token, loggly_token], \"cm-*\": [do_credential, vultr_credential, cfgsrv_credential]}" > top.sls '
-            ' && sudo mv salt.sls global.sls top.sls do_credential.sls vultr_credential.sls cfgsrv_credential.sls secondary_redis_credential.sls github_token.sls loggly_token.sls $(hostname).sls /srv/pillar/ '
+            r' && echo "base: {\"fp-*\": [cfgsrv_credential, vultr_credential, github_token, loggly_token], \"cm-*\": [do_credential, vultr_credential, cfgsrv_credential], \"cs-*\": [cfgsrv_credential], \"*\": [global, salt]}" > top.sls '
+            ' && sudo mv salt.sls global.sls top.sls do_credential.sls vultr_credential.sls cfgsrv_credential.sls github_token.sls loggly_token.sls $(hostname).sls /srv/pillar/ '
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.salt_version,
                  util.in_staging(),
                  util.in_production(),
                  config.datacenter,
+                 cfgsrv_redis_url,
                  slack_webhook_url,
                  config.cloudmaster_name,
                  do_token,
                  vultr_apikey,
                  cfgsrv_token,
-                 cfgsrv_redis_url,
                  cfgsrv_redis_test_pass,
-                 secondary_redis_url,
                  github_token,
-                 loggly_token))
+                 loggly_token),
+            as_root=as_root)
 
 if __name__ == '__main__':
     check_master_if_in_production()
-    update()
+    update('--as-root' in sys.argv)

@@ -17,6 +17,8 @@ base:
         - logrotate
         - check_disk
         - netdata
+        - redis
+        - redis_tls
         - sshalert
     'cm-vlfra1':
         - vps_sanity_checks
@@ -32,6 +34,16 @@ base:
         - http_proxy
     'pubsub-*':
         - pubsub
+    'borda-*':
+        - borda
     'ops-panel':
         - lantern_build_prereqs
         - proxy_ufw_rules
+    'cs-*':
+        - lantern_build_prereqs
+        - proxy_ufw_rules
+#        - stunnel4
+        - config_server
+    'redis-*':
+        - stunnel4
+        - redis_server

@@ -1,3 +1,6 @@
+NOTE - this repo manages large files using [git lfs](https://git-lfs.github.com/).
+Please install the git lfs client in order to use this repo.
+
 # Lantern Cloud
 
 This project contains code and configuration scripts to launch and manage cloud-hosted infrastructure for the [Lantern](https://github.com/getlantern/lantern) censorship circumvention tool.
@@ -78,7 +81,7 @@ If you have many proxies in a cloudmaster, they may have trouble updating all at
 To do this in the proxies managed by all production cloudmasters,
 
     bin/inallcms bin/ssh_cloudmaster.py 'sudo salt -b 100 "fp-*" state.highstate'
-    
+
 This operation is not 100% reliable, so after running an important update you may need to verify that the update was performed in all machines.  How to do this is explained below, in the "Verify deployment" subsection.
 
 To run an arbitrary command (as root) in all chained proxies:
@@ -162,7 +165,7 @@ Either way, you just need to keep running the update/verify procedure (perhaps w
 
 Once you have launched a minion by any of the methods described below, the
 machine will start applying the Salt configuration on its own.  A common
-problem when first testing configuration changes is that Salt rejects your .sls 
+problem when first testing configuration changes is that Salt rejects your .sls
 files altogether (for example, if you have some YAML or Jinja syntax error).
 One way to quickly detect that is to run
 
@@ -200,14 +203,15 @@ Currently this is a manual process.
    - The name must follow the convention `cm-<datacenter><optionalextrastuff>`.  For example, if want to launch a test cloudmaster for yourself in the `donyc3` datacenter, call it `cm-donyc3myname`.  A production cloudmaster must not have any extra stuff attached to its name (for example, the production cloudmaster for that datacenter is just `cm-donyc3`).
    - Remember to provide your own SSH key in addition to the cloudmaster ones.
    - Although these are not currently being used, selecting the options for IPv6 support and private networking might be a good idea for forward compatibility.
- - ssh into `root@<your-new-cloudmaster-ip>` and run:
+ - ssh into `root@<your-new-cloudmaster-ip>` and run [1]:
 
 ```bash
 NAME="<your-cloudmaster's-name>"
 mkdir -p /srv/pillar
 touch /srv/pillar/$NAME.sls
-curl -L https://bootstrap.saltstack.com | sh -s -- -M -A 127.0.0.1 -i $NAME git v2015.5.5
+curl -L https://bootstrap.saltstack.com | sh -s -- -M -A 127.0.0.1 -i $NAME git v2015.8.8.2
 salt-key -ya $NAME
+salt-cloud -u
 ```
  - in your own computer, make a new file with contents similar to these:
 
@@ -218,6 +222,49 @@ cloudmaster_address = "188.166.40.244"
 
 - and place it in `~/git/lantern_aws/bin/config_overrides.py`.  You probably want to have it saved somewhere else too, since you'll be deleting and restoring `config_overrides.py` to alternate between the production deployment and one or more non-production ones.
 - `cd ~/git/lantern_aws/bin`
-- `./update.py && ./hscloudmaster.bash`
+- `./update.py --as-root` (you only need to run --as-root until you've successfully run state.highstate once)
+- back in the cloudmaster [2]:
+- `salt-call state.highstate | tee hslog`
 
 Your cloudmaster should be ready now.  If it's not a production one (XXX: add instructions for making it a production one) it will be running against a local redis DB.
+
+[1] Please double-check in [bin/config.py](https://github.com/getlantern/lantern_aws/blob/master/bin/config.py) that this version is current.  Also, the `salt-cloud -u` line is only required due to a bug in `v2015.8.8.2`.
+
+[2] You can't use `bin/hscloudmaster.bash` here because it hasn't been adapted to work as root, which is only needed during this bootstrap procedure.
+
+##### Launching a redis server
+For replication purposes, Redis servers can be either masters or slaves.  At any
+one time, there should be only one master, and DNS should be configured so that
+redis.getlantern.org resolves to the master.
+
+The only difference between masters and slaves is that masters have the pillar
+`is_redis_master: "True"`.
+
+To launch a redis server named `redis-donyc3-001` in the `donyc3` datacenter:
+
+On the cloudmaster `cm-donyc3`:
+
+```
+sudo touch /srv/pillar/redis-donyc3-001.sls
+# If you want this to be a redis master
+sudo /bin/sh -exec "echo 'is_redis_master: \"True\"' > /srv/pillar/redis-donyc3-001.sls"
+sudo salt-cloud -p donyc3_4GB redis-donyc3-001
+sudo salt "redis-donyc3-001" state.highstate
+```
+
+##### Upgrading a cloudmaster's Salt version
+
+This procedure is for upgrading to v2015.8.8.2.  It isn't guaranteed to work with every version, but it should be a good baseline.
+
+- ssh into your cloudmaster.
+
+- upgrade all minions.  Just copying and pasting this command should work:
+
+```
+salt -C 'not E@cm-' cmd.run 'curl -L https://bootstrap.saltstack.com | sh -s -- -A $(salt-call grains.get master | tail -n 1 | tr -d "[[:space:]]") -i $(salt-call grains.get id | tail -n 1 | tr -d "[[:space:]]") git v2015.8.8.2'
+```
+- upgrade the master itself (**NOTE: it's important to upgrade the minions before**), running a similar command locally:
+
+```
+curl -L https://bootstrap.saltstack.com | sh -s -- -M -A 127.0.0.1 -i $(salt-call grains.get id | tail -n 1 | tr -d "[[:space:]]") git v2015.8.8.2
+```

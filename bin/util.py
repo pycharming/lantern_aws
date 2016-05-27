@@ -30,11 +30,6 @@ def read_cfgsrv_credential():
                              ['auth_token', 'redis_url', 'redis_test_pass'])
 
 @memoized
-def read_secondary_redis_credential():
-    return secrets_from_yaml(['lantern_aws', 'secondary_redis.yaml'],
-                             ['secondary_redis_url'])[0]
-
-@memoized
 def read_github_token():
     return secrets_from_yaml(['github.md'],
                              ['repo-token'])[0]
@@ -70,10 +65,11 @@ def set_secret_permissions():
         for name in filenames:
             os.chmod(os.path.join(path, name), stat.S_IREAD)
 
-def ssh_cloudmaster(cmd=None, out=None):
+def ssh_cloudmaster(cmd=None, out=None, as_root=False):
     whitelist_ssh()
-    full_cmd = "ssh -o StrictHostKeyChecking=no %s" % (
-                    config.cloudmaster_address)
+    full_cmd = "ssh -o StrictHostKeyChecking=no %s%s" % (
+        ('root@' if as_root else ''),
+        config.cloudmaster_address)
     if cmd:
         full_cmd += " '%s'" % cmd
     if out:

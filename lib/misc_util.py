@@ -5,10 +5,16 @@ from functools import wraps
 import re
 import multiprocessing
 import sys
-import subprocess
 import time
 import traceback
-
+try:
+    # Backport of the Python 3 version of subprocess, used for the timeout.
+    import subprocess32 as subprocess
+except ImportError:
+    print >> sys.stderr
+    print >> sys.stderr, "*** try `pip install subprocess32` ***"
+    print >> sys.stderr
+    raise
 
 class Cache:
     def __init__(self, timeout, update_fn):
@@ -49,12 +55,12 @@ class defaultobj(defaultdict):
     def __setattr__(self, name, value):
         return self.__setitem__(name, value)
 
-def ssh(ip, cmd, timeout=60, whitelist=True):
+def ssh(ip, cmd, timeout=30, whitelist=True):
     if whitelist:
         whitelist_ssh()
     return cmd_error_and_output(
-        with_timeout(['ssh', '-o', 'StrictHostKeyChecking=no', 'lantern@' + ip, cmd],
-                     timeout))
+        ['ssh', '-o', 'StrictHostKeyChecking=no', '-o', 'BatchMode=yes', 'lantern@' + ip, cmd],
+        timeout)
 
 def whitelist_ssh(time=60):
     try:
@@ -64,19 +70,25 @@ def whitelist_ssh(time=60):
         print >> sys.stderr, "No redis access; I won't be whitelisted in this SSH session"
         return
     ip = subprocess.check_output(['dig', '+short', 'myip.opendns.com', '@resolver1.opendns.com']).strip()
-    redis_shell.setex('sshalert-whitelist:%s' % ip, 'admin', time)
+    key = 'sshalert-whitelist:%s' % ip
+    ttl = redis_shell.ttl(key)
+    # At least some versions of redispy return None. Let's be paranoid here and
+    # normalize to int(-1).
+    if ttl in [None, '-1', -1]:
+        if redis_shell.exists(key):
+            # Permanently whitelisted.
+            return
+        ttl = -1
+    if ttl < time:
+        redis_shell.setex(key, 'admin', time)
 
-def with_timeout(args, timeout=None):
-    if timeout is None:
-        return args
-    else:
-        return ['timeout', str(timeout)] + args
-
-def cmd_error_and_output(args):
+def cmd_error_and_output(args, timeout=120):
     try:
-        return 0, subprocess.check_output(args)
+        return 0, subprocess.check_output(args, timeout=timeout)
     except subprocess.CalledProcessError as e:
         return e.returncode, e.output
+    except subprocess.TimeoutExpired as e:
+        return 'timeout-expired', "%s -> %r" % (e.cmd, e.output)
     except Exception as e:
         return 'python-exception', traceback.format_exc()
 

@@ -3,6 +3,13 @@ include:
     - vultr
     - redis
 
+# Quick hack to get this into cloudmasters without adding it to lantern_aws.
+# config-server is in a private repo.
+update-config-server-uberjar:
+  cmd.run:
+    - name: "cp -f /home/lantern/config-server.jar /srv/salt/config_server/config-server.jar"
+    - unless: "[ ! -e /home/lantern/config-server.jar ]"
+
 /etc/ufw/applications.d/salt:
     file.managed:
         - source: salt://cloudmaster/ufw-rules-salt
@@ -44,7 +51,7 @@ refill_srvq:
 {# Only launch regional servers from select datacenters. #}
 
 {% if svc != 'refill_region_srvq'
-       or pillar['cloudmaster_name'] in ['cm-donyc3', 'cm-vltok1', 'cm-doams3',
+       or pillar['cloudmaster_name'] in ['cm-donyc3', 'cm-vltok1', 'cm-dosgp1', 'cm-dosfo1', 'cm-doams3',
                                          'cm-donyc3staging', 'cm-dosgp1staging', 'cm-doams3staging'] %}
 
 /etc/init/{{ svc }}.conf:
@@ -147,3 +154,21 @@ redis-server:
   file.managed:
     - source: salt://cloudmaster/kill_running_highstates.py
     - mode: 755
+
+# Utility to launch config servers (XXX: generalize).
+/usr/bin/launch_config_server.py:
+  file.managed:
+    - source: salt://cloudmaster/launch_config_server.py
+    - mode: 755
+
+# This transitional module has been phased out, but apparently Salt still picks
+# it up as the Digital Ocean driver if present from an old installation.
+#
+# This suggests making sure to nuke the old installation altogether when
+# upgrading Salt, but as of this writing this problem had crept into many
+# cloudmasters.
+delete-obsolete-digital-ocean-v2-driver:
+  file.absent:
+    - names:
+        - /usr/lib/python2.7/dist-packages/salt/cloud/clouds/digital_ocean_v2.py
+        - /usr/lib/python2.7/dist-packages/salt/cloud/clouds/digital_ocean_v2.pyc

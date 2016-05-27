@@ -188,12 +188,12 @@ def actually_offload_proxy(proportion=1.0, reassign=True, name=None, ip=None, sr
         rshell.hdel(client_table_key, *tomove)
         print "Offloaded %s clients from %s (%s) into the slice table." % (len(tomove), name, ip)
 
-def actually_retire_proxy(name, ip, pipeline=None):
+def actually_retire_proxy(name, ip, srv=None, pipeline=None):
     """
     While retire_proxy just enqueues the proxy for retirement, this actually
     updates the redis tables.
     """
-    name, ip, srv = nameipsrv(name=name, ip=ip)
+    name, ip, srv = nameipsrv(name=name, ip=ip, srv=srv)
     cm = cm_by_name(name)
     region = region_by_name(name)
     txn = pipeline or redis_shell.pipeline()
@@ -245,6 +245,22 @@ def destroy_vps(name):
 def todaystr():
     now = datetime.utcnow()
     return "%d%02d%02d" % (now.year, now.month, now.day)
+
+def new_vps_serial(prefix, cm=None, datestr=None):
+    if cm is None:
+        cm = my_cm()
+    if datestr is None:
+        datestr = todaystr()
+    key = 'serial:%s:%s:%s' % (cm, prefix, datestr)
+    p = redis_shell.pipeline()
+    p.incr(key)
+    p.expire(key, 25 * 60 * 60)
+    return p.execute()[0]
+
+def new_vps_name(prefix):
+    date = todaystr()
+    cm = my_cm()
+    return "-".join([prefix, cm, date, str(new_vps_serial(prefix, cm, date)).zfill(3)])
 
 def my_cm():
     """
@@ -336,6 +352,18 @@ def offload_proxy(proportion=1.0, replace=True, name=None, ip=None, srv=None):
                                   'replace': bool(replace),
                                   'name': name,
                                   'ip': ip}))
+
+def proxy_status(name=None, ip=None, srv=None):
+    name, _, srv = nameipsrv(name, ip, srv)
+    if srv is None:
+        return 'baked-in'
+    elif redis_shell.zscore(region_by_name(name) + ':slices', srv) is None:
+        return 'closed'
+    else:
+        return 'open'
+
+def offload_if_closed(name=None, ip=None, srv=None, reason='failed_checkfallbacks', pipeline=None):
+    retire_proxy(name, ip, srv, reason, pipeline, proxy_status(name, ip, srv) == 'closed')
 
 def retire_proxy(name=None, ip=None, srv=None, reason='failed checkfallbacks', pipeline=None):
     name, ip, srv = nameipsrv(name, ip, srv)

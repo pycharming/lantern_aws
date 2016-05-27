@@ -5,7 +5,7 @@ import sys
 import here
 
 # Values for production deployment.
-salt_version = 'v2015.5.5'
+salt_version = 'v2015.8.8.2'
 production_cloudmasters = ['cm-doams3', 'cm-dosgp1', 'cm-dosfo1', 'cm-donyc3', 'cm-vltok1', 'cm-vlfra1', 'cm-vlpar1']
 datacenter = os.getenv("DC", 'doams3')
 cloudmaster_name = 'cm-' + datacenter

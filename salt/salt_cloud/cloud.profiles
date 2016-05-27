@@ -5,7 +5,7 @@
                         ('nyc3', 'New York 3'),
                         ('sfo1', 'San Francisco 1'),
                         ('sgp1', 'Singapore 1')] %}
-{% for size in ['512MB', '1GB', '2GB'] %}
+{% for size in ['512MB', '1GB', '2GB', '4GB', '8GB', '16GB', '32GB', '48GB', '64GB'] %}
 do{{ dc }}_{{ size }}:
     provider: do
     image: "14.04.4 x64"

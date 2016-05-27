@@ -1,5 +1,6 @@
 python-dateutil
 python-digitalocean
+pyyaml
 redis
 transit-python==0.8.282
 vultr==0.1.2

@@ -23,7 +23,16 @@ base-packages:
             - python-dateutil
             - htop
             - vim
+            - python-dev
         - reload_modules: yes
+
+base-pips:
+  pip.installed:
+    - upgrade: yes
+    - order: 1
+    - names:
+        - requests
+        - subprocess32
 
 transit-python:
   pip.installed:

@@ -4,7 +4,7 @@ pylib-pythonpath:
     - name: /etc/environment
     - text: "PYTHONPATH=/usr/local/lib/pylib"
 
-{% set libs=['redisq', 'do_util', 'vultr_util', 'vps_util', 'redis_util', 'misc_util', 'alert'] %}
+{% set libs=['redisq', 'do_util', 'vultr_util', 'vps_util', 'paths', 'redis_util', 'misc_util', 'alert', 'model'] %}
 
 {% for lib in libs %}
 

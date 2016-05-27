@@ -47,7 +47,7 @@ def run():
             color="danger")
     os.path.walk('/var/log', delete_big_files, None)
     # Brutish way to restart all affected services.
-    os.system('/sbin/reboot')
+    os.system('/sbin/reboot -f')
 
 
 if __name__ == '__main__':
