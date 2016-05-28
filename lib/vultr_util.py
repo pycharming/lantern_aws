@@ -84,6 +84,8 @@ def try_vultr_cmd(cmd, *args):
         try:
             return apply(cmd, args)
         except VultrError as e:
+            if 'rate limit' not in e.message.lower():
+                raise
             traceback.print_exc()
             # Add some random factor too, to break synchronization between
             # concurrently starting jobs.
@@ -141,7 +143,12 @@ def destroy_vps(name,
                                         update_fn=lambda: retrying_server_list().values())):
     for d in server_cache.get():
         if d['label'] == name:
-            try_vultr_cmd(vultr.server_destroy, d['SUBID'])
+            try:
+                try_vultr_cmd(vultr.server_destroy, d['SUBID'])
+            except VultrError as e:
+                if not e.message.lower().strip().startswith('invalid server'):
+                    raise
+                print "Subid %s with name %r not there anymore; ignoring..." % (d['SUBID'], name)
             time.sleep(2)
             # We don't `break` here because it's sadly possible, due to a bug,
             # that there is more than one VPS with the same name.
