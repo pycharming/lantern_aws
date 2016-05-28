@@ -28,6 +28,11 @@ def read_vultr_credential():
                              ['api-key'])[0]
 
 @memoized
+def read_linode_credential():
+    return secrets_from_yaml(['linode.md'],
+                             ['pass', 'api_key', 'tokyo_api_key'])
+
+@memoized
 def read_cfgsrv_credential():
     return secrets_from_yaml(['lantern_aws', 'config_server.yaml'],
                              ['auth_token', 'redis_url', 'redis_test_pass'])

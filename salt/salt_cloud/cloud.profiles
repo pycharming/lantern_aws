@@ -14,3 +14,15 @@ do{{ dc }}_{{ size }}:
     script_args: '-- git {{ pillar['salt_version'] }}'
 {% endfor %}
 {% endfor %}
+
+{% for dc_abbrev, location, provider in [('sgp1', 'Singapore, SG', 'linode'),
+                                         ('tok1', 'Tokyo, JP', 'linode_tokyo')] %}
+{% for size_abbrev, size in [('1GB', 'Linode 1024')] %}
+li{{ dc_abbrev }}_{{ size_abbrev }}:
+    provider: {{ provider }}
+    image: "Ubuntu 14.04 LTS"
+    size: "{{ size }}"
+    location: "{{ location }}"
+    script_args: '-- git {{ pillar['salt_version'] }}'
+{% endfor %}
+{% endfor %}
