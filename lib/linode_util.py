@@ -4,7 +4,14 @@ import subprocess
 import sys
 import time
 
-import linode.api
+try:
+    import linode.api
+except ImportError:
+    print >> sys.stderr
+    print >> sys.stderr, "Try `pip install linode-python==1.1.1`"
+    print >> sys.stderr
+    raise
+
 import yaml
 
 import vps_util
