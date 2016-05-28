@@ -141,8 +141,10 @@ def destroy_vps(name,
                                         update_fn=lambda: retrying_server_list().values())):
     for d in server_cache.get():
         if d['label'] == name:
-            vultr.server_destroy(d['SUBID'])
-            break
+            try_vultr_cmd(vultr.server_destroy, d['SUBID'])
+            time.sleep(2)
+            # We don't `break` here because it's sadly possible, due to a bug,
+            # that there is more than one VPS with the same name.
     time.sleep(10)
     os.system('salt-key -yd ' + name)
 

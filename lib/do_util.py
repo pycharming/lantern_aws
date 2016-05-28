@@ -53,7 +53,7 @@ def destroy_vps(name):
                         headers={"Authorization": "Bearer " + do_token})
     except KeyError:
         print >> sys.stderr, "Droplet not found:", name
-    os.system('salt-key -yd' + name)
+    os.system('salt-key -yd ' + name)
 
 def droplet2vps(d):
     url = "https://cloud.digitalocean.com/droplets/%s/graphs" % d.id

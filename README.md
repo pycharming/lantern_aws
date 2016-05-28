@@ -215,6 +215,16 @@ commands from there.
 
 ##### Launching a cloud master
 
+[XXX: updating these instructions for Linode is pending, because I'm still figuring out how to make it more like the others.  For the time being, some known differences:
+
+- Linode Ubuntu 14.04 machines don't come with `curl` installed.  `apt-get install curl` before trying to install Salt should fix this.
+
+- In Linode you need to set a default root password.  This doesn't play well with `update.py`, and password login will get disabled the first time you run Salt highstate.  Therefore, after having launched your cloudmaster, you need to upload your SSH key there (e.g. `ssh-copy-id root@<your cloudmaster's IP>`) before running `update.py`.
+
+- I don't yet know whether private networking and/or IPv6 need to be explicitly enabled.
+
+/XXX]
+
 Currently this is a manual process.
 
  - Launch a VPS of the size you want in the provider and datacenter you want (2GB is currently recommended for production ones).  Some considerations:
@@ -301,3 +311,9 @@ salt -C 'not E@cm-' cmd.run 'curl -L https://bootstrap.saltstack.com | sh -s -- 
 ```
 curl -L https://bootstrap.saltstack.com | sh -s -- -M -A 127.0.0.1 -i $(salt-call grains.get id | tail -n 1 | tr -d "[[:space:]]") git v2015.8.8.2
 ```
+
+### Caveats
+
+This is a list of known fragile points to consider before making changes, or if something breaks for no apparent cause.
+
+- `linode_util.all_vpss` kind of assumes that linode VPSs only have one public IP address.  If more than one is available, an arbitrary one will be listed, and a warning will be printed out to stderr.
