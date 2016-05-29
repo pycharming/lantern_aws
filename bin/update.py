@@ -38,8 +38,6 @@ def check_master_if_in_production():
         lfs_status_output = normalize_status_output(
                 subprocess.check_output(['git', 'lfs', 'status']))
         if lfs_status_output != EXPECTED_PRODUCTION_GIT_LFS_STATUS_OUTPUT:
-            print lfs_status_output
-            print EXPECTED_PRODUCTION_GIT_LFS_STATUS_OUTPUT
             not_up_to_date()
 
 def not_up_to_date():
