@@ -14,16 +14,36 @@ import vps_util
 do_token = os.getenv("DO_TOKEN")
 do = digitalocean.Manager(token=do_token)
 
+dc2location = {'ams3': 'Amsterdam 3',
+               'nyc3': 'New York 3',
+               'sfo1': 'San Francisco 1',
+               'sgp1': 'Singapore 1'}
 
 def create_vps(name, req={}, plan=None):
     vps_util.save_pillar(name, req)
     if plan is None:
         plan = vps_util.dc_by_cm(vps_util.my_cm()) + "_512MB"
-    out = subprocess.check_output(["salt-cloud", "-p", plan, name])
-    # Uberhack: XXX update with salt version...
-    d = yaml.load(out[out.rfind(name + ":"):].replace("----------", "").replace("|_", "-")).values()[0]
-    return {'name': d['name'],
-            'ip': d['networks']['v4'][1]['ip_address']}
+    dc, size = plan.split('_')
+    location = dc2location[dc]
+    d = digitalocean.Droplet(token=do_token,
+                             name=name,
+                             size=size,
+                             image="14.04.4 x64",
+                             region=location,
+                             ssh_keys="cloudmaster",
+                             backups=False,
+                             ipv6=True,
+                             private_networking=True)
+    print "Creating droplet..."
+    d.create()
+    print "Waiting for droplet to start up..."
+    assert len(d.action_ids) == 1
+    action = d.get_action(d.action_ids[0])
+    action.wait(20)
+    print "Creation completed, fetching droplet data..."
+    d.load()
+    assert d.name == name
+    return {'name': name, 'ip': d.ip_address, 'droplet': d}
 
 def init_vps(d):
     name = d['name']

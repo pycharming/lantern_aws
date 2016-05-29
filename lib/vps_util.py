@@ -490,3 +490,25 @@ def destroy_until_dc(srvq, dc):
             redis_shell.rpush(srvq, entry)
             return
         retire_proxy(name=name, ip=ip, reason="Flushing server queue")
+
+def setup_salt(ip, name):
+    while True:
+        print("Bootstrapping...")
+        if os.system(bootstrap_tmpl % (ip, name)):
+            print("Error trying to bootstrap; retrying...")
+        else:
+            break
+        time.sleep(10)
+    print("Generating and copying keys...")
+    with vps_util.tempdir(subid):
+        trycmd('salt-key --gen-keys=%s' % name)
+        for suffix in ['.pem', '.pub']:
+            os.rename(name + suffix, 'minion' + suffix)
+        trycmd(scpkeys_tmpl % ip)
+        os.rename('minion.pub', os.path.join('/etc/salt/pki/master/minions', name))
+        print("Starting salt-minion...")
+        trycmd(start_tmpl % ip)
+        print("Calling highstate...")
+        time.sleep(10)
+        trycmd("salt -t 1800 %s state.highstate" % name)
+        return vps_util.hammer_the_damn_thing_until_it_proxies(name)
