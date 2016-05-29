@@ -19,6 +19,12 @@ nothing to commit, working directory clean
 
 EXPECTED_PRODUCTION_GIT_PULL_OUTPUT = "Already up-to-date.\n"
 
+EXPECTED_PRODUCTION_GIT_LFS_STATUS_OUTPUT = normalize_status_output("""\
+On branch master
+Git LFS objects to be committed:
+Git LFS objects not staged for commit:
+""")
+
 def check_master_if_in_production():
     if util.in_production():
         status_output = normalize_status_output(
@@ -27,6 +33,10 @@ def check_master_if_in_production():
             not_up_to_date()
         pull_output = subprocess.check_output(['git', 'pull'])
         if pull_output != EXPECTED_PRODUCTION_GIT_PULL_OUTPUT:
+            not_up_to_date()
+        lfs_status_output = normalize_status_output(
+                subprocess.check_output(['git', 'lfs', 'status']))
+        if lfs_status_output != EXPECTED_PRODUCTION_GIT_LFS_STATUS_OUTPUT:
             not_up_to_date()
 
 def not_up_to_date():
