@@ -37,6 +37,8 @@ def check_master_if_in_production():
         lfs_status_output = normalize_status_output(
                 subprocess.check_output(['git', 'lfs', 'status']))
         if lfs_status_output != EXPECTED_PRODUCTION_GIT_LFS_STATUS_OUTPUT:
+            print lfs_status_output
+            print EXPECTED_PRODUCTION_GIT_LFS_STATUS_OUTPUT
             not_up_to_date()
 
 def not_up_to_date():
@@ -44,7 +46,7 @@ def not_up_to_date():
     print "*** UP-TO-DATE MASTER CHECKOUT REQUIRED ***"
     print
     print "Sorry, you can only deploy to the production cloudmaster"
-    print "from an up-to-date master checkout."
+    print "from an up-to-date master checkout with git-lfs installed."
     print
     print "If you're pretty sure that is the case, you may want to"
     print "either update git or fix `check_master_if_in_production`"
