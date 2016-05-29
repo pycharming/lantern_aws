@@ -45,7 +45,6 @@ refill_srvq:
 
 {% for svc, executable in [('refill_cm_srvq', 'refill_srvq'),
                            ('refill_region_srvq', 'refill_srvq'),
-                           ('offload', 'offload'),
                            ('retire', 'retire'),
                            ('destroy', 'destroy')] %}
 
