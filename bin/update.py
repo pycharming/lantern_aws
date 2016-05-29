@@ -21,6 +21,7 @@ EXPECTED_PRODUCTION_GIT_PULL_OUTPUT = "Already up-to-date.\n"
 
 EXPECTED_PRODUCTION_GIT_LFS_STATUS_OUTPUT = normalize_status_output("""\
 On branch master
+Git LFS objects to be pushed to origin/master:
 Git LFS objects to be committed:
 Git LFS objects not staged for commit:
 """)
