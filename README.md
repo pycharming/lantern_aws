@@ -235,6 +235,9 @@ cloudmaster_address = "188.166.40.244"
 - `./update.py --as-root` (you only need to run --as-root until you've successfully run state.highstate once)
 - back in the cloudmaster [2]:
 - `salt-call state.highstate | tee hslog`
+- `python -c "import redis_util; redis_util.redis_shell.set('sshalert-whitelist:<MY-IP>', '<MY-USER>')"`
+
+Remember to change <MY-IP> to your public IP and <MY-USER> to your login user.
 
 Your cloudmaster should be ready now.  If it's not a production one (XXX: add instructions for making it a production one) it will be running against a local redis DB.
 
