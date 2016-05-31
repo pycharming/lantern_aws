@@ -98,6 +98,7 @@ def check_load(minutes_back=30):
     cpu_io = []
     last_swap_tx = None
     swap_tx = 0
+    mem_pc = []
     with file(path) as f:
         while True:
             line = f.readline()
@@ -113,10 +114,12 @@ def check_load(minutes_back=30):
                 swap_tx += delta
             last_swap_tx = s.swap_tx
             cpu_io.append(s.cpu_io)
+            mem_pc.append(s.mem_pc)
     cpu_io = sum(cpu_io) / len(cpu_io)
-    if cpu_io > 0.10:
+    mem_pc = sum(mem_pc) / len(mem_pc)
+    if cpu_io > 0.10 and mem_pc > 0.8:
         print "overloaded!"
-        details = "cpu_io: %.2f, swap_tx: %s, num_cores: %s" % (cpu_io, swap_tx, psutil.NUM_CPUS)
+        details = "cpu_io: %.2f, mem_pc: %.2f, swap_tx: %s, num_cores: %s" % (cpu_io, mem_pc, swap_tx, psutil.NUM_CPUS)
         print details
         import alert
         alert.send_to_slack("I think I'm overloaded",
