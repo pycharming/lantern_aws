@@ -151,12 +151,20 @@ def actually_close_proxy(name=None, ip=None, srv=None, pipeline=None):
     if txn is not pipeline:
         txn.execute()
 
+class ProxyGone(Exception):
+    def __init__(self, name, ip, srv):
+        self.name = name
+        self.ip = ip
+        self.srv = srv
+
 def actually_offload_proxy(proportion=1.0, reassign=True, name=None, ip=None, srv=None, pipeline=None):
     # Some of the stuff below is wasteful or breaks in this edge case.
     if proportion <= 0:
         print >> sys.stderr, "WARNING: actually_offload_proxy called with proportion %s; did you really mean this?" % proportion
         return
     name, ip, srv = nameipsrv(name, ip, srv)
+    if srv is None:
+        raise ProxyGone(name, ip, srv)
     region = region_by_name(name)
     client_table_key = region + ':clientip->srv'
     packed_srv = redis_util.pack_srv(srv)

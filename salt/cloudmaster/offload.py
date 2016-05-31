@@ -3,6 +3,7 @@
 
 import json
 import os
+import sys
 import time
 
 from redis_util import redis_shell
@@ -29,11 +30,16 @@ def run():
                 task = {'name': name, 'ip': ip, 'proportion': 1.0, 'replace': True}
             print "Offloading users from %s (%s)" % (name, ip)
             txn = redis_shell.pipeline()
-            vps_util.actually_offload_proxy(proportion=task['proportion'],
-                                            replace=task['replace'],
-                                            name=task['name'],
-                                            ip=task['ip'],
-                                            pipeline=txn)
+            try:
+                vps_util.actually_offload_proxy(proportion=task['proportion'],
+                                                replace=task['replace'],
+                                                name=task['name'],
+                                                ip=task['ip'],
+                                                pipeline=txn)
+            except vps_util.ProxyGone:
+                print >> sys.stderr, "Tried to offload no longer existing proxy %s (%s)" % (name, ip)
+                remover(redis_shell)
+                continue
             remover(txn)
             cm = vps_util.cm_by_name(name)
             txn.lpush(cm + ':retireq', '%s|%s' % (task['name'], task['ip']))
