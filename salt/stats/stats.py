@@ -89,6 +89,41 @@ def get_bps(minutes_back=None):
     print ret
     return ret
 
+# XXX: quick check; refactor
+def check_load(minutes_back=30):
+    print "stats.check_load starting..."
+    # command line friendliness
+    minutes_back = int(minutes_back)
+    start_time = datetime.utcnow() - timedelta(minutes=minutes_back)
+    cpu_io = []
+    last_swap_tx = None
+    swap_tx = 0
+    with file(path) as f:
+        while True:
+            line = f.readline()
+            if not line:
+                break
+            s = parse_line(line)
+            if s.time < start_time:
+                continue
+            if last_swap_tx is None:
+                last_swap_tx = s.swap_tx
+            delta = s.swap_tx - last_swap_tx
+            if delta > 0:
+                swap_tx += delta
+            last_swap_tx = s.swap_tx
+            cpu_io.append(s.cpu_io)
+    cpu_io = sum(cpu_io) / len(cpu_io)
+    if cpu_io > 0.10:
+        print "overloaded!"
+        details = "cpu_io: %.2f, swap_tx: %s, num_cores: %s" % (cpu_io, swap_tx, psutil.NUM_CPUS)
+        print details
+        import alert
+        alert.send_to_slack("I think I'm overloaded",
+                            details,
+                            color="#0000ff",
+                            channel="#staging-alerts")
+    print "stats.check_load done"
 
 if __name__ == '__main__':
     if len(sys.argv ) < 2:
