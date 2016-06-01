@@ -117,7 +117,7 @@ def check_load(minutes_back=30):
             mem_pc.append(s.mem_pc)
     cpu_io = sum(cpu_io) / len(cpu_io)
     mem_pc = sum(mem_pc) / len(mem_pc)
-    if cpu_io > 2 and mem_pc > 80:
+    if cpu_io > 3 and mem_pc > 85:
         print "overloaded!"
         details = "cpu_io: %.2f, mem_pc: %.2f, swap_tx: %s, num_cores: %s" % (cpu_io, mem_pc, swap_tx, psutil.NUM_CPUS)
         print details
