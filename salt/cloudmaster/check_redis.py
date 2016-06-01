@@ -22,11 +22,13 @@ try:
     from redis_util import redis_shell
     if not redis_shell.ping():
         fail("Redis at %s did not respond to ping" % redis_host)
-    elif not redis_shell.hset("__last_checked_at", socket.gethostname(), datetime.datetime.now()):
-        fail("Redis at %s did not allow write, may be a read-only slave" % redis_host)
     else:
-        print "Redis is Up!"
-
+        try:
+            redis_shell.hset("__last_checked_at", socket.gethostname(), datetime.datetime.now())
+            print "Redis is Up!"
+        except Exception,e:
+            fail("Redis at %s did not allow write, may be a read-only slave: %v" % (redis_host, e))
+            
 except Exception,e:
     msg = "Unable to check whether redis at %s is available: %s" % (redis_host, e)
     fail(msg)
