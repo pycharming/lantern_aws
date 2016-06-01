@@ -4,5 +4,4 @@ DC=donyc3 $@ &
 DC=doams3 $@ &
 DC=dosfo1 $@ &
 DC=dosgp1 $@ &
-DC=vltok1 $@ &
 wait
