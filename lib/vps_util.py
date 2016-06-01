@@ -288,6 +288,8 @@ def dc_by_cm(cm):
 
 _region_by_production_cm = {'donyc3': 'etc',
                             'doams3': 'ir',
+                            # The vlfra1 cloudmaster is no more, but if we were
+                            # to bring it back, it would be in this region.
                             'vlfra1': 'ir',
                             'vlpar1': 'ir',
                             'dosgp1': 'sea',

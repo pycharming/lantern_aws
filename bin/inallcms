@@ -3,7 +3,6 @@
 DC=donyc3 $@ &
 DC=doams3 $@ &
 DC=dosfo1 $@ &
-DC=vlfra1 $@ &
 DC=vlpar1 $@ &
 DC=dosgp1 $@ &
 DC=vltok1 $@ &
