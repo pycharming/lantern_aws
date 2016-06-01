@@ -76,7 +76,7 @@ def set_secret_permissions():
 def ssh_cloudmaster(cmd=None, out=None, as_root=False):
     whitelist_ssh()
     full_cmd = "ssh -o StrictHostKeyChecking=no %s%s" % (
-        ('root@' if as_root else ''),
+        ('root@' if as_root else 'lantern@'),
         config.cloudmaster_address)
     if cmd:
         full_cmd += " '%s'" % cmd

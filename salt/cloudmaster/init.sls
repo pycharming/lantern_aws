@@ -45,14 +45,13 @@ refill_srvq:
 
 {% for svc, executable in [('refill_cm_srvq', 'refill_srvq'),
                            ('refill_region_srvq', 'refill_srvq'),
-                           ('offload', 'offload'),
                            ('retire', 'retire'),
                            ('destroy', 'destroy')] %}
 
 {# Only launch regional servers from select datacenters. #}
 
 {% if svc != 'refill_region_srvq'
-       or pillar['cloudmaster_name'] in ['cm-donyc3', 'cm-vltok1', 'cm-dosgp1', 'cm-dosfo1', 'cm-doams3',
+       or pillar['cloudmaster_name'] in ['cm-donyc3', 'cm-dosgp1', 'cm-dosfo1', 'cm-doams3',
                                          'cm-donyc3staging', 'cm-dosgp1staging', 'cm-doams3staging'] %}
 
 /etc/init/{{ svc }}.conf:
