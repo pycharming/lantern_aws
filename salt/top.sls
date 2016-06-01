@@ -20,7 +20,7 @@ base:
         - redis
         - redis_tls
         - sshalert
-    'cm-vlfra1':
+    'cm-donyc3':
         - vps_sanity_checks
         - check_vpss
         - update_masquerades

@@ -34,7 +34,7 @@ refill_srvq:
     - require:
        - service: refill_srvq
 
-{% for executable in ['refill_srvq', 'offload', 'retire', 'destroy'] %}
+{% for executable in ['refill_srvq', 'offload', 'retire', 'destroy', 'check_redis'] %}
 /usr/bin/{{ executable }}.py:
     file.managed:
         - source: salt://cloudmaster/{{ executable }}.py
@@ -45,14 +45,13 @@ refill_srvq:
 
 {% for svc, executable in [('refill_cm_srvq', 'refill_srvq'),
                            ('refill_region_srvq', 'refill_srvq'),
-                           ('offload', 'offload'),
                            ('retire', 'retire'),
                            ('destroy', 'destroy')] %}
 
 {# Only launch regional servers from select datacenters. #}
 
 {% if svc != 'refill_region_srvq'
-       or pillar['cloudmaster_name'] in ['cm-donyc3', 'cm-vltok1', 'cm-dosgp1', 'cm-dosfo1', 'cm-doams3',
+       or pillar['cloudmaster_name'] in ['cm-donyc3', 'cm-dosgp1', 'cm-dosfo1', 'cm-doams3',
                                          'cm-donyc3staging', 'cm-dosgp1staging', 'cm-doams3staging'] %}
 
 /etc/init/{{ svc }}.conf:
@@ -173,3 +172,12 @@ delete-obsolete-digital-ocean-v2-driver:
     - names:
         - /usr/lib/python2.7/dist-packages/salt/cloud/clouds/digital_ocean_v2.py
         - /usr/lib/python2.7/dist-packages/salt/cloud/clouds/digital_ocean_v2.pyc
+
+# Check redis periodically
+/usr/bin/check_redis.py 2>&1 | logger -t check_redis:
+  cron.present:
+    - identifier: check_redis
+    - minute: "*"
+    - user: lantern
+    - require:
+        - file: /usr/bin/check_redis.py
