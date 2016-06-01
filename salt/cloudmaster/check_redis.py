@@ -5,25 +5,28 @@
 import sys
 import os
 import alert
+import datetime
+import socket
 
+# The below duplicates logic in redis_util in case we can't import redis_util.
 redis_url = os.getenv('REDIS_URL')
 redis_host = redis_url.split("@")[1]
 
 def fail(msg):
-    redis_url = os.getenv('REDIS_URL')
-    redis_host = redis_url.split("@")[1]
     alert.send_to_slack("Redis Unavailable",
                         msg,
-                        color="#ff0000",
+                        color="danger",
                         channel="#redis-alerts")
 
 try:
     from redis_util import redis_shell
-    if redis_shell.ping():
-        print "Redis is Up!"
+    if not redis_shell.ping():
+        fail("Redis at %s did not respond to ping" % redis_host)
+    elif not redis_shell.hset("__last_checked_at", socket.gethostname(), datetime.datetime.now()):
+        fail("Redis at %s did not allow write, may be a read-only slave" % redis_host)
     else:
-        msg = "Redis at %s did not respond to ping" % redis_host
-        fail(msg)
+        print "Redis is Up!"
+
 except Exception,e:
     msg = "Unable to check whether redis at %s is available: %s" % (redis_host, e)
     fail(msg)
