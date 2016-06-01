@@ -337,6 +337,11 @@ def all_vpss():
 def proxy_status(name=None, ip=None, srv=None):
     name, _, srv = nameipsrv(name, ip, srv)
     if srv is None:
+        if name is not None:
+            region = region_by_name(name)
+            for qentry in redis_shell.lrange(region + ':srvq', 0, -1):
+                if qentry.split('|')[1] == name:
+                    return 'enqueued'
         return 'baked-in'
     elif redis_shell.zscore(region_by_name(name) + ':slices', srv) is None:
         return 'closed'
