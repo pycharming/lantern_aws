@@ -20,7 +20,7 @@ def vpss_from_cm(cm):
         return set(ret)
 
 dcs = {'do': ['doams3', 'dosgp1', 'donyc3', 'dosfo1'],
-       'vl': ['vltok1', 'vlpar1'],
+       'vl': ['vltok1'],
        'li': ['lisgp1', 'litok1']}
 
 expected = {provider: set.union(*map(vpss_from_cm, provider_dcs))
