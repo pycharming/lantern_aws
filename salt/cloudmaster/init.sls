@@ -34,7 +34,7 @@ refill_srvq:
     - require:
        - service: refill_srvq
 
-{% for executable in ['refill_srvq', 'offload', 'retire', 'destroy'] %}
+{% for executable in ['refill_srvq', 'offload', 'retire', 'destroy', 'check_redis'] %}
 /usr/bin/{{ executable }}.py:
     file.managed:
         - source: salt://cloudmaster/{{ executable }}.py
@@ -173,3 +173,12 @@ delete-obsolete-digital-ocean-v2-driver:
     - names:
         - /usr/lib/python2.7/dist-packages/salt/cloud/clouds/digital_ocean_v2.py
         - /usr/lib/python2.7/dist-packages/salt/cloud/clouds/digital_ocean_v2.pyc
+
+# Check redis periodically
+/usr/bin/check_redis.py 2>&1 | logger -t check_redis:
+  cron.present:
+    - identifier: check_redis
+    - minute: "*"
+    - user: lantern
+    - require:
+        - file: /usr/bin/check_redis.py

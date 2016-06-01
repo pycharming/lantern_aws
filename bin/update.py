@@ -69,7 +69,7 @@ def rsync(src, dst, as_root=False):
                        + ("" if as_root else " --rsync-path='sudo rsync' ") # we set --rsync-path to use sudo so that we can overwrite files owned by root
                        + " -azLk %s/ %s%s:%s")
                       % (src,
-                         ('root@' if as_root else ''),
+                         ('root@' if as_root else 'lantern@'),
                          config.cloudmaster_address,
                          dst))
     if not error:
