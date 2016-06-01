@@ -288,6 +288,9 @@ def dc_by_cm(cm):
 
 _region_by_production_cm = {'donyc3': 'etc',
                             'doams3': 'ir',
+                            # The vlfra1 and vlpar1 cloudmasters are no more,
+                            # but if we were to bring them back, it would be in
+                            # this region.
                             'vlfra1': 'ir',
                             'vlpar1': 'ir',
                             'dosgp1': 'sea',
@@ -337,6 +340,11 @@ def all_vpss():
 def proxy_status(name=None, ip=None, srv=None):
     name, _, srv = nameipsrv(name, ip, srv)
     if srv is None:
+        if name is not None:
+            region = region_by_name(name)
+            for qentry in redis_shell.lrange(region + ':srvq', 0, -1):
+                if qentry.split('|')[1] == name:
+                    return 'enqueued'
         return 'baked-in'
     elif redis_shell.zscore(region_by_name(name) + ':slices', srv) is None:
         return 'closed'
