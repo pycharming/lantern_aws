@@ -17,6 +17,11 @@ num_samples = 60 * 24 * 7  # keep last week, assuming 1m precision
 
 path = "/home/lantern/stats"
 
+# There are two major classes of stats handled here: cumulative ones that are
+# defined as a counter since last reboot, and independent instant samples. For
+# the former we accumulate by adding deltas (with some care to handle reboots,
+# which reset the stat). For the latter we average over the requested period.
+
 delta_val = namedtuple('accum_val', ['val', 'prev'])
 avg_val = namedtuple('avg_val', ['val', 'nsamples'])
 
@@ -42,6 +47,8 @@ accum_type = namedtuple('accum_type', ['init', 'step_fn'])
 delta_type = accum_type(delta_0, delta_reduce_step)
 avg_type = accum_type(avg_0, avg_reduce_step)
 stat_def = namedtuple('stat_def', ['name', 'display_name', 'accum_type', 'parser'])
+# DRY: this must be kept consistent with save(); AFAICT the rest of this module
+# derives its data model from here.
 stat_defs = [stat_def(*args) for args in [
     ('time', 'time', None, parse_time),
     ('load_avg', 'load avg 1m', avg_type, float),
@@ -75,6 +82,7 @@ def save():
         lines = file(path).readlines()[-num_samples:]
     else:
         lines = []
+    # DRY: stat_defs
     new_line = "|".join(map(str,
         [now, la1m, cpu.user, cpu.system, cpu.iowait, cpu.idle, mem.percent, mem.active, swap.percent, swap.sin + swap.sout,
          duse.percent, dtx.read_bytes + dtx.write_bytes, net.bytes_sent, net.bytes_recv, net.errin + net.errout, net.dropin + net.dropout]))
