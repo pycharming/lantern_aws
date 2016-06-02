@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import division
+
 from collections import namedtuple
 from datetime import datetime, timedelta
 import os
@@ -15,6 +17,50 @@ num_samples = 60 * 24 * 7  # keep last week, assuming 1m precision
 
 path = "/home/lantern/stats"
 
+delta_val = namedtuple('accum_val', ['val', 'prev'])
+avg_val = namedtuple('avg_val', ['val', 'nsamples'])
+
+delta_0 = delta_val(val=None, prev=None)
+
+avg_0 = avg_val(val=0, nsamples=0)
+
+def delta_reduce_step(accum, newval):
+    if accum.val is None:
+        return delta_val(0, newval)
+    nextval = accum.val + newval
+    if newval >= accum.prev:
+        nextval -= accum.prev
+    return delta_val(nextval, newval)
+
+def avg_reduce_step(accum, newval):
+    return avg_val(val=(accum.val * accum.nsamples + newval)
+                       / (accum.nsamples + 1),
+                   nsamples=accum.nsamples + 1)
+
+accum_type = namedtuple('accum_type', ['init', 'step_fn'])
+
+delta_type = accum_type(delta_0, delta_reduce_step)
+avg_type = accum_type(avg_0, avg_reduce_step)
+stat_def = namedtuple('stat_def', ['name', 'display_name', 'accum_type', 'parser'])
+stat_defs = [stat_def(*args) for args in [
+    ('time', 'time', None, parse_time),
+    ('load_avg', 'load avg 1m', avg_type, float),
+    ('cpu_user', 'user CPU %', avg_type, float),
+    ('cpu_sys', 'sys CPU %', avg_type, float),
+    ('cpu_io', 'I/O CPU %', avg_type, float),
+    ('cpu_idle', 'idle CPU %', avg_type, float),
+    ('mem_pc', 'mem %', avg_type, float),
+    ('mem_active', 'active mem', avg_type, int),
+    ('swap_pc', 'swap %', avg_type, float),
+    ('swap_tx', 'swap TX', delta_type, int),
+    ('disk_pc', 'disk %', avg_type, float),
+    ('disk_tx', 'disk TX', delta_type, int),
+    ('bytes_sent', 'bytes sent', delta_type, int),
+    ('bytes_recv', 'bytes recv', delta_type, int),
+    ('net_errors', 'net errors', delta_type, int),
+    ('net_dropped', 'net dropped', delta_type, int)]]
+
+name2def = {d.name: d for d in stat_defs}
 
 def save():
     now = datetime.utcnow()
@@ -32,101 +78,70 @@ def save():
     new_line = "|".join(map(str,
         [now, la1m, cpu.user, cpu.system, cpu.iowait, cpu.idle, mem.percent, mem.active, swap.percent, swap.sin + swap.sout,
          duse.percent, dtx.read_bytes + dtx.write_bytes, net.bytes_sent, net.bytes_recv, net.errin + net.errout, net.dropin + net.dropout]))
-    print "Time | load avg 1m | user CPU | sys CPU | IO CPU | idle CPU | mem% | active mem | swap% | swap tx | disk% | disk tx | bytes sent | bytes recv | net errors | net drops"
+    print " | ".join(d.display_name for d in stat_defs)
     print new_line
     lines.append(new_line + '\n')
     with file(path + ".tmp", 'w') as f:
         f.writelines(lines)
     os.rename(path + ".tmp", path)
 
-sample = namedtuple('sample', ['time', 'load_avg', 'cpu_user', 'cpu_sys', 'cpu_io', 'cpu_idle', 'mem_pc', 'mem_active', 'swap_pc', 'swap_tx', 'disk_pc', 'disk_tx', 'bytes_sent', 'bytes_recv', 'net_errors', 'net_dropped'])
+sample = namedtuple('sample', [d.name for d in stat_defs])
 
 def parse_line(line):
-    time, load_avg, cpu_user, cpu_sys, cpu_io, cpu_idle, mempc, memact, swappc, swaptx, diskpc, disktx, sent, recv, err, drop = line.strip().split('|')
-    return sample(parse_time(time), float(load_avg), float(cpu_user), float(cpu_sys), float(cpu_io), float(cpu_idle), float(mempc), int(memact), float(swappc), int(swaptx), float(diskpc), int(disktx), int(sent), int(recv), int(err), int(drop))
+    return sample(*(d.parser(s) for d, s in zip(stat_defs, line.strip().split('|'))))
 
-def get_bps(minutes_back=None):
-    "max(sent, received) bytes per second during the requested interval"
+def summary(stats, minutes_back=None):
     if minutes_back is None:
         start_time = datetime.fromtimestamp(0)
     else:
         # allow string arguments for command line usage.
         minutes_back = int(minutes_back)
         start_time = datetime.utcnow() - timedelta(minutes=minutes_back)
-    rt = obj(seconds=0, bytes_sent=0, bytes_recv=0)
-    # Start and end of each run of samples with monotonically increasing
-    # bytes_sent and bytes_recv. This is necessary to avoid distortions caused
-    # by reboots, downtime, etc.
-    start = end = None
-    def update():
-        rt.seconds += (end.time - start.time).total_seconds()
-        assert end.bytes_sent >= start.bytes_sent >= 0, "bad bytes sent! %s..%s (delta %s)" % (start.bytes_sent, end.bytes_sent, end.bytes_sent - start.bytes_sent)
-        assert end.bytes_recv >= start.bytes_recv >= 0, "bad bytes recv! %s..%s (delta %s)" % (start.bytes_recv, end.bytes_recv, end.bytes_recv - start.bytes_recv)
-        rt.bytes_sent += end.bytes_sent - start.bytes_sent
-        rt.bytes_recv += end.bytes_recv - start.bytes_recv
+    defs = map(name2def.get, stats)
+    accum_vals, accum_fns = zip(*(d.accum_type for d in defs))
+    actual_start_time = None
     with file(path) as f:
         while True:
             line = f.readline()
             if not line:
-                if start:
-                    update()
                 break
             s = parse_line(line)
             if s.time < start_time:
                 continue
-            if not start:
-                start = end = s
-                continue
-            if end.bytes_sent <= s.bytes_sent and end.bytes_recv <= s.bytes_recv:
-                end = s
-                continue
-            update()
-            start = end = s
-    if not rt.seconds:
-        raise RuntimeError('no useful sample intervals')
-    ret = max(rt.bytes_sent, rt.bytes_recv) / rt.seconds
-    print "Sent %s bytes, received %s bytes in %s seconds (%s bps)" % (rt.bytes_sent, rt.bytes_recv, rt.seconds, ret)
+            if actual_start_time is None:
+                actual_start_time = s.time
+            new_vals = [getattr(s, stat) for stat in stats]
+            accum_vals = [fn(accum, new)
+                          for fn, accum, new in zip(accum_fns, accum_vals, new_vals)]
+    return {'actual_start_time': actual_start_time,
+            'values': {stat: val
+                       for stat, (val, _) in zip(stats, accum_vals)}}
+
+def get_bps(minutes_back=None):
+    s = summary(['bytes_sent', 'bytes_recv'], minutes_back)
+    sent = s['values']['bytes_sent']
+    recv = s['values']['bytes_recv']
+    seconds = (datetime.utcnow() - s['actual_start_time']).total_seconds()
+    ret = max(sent, recv) / seconds
+    print "Sent %s bytes, received %s bytes in %s seconds (%s bps)" % (sent, recv, seconds, ret)
     print ret
     return ret
 
-# XXX: quick check; refactor
+# XXX: quick check; move to check_load when stats.py becomes a library.
 def check_load(minutes_back=30):
-    print "stats.check_load starting..."
-    # command line friendliness
-    minutes_back = int(minutes_back)
-    start_time = datetime.utcnow() - timedelta(minutes=minutes_back)
-    cpu_io = []
-    last_swap_tx = None
-    swap_tx = 0
-    mem_pc = []
-    with file(path) as f:
-        while True:
-            line = f.readline()
-            if not line:
-                break
-            s = parse_line(line)
-            if s.time < start_time:
-                continue
-            if last_swap_tx is None:
-                last_swap_tx = s.swap_tx
-            delta = s.swap_tx - last_swap_tx
-            if delta > 0:
-                swap_tx += delta
-            last_swap_tx = s.swap_tx
-            cpu_io.append(s.cpu_io)
-            mem_pc.append(s.mem_pc)
-    cpu_io = sum(cpu_io) / len(cpu_io)
-    mem_pc = sum(mem_pc) / len(mem_pc)
+    s = summary(['cpu_io', 'mem_pc', 'swap_tx'], minutes_back=minutes_back)
+    mem_pc = s['values']['mem_pc']
+    cpu_io = s['values']['cpu_io']
+    swap_tx = s['values']['swap_tx']
+    details = "cpu_io: %.2f, mem_pc: %.2f, swap_tx: %s, num_cores: %s" % (cpu_io, mem_pc, swap_tx, psutil.NUM_CPUS)
+    print details
     if cpu_io > 3 and mem_pc > 85:
         print "overloaded!"
-        details = "cpu_io: %.2f, mem_pc: %.2f, swap_tx: %s, num_cores: %s" % (cpu_io, mem_pc, swap_tx, psutil.NUM_CPUS)
-        print details
         import alert
         alert.send_to_slack("I think I'm overloaded",
                             details,
                             color="#0000ff",
                             channel="#staging-alerts")
-    print "stats.check_load done"
 
 if __name__ == '__main__':
     if len(sys.argv ) < 2:
