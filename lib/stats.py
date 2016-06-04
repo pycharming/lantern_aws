@@ -27,7 +27,7 @@ avg_val = namedtuple('avg_val', ['val', 'nsamples'])
 
 delta_0 = delta_val(val=None, prev=None)
 
-avg_0 = avg_val(val=0, nsamples=0)
+avg_0 = avg_val(val=None, nsamples=0)
 
 def delta_reduce_step(accum, newval):
     if accum.val is None:
@@ -38,7 +38,7 @@ def delta_reduce_step(accum, newval):
     return delta_val(nextval, newval)
 
 def avg_reduce_step(accum, newval):
-    return avg_val(val=(accum.val * accum.nsamples + newval)
+    return avg_val(val=((accum.val or 0) * accum.nsamples + newval)
                        / (accum.nsamples + 1),
                    nsamples=accum.nsamples + 1)
 
@@ -98,32 +98,55 @@ sample = namedtuple('sample', [d.name for d in stat_defs])
 def parse_line(line):
     return sample(*(d.parser(s) for d, s in zip(stat_defs, line.strip().split('|'))))
 
-def summary(stats, minutes_back=None):
+def get_stats(fileobj, start_time):
+    while True:
+        line = fileobj.readline()
+        if not line:
+            break
+        s = parse_line(line)
+        if s.time < start_time:
+            continue
+        yield s
+
+def reduce_stats(dimensions, samples):
+    """
+    Return a summary of each of the requested dimensions across the samples.
+
+    Examples of dimensions are 'cpu_io' or 'disk_tx'.
+
+    A summary can be either
+
+      - an average, useful for stats that are independent point-in-time
+        samples (i.e., dimensions with accum_type==avg_type), or
+
+      - a total quantity representing the accrued value over the samples,
+        useful for dimensions that increase monotonically (with the exception
+        of being reset in reboots).  These are dimensions with
+        accum_type==delta_type.
+    """
+    actual_start_time = None
+    defs = map(name2def.get, dimensions)
+    accum_vals, accum_fns = zip(*(d.accum_type for d in defs))
+    for s in samples:
+        if actual_start_time is None:
+            actual_start_time = s.time
+        new_vals = [getattr(s, dim) for dim in dimensions]
+        accum_vals = [fn(accum, new)
+                      for fn, accum, new in zip(accum_fns, accum_vals, new_vals)]
+    return {'actual_start_time': actual_start_time,
+            'values': {dim: val
+                       for dim, (val, _) in zip(dimensions, accum_vals)}}
+
+def summary(dimensions, minutes_back=None):
     if minutes_back is None:
         start_time = datetime.fromtimestamp(0)
     else:
         # allow string arguments for command line usage.
         minutes_back = int(minutes_back)
         start_time = datetime.utcnow() - timedelta(minutes=minutes_back)
-    defs = map(name2def.get, stats)
-    accum_vals, accum_fns = zip(*(d.accum_type for d in defs))
-    actual_start_time = None
     with file(path) as f:
-        while True:
-            line = f.readline()
-            if not line:
-                break
-            s = parse_line(line)
-            if s.time < start_time:
-                continue
-            if actual_start_time is None:
-                actual_start_time = s.time
-            new_vals = [getattr(s, stat) for stat in stats]
-            accum_vals = [fn(accum, new)
-                          for fn, accum, new in zip(accum_fns, accum_vals, new_vals)]
-    return {'actual_start_time': actual_start_time,
-            'values': {stat: val
-                       for stat, (val, _) in zip(stats, accum_vals)}}
+        return reduce_stats(dimensions, get_stats(f, start_time))
+
 
 def get_bps(minutes_back=None):
     s = summary(['bytes_sent', 'bytes_recv'], minutes_back)
