@@ -15,7 +15,7 @@ from misc_util import obj
 
 num_samples = 60 * 24 * 7  # keep last week, assuming 1m precision
 
-path = "/home/lantern/stats"
+stats_path = "/home/lantern/stats"
 
 # There are two major classes of stats handled here: cumulative ones that are
 # defined as a counter since last reboot, and independent instant samples. For
@@ -78,8 +78,8 @@ def save():
     cpu = psutil.cpu_times_percent(interval=1)
     duse = psutil.disk_usage('/')
     dtx = psutil.disk_io_counters(perdisk=False)
-    if os.path.exists(path):
-        lines = file(path).readlines()[-num_samples:]
+    if os.path.exists(stats_path):
+        lines = file(stats_path).readlines()[-num_samples:]
     else:
         lines = []
     # DRY: stat_defs
@@ -89,9 +89,9 @@ def save():
     print " | ".join(d.display_name for d in stat_defs)
     print new_line
     lines.append(new_line + '\n')
-    with file(path + ".tmp", 'w') as f:
+    with file(stats_path + ".tmp", 'w') as f:
         f.writelines(lines)
-    os.rename(path + ".tmp", path)
+    os.rename(stats_path + ".tmp", stats_path)
 
 sample = namedtuple('sample', [d.name for d in stat_defs])
 
@@ -144,7 +144,7 @@ def summary(dimensions, minutes_back=None):
         # allow string arguments for command line usage.
         minutes_back = int(minutes_back)
         start_time = datetime.utcnow() - timedelta(minutes=minutes_back)
-    with file(path) as f:
+    with file(stats_path) as f:
         return reduce_stats(dimensions, get_stats(f, start_time))
 
 
