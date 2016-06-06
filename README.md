@@ -12,10 +12,28 @@ At this moment, three types of machines are launched and managed by this project
 - **Cloudmasters**, which launches fallback proxies, runs checks on them, and allows to run batch jobs in them (in particular, updating their configuration).
 
 ## How does it work
-
 Cloudmasters listen for requests to launch, retire, an destroy proxies in a reliable redis queue.  Upon serving them, and when necessary, they push their results (e.g., proxy configurations) to redis queues.  Currently, the main system interacting with the cloudmasters in this way is the config server.
 
 [Salt](http://saltstack.com/) is used for configuration management.  The `salt` directory in this project contains the configuration for all the machines (you can see which modules apply to which machines in `salt/top.sls`).  The Cloud Master doubles as a Salt Master for launched peers, so they fetch their configuration from it.
+
+### Where do servers get their binaries
+Binaries for things like our http-proxy and config servers are stored and
+versioned directly within this lantern_aws repo using git lfs. Binaries are
+hosted on the Cloudmasters and distributed from there to the servers that need
+them.
+
+## How can I test this stuff?
+For small local changes, you can launch your own Cloudmaster per the
+instructions below, launch your own servers from that Cloudmaster and deploy
+uncommitted code directly to your test environment.
+
+### Staging
+The whole team shares a staging environment with its own set of Cloudmasters
+like `cm-donyc3staging`. For bigger changes, it's a good idea to deploy those
+to staging first.  To do that, simply merge your configuration changes into
+the [staging branch](https://github.com/getlantern/lantern_aws/tree/staging)
+and also add any preview builds of your binaries to this branch. Then, deploy
+from that branch using the usual `bin/update.py` script.
 
 ## Usage
 
@@ -264,6 +282,21 @@ sudo /bin/sh -exec "echo 'is_redis_master: \"True\"' > /srv/pillar/redis-donyc3-
 sudo salt-cloud -p donyc3_4GB redis-donyc3-001
 sudo salt "redis-donyc3-001" state.highstate
 ```
+
+The first time you run highstate, redis may fail to install. To resolve this,
+ssh to the machine as lantern and then run the following:
+
+```
+ssh lantern@<ip>
+sudo rm /var/lib/dpkg/lock
+sudo dpkg --configure -a
+sudo apt-get install redis-server=3:3.0.7-1chl1~trusty1
+sudo rm /var/cache/salt/minion/proc/*
+```
+
+After this point, run `state.highstate` again and it should run successfully
+from here on out. The machine may still be running a Redis instance started by
+the old init.d script. You can fix this by rebooting the machine.
 
 ##### Upgrading a cloudmaster's Salt version
 

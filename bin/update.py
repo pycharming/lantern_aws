@@ -102,6 +102,9 @@ def move_root_file(src, dst, as_root=False):
                                 as_root=as_root)
 
 def upload_pillars(as_root=False):
+    if not util.in_dev() and not util.in_staging() and not util.in_production():
+        assert util.in_production(), "Environment unknown!"
+
     _, _, do_token = util.read_do_credential()
     vultr_apikey = util.read_vultr_credential()
     linode_password, linode_apikey, linode_tokyo_apikey = util.read_linode_credential()
@@ -113,26 +116,40 @@ def upload_pillars(as_root=False):
         slack_webhook_url = util.read_slack_webhook_url()
     else:
         slack_webhook_url = util.read_slack_staging_webhook_url()
-    if not util.in_production():
-        if util.in_staging():
-            # Exception: make the staging cloudmasters use the redis instance
-            # of the staging cloudmaster in Amsterdam, to be more like the
-            # production setup.
-            redis_address = '188.166.55.168'
-        else:
-            redis_address = config.cloudmaster_address
-        cfgsrv_redis_url = "redis://redis:%s@%s:6379" % (cfgsrv_redis_test_pass,
-                                                         redis_address)
+
+    environment = "production"
+
+    if util.in_staging():
+        environment = "staging"
+        cfgsrv_redis_url = "rediss://:testing@redis-staging.getlantern.org:6380"
+
+    redis_host = cfgsrv_redis_url.split('@')[1]
+    redis_domain = redis_host.split(":")[0]
+    redis_via_stunnel_url = cfgsrv_redis_url.split('@')[0].replace("rediss", "redis") + "@localhost:6380"
+
+    if util.in_dev():
+        environment = "dev"
+        redis_host = "%s:6379" % config.cloudmaster_address
+        cfgsrv_redis_url = "redis://redis:%s@%s" % (cfgsrv_redis_test_pass, redis_host)
+        redis_domain = "redis-staging.getlantern.org"
+        # Bypass stunnel in dev environments because we're not encrypting connections to Redis
+        redis_via_stunnel_url = cfgsrv_redis_url
+
     util.ssh_cloudmaster((
             'echo "salt_version: %s" > salt.sls '
             # Hack so every instance will read specific pillars from a file
             # named with the <instance_name>.sls scheme.
             r' && echo "include: [{{ grains[\"id\"] }}]" >> salt.sls '
             ' && echo "" > $(hostname).sls""'
-            ' && echo "in_staging: %s" > global.sls '
+            ' && echo "environment: %s" > global.sls '
+            ' && echo "in_dev: %s" >> global.sls '
+            ' && echo "in_staging: %s" >> global.sls '
             ' && echo "in_production: %s" >> global.sls '
             ' && echo "datacenter: %s" >> global.sls '
             ' && echo "cfgsrv_redis_url: %s" >> global.sls'
+            ' && echo "redis_via_stunnel_url: %s" >> global.sls'
+            ' && echo "redis_host: %s" >> global.sls'
+            ' && echo "redis_domain: %s" >> global.sls'
             ' && echo "slack_webhook_url: %s" >> global.sls '
             ' && echo "cloudmaster_name: %s" >> global.sls '
             ' && echo "do_token: %s" > do_credential.sls'
@@ -149,10 +166,15 @@ def upload_pillars(as_root=False):
             ' && sudo chown -R root:root /srv/pillar '
             ' && sudo chmod -R 600 /srv/pillar '
             ) % (config.salt_version,
+                 environment,
+                 util.in_dev(),
                  util.in_staging(),
                  util.in_production(),
                  config.datacenter,
                  cfgsrv_redis_url,
+                 redis_via_stunnel_url,
+                 redis_host,
+                 redis_domain,
                  slack_webhook_url,
                  config.cloudmaster_name,
                  do_token,

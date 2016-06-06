@@ -3,8 +3,8 @@
     - source: salt://redis_server/stunnel_server.conf
     - template: jinja
     - context:
-        redis_host: {{ pillar['cfgsrv_redis_url'].split('@')[1] }}
-        redis_domain: {{ pillar['cfgsrv_redis_url'].split('@')[1].split(":")[0] }}
+        redis_host: {{ pillar['redis_host'] }}
+        redis_domain: {{ pillar['redis_domain'] }}
     - user: root
     - group: root
     - mode: 644
@@ -14,7 +14,11 @@
 
 /etc/redis/redis_auth.conf:
   file.managed:
+    {% if pillar["in_production"] %}
     - source: salt://redis_server/redis_auth.conf
+    {% else %}
+    - source: salt://redis_server/redis_auth_test.conf
+    {% endif %}
     - user: root
     - group: root
     - mode: 644
@@ -98,7 +102,7 @@ redis-server:
 
 disable-redis-server-sysv:
   cmd.run:
-    - name: /etc/init.d/redis-server stop ; update-rc.d redis-server disable ; update-rc.d redis-server remove ; rm /etc/init.d/redis-server ; echo "done"
+    - name: /etc/init.d/redis-server stop && update-rc.d redis-server disable
 
 /etc/init/redis-server.conf:
   file.managed:
@@ -119,6 +123,45 @@ redis-server-running:
         - file: /etc/redis/*
         - file: /etc/init/redis-server.conf
         - cmd: stunnel4-deps
+
+{% if not pillar["in_dev"] and pillar.get("is_redis_master", False) %}
+s3cmd:
+  pkg.installed
+
+pgpgpg:
+  pkg.installed
+
+/home/lantern/.s3cfg:
+  file.managed:
+    - source: salt://redis_server/.s3cfg-{{ pillar['environment'] }}
+    - user: lantern
+    - group: lantern
+    - mode: 600
+    - makedirs: True
+
+/home/lantern/s3backup.bash:
+  file.managed:
+    - source: salt://redis_server/s3backup.bash
+    - template: jinja
+    - context:
+        environment: {{ pillar['environment'] }}
+    - user: lantern
+    - group: lantern
+    - mode: 755
+    - makedirs: True
+
+/home/lantern/s3backup.bash 2>&1 | logger -t s3backup:
+  cron.present:
+    - identifier: s3backup
+    - hour: "0,12"
+    - minute: 0
+    - user: lantern
+    - require:
+        - file: /home/lantern/.s3cfg
+        - file: /home/lantern/s3backup.bash
+        - pkg: s3cmd
+        - pkg: pgpgpg
+{% endif %}
 
 {% set rulefiles=['user.rules', 'user6.rules'] %}
 {% for file in rulefiles %}
