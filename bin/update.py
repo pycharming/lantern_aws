@@ -19,6 +19,13 @@ nothing to commit, working directory clean
 
 EXPECTED_PRODUCTION_GIT_PULL_OUTPUT = "Already up-to-date.\n"
 
+EXPECTED_PRODUCTION_GIT_LFS_STATUS_OUTPUT = normalize_status_output("""\
+On branch master
+Git LFS objects to be pushed to origin/master:
+Git LFS objects to be committed:
+Git LFS objects not staged for commit:
+""")
+
 def check_master_if_in_production():
     if util.in_production():
         status_output = normalize_status_output(
@@ -28,13 +35,17 @@ def check_master_if_in_production():
         pull_output = subprocess.check_output(['git', 'pull'])
         if pull_output != EXPECTED_PRODUCTION_GIT_PULL_OUTPUT:
             not_up_to_date()
+        lfs_status_output = normalize_status_output(
+                subprocess.check_output(['git', 'lfs', 'status']))
+        if lfs_status_output != EXPECTED_PRODUCTION_GIT_LFS_STATUS_OUTPUT:
+            not_up_to_date()
 
 def not_up_to_date():
     print
     print "*** UP-TO-DATE MASTER CHECKOUT REQUIRED ***"
     print
     print "Sorry, you can only deploy to the production cloudmaster"
-    print "from an up-to-date master checkout."
+    print "from an up-to-date master checkout with git-lfs installed."
     print
     print "If you're pretty sure that is the case, you may want to"
     print "either update git or fix `check_master_if_in_production`"
@@ -69,7 +80,7 @@ def rsync(src, dst, as_root=False):
                        + ("" if as_root else " --rsync-path='sudo rsync' ") # we set --rsync-path to use sudo so that we can overwrite files owned by root
                        + " -azLk %s/ %s%s:%s")
                       % (src,
-                         ('root@' if as_root else ''),
+                         ('root@' if as_root else 'lantern@'),
                          config.cloudmaster_address,
                          dst))
     if not error:

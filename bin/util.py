@@ -9,7 +9,18 @@ from misc_util import memoized, whitelist_ssh
 
 
 def in_production():
-    return config.cloudmaster_name in config.production_cloudmasters
+    production_name = config.cloudmaster_name in config.production_cloudmasters
+    production_address = config.cloudmaster_address in config.dc2cm_address.values()
+    if production_name and production_address:
+        return True
+    elif not production_name and not production_address:
+        return False
+    elif production_name and not production_address:
+        raise RuntimeError("%s is a production cloudmaster but %s is not its address!"
+                           % (config.cloudmaster_name, config.cloudmaster_address))
+    elif not production_name and production_address:
+        raise RuntimeError("%s is the address of a production cloudmaster, not of %s!"
+                           % (config.cloudmaster_address, config.cloudmaster_name))
 
 def in_staging():
     return config.cloudmaster_name.endswith('staging')
@@ -76,7 +87,7 @@ def set_secret_permissions():
 def ssh_cloudmaster(cmd=None, out=None, as_root=False):
     whitelist_ssh()
     full_cmd = "ssh -o StrictHostKeyChecking=no %s%s" % (
-        ('root@' if as_root else ''),
+        ('root@' if as_root else 'lantern@'),
         config.cloudmaster_address)
     if cmd:
         full_cmd += " '%s'" % cmd

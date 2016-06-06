@@ -151,8 +151,16 @@ def actually_close_proxy(name=None, ip=None, srv=None, pipeline=None):
     if txn is not pipeline:
         txn.execute()
 
+class ProxyGone(Exception):
+    def __init__(self, name, ip, srv):
+        self.name = name
+        self.ip = ip
+        self.srv = srv
+
 def actually_offload_proxy(name=None, ip=None, srv=None, pipeline=None):
     name, ip, srv = nameipsrv(name, ip, srv)
+    if srv is None:
+        raise ProxyGone(name, ip, srv)
     region = region_by_name(name)
     client_table_key = region + ':clientip->srv'
     packed_srv = redis_util.pack_srv(srv)
@@ -217,6 +225,8 @@ def vps_shell(provider_etc):
     if provider_etc.startswith('do'):
         import do_util
         return do_util
+    # XXX: Left around should we come back to using Vultr anytime soon.
+    #      Delete otherwise.
     elif provider_etc.startswith('vl'):
         import vultr_util
         return vultr_util
@@ -260,9 +270,6 @@ def cm_by_name(name):
     # Legacy.
     if name.startswith('fp-nl-'):
         name = name.replace('nl', 'doams3', 1)
-    elif name.startswith('fp-jp-'):
-        name = name.replace('jp', 'vltok1', 1)
-
     # We need to count from the right because we have HTTPS proxies both with
     # and without the -https- part in their name.
     return name.split('-')[-3]
@@ -280,13 +287,19 @@ def dc_by_cm(cm):
 
 _region_by_production_cm = {'donyc3': 'etc',
                             'doams3': 'ir',
+                            # The vlfra1 and vlpar1 cloudmasters are no more,
+                            # but if we were to bring them back, it would be in
+                            # this region.
                             'vlfra1': 'ir',
                             'vlpar1': 'ir',
                             'dosgp1': 'sea',
                             'dosfo1': 'sea',
+                            # Same as above for vltok1.
                             'vltok1': 'sea',
                             'lisgp1': 'sea',
                             'litok1': 'sea',
+                            # XXX: actually this should be vllos1. No
+                            # cloudmasters here either, though.
                             'vllan1': 'etc'}
 def region_by_dc(dc):
     return _region_by_production_cm[dc]
@@ -322,13 +335,17 @@ class vps:
         return "<%s (%s)>" % (self.name, self.ip)
 
 def all_vpss():
-    return (set(vps_shell('vl').all_vpss())
-            | set(vps_shell('do').all_vpss())
+    return (set(vps_shell('do').all_vpss())
             | set(vps_shell('li').all_vpss()))
 
 def proxy_status(name=None, ip=None, srv=None):
     name, _, srv = nameipsrv(name, ip, srv)
     if srv is None:
+        if name is not None:
+            region = region_by_name(name)
+            for qentry in redis_shell.lrange(region + ':srvq', 0, -1):
+                if qentry.split('|')[1] == name:
+                    return 'enqueued'
         return 'baked-in'
     elif redis_shell.zscore(region_by_name(name) + ':slices', srv) is None:
         return 'closed'
