@@ -17,7 +17,11 @@ try:
     ip = os.environ['SSH_CONNECTION'].split(' ')[0]
     user = os.environ['USER']
 
-    whitelisted = redis_shell is not None and redis_shell.exists('sshalert-whitelist:%s' % ip)
+    try:
+        whitelisted = redis_shell is not None and redis_shell.exists('sshalert-whitelist:%s' % ip)
+    except Exception, e:
+        print >> sys.stderr, "Unable to check whitelisted status, assuming whitelisted: ", e
+        whitelisted = True
 
     original_cmd = os.getenv('SSH_ORIGINAL_COMMAND')
 
