@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+"""
+Maintain, and help read and digest, a rolling log of recent system resource
+usage.
+"""
+
 from __future__ import division
 
 from collections import namedtuple
@@ -11,6 +16,9 @@ from dateutil.parser import parse as parse_time
 import psutil
 
 from misc_util import obj
+
+
+__all__ = ['save', 'summary', 'get_bps']
 
 
 num_samples = 60 * 24 * 7  # keep last week, assuming 1m precision
@@ -33,6 +41,9 @@ def delta_reduce_step(accum, newval):
     if accum.val is None:
         return delta_val(0, newval)
     nextval = accum.val + newval
+    # If the new value is lower than the accumulated one, there has been a
+    # reboot, in which case we want to use the absolute value in the sample
+    # instead of the delta from the previous sample.
     if newval >= accum.prev:
         nextval -= accum.prev
     return delta_val(nextval, newval)
@@ -69,7 +80,12 @@ stat_defs = [stat_def(*args) for args in [
 
 name2def = {d.name: d for d in stat_defs}
 
+sample = namedtuple('sample', [d.name for d in stat_defs])
+
 def save():
+    """
+    Append a serialized `sample` to the rolling log.
+    """
     now = datetime.utcnow()
     la1m, _, _ = os.getloadavg()
     net = psutil.net_io_counters(pernic=False)
@@ -79,6 +95,7 @@ def save():
     duse = psutil.disk_usage('/')
     dtx = psutil.disk_io_counters(perdisk=False)
     if os.path.exists(stats_path):
+        # Remove old samples to keep the size of the log bounded.
         lines = file(stats_path).readlines()[-num_samples:]
     else:
         lines = []
@@ -92,8 +109,6 @@ def save():
     with file(stats_path + ".tmp", 'w') as f:
         f.writelines(lines)
     os.rename(stats_path + ".tmp", stats_path)
-
-sample = namedtuple('sample', [d.name for d in stat_defs])
 
 def parse_line(line):
     return sample(*(d.parser(s) for d, s in zip(stat_defs, line.strip().split('|'))))
@@ -109,6 +124,20 @@ def get_stats(fileobj, start_time):
         yield s
 
 def reduce_stats(dimensions, samples):
+    actual_start_time = None
+    defs = map(name2def.get, dimensions)
+    accum_vals, accum_fns = zip(*(d.accum_type for d in defs))
+    for s in samples:
+        if actual_start_time is None:
+            actual_start_time = s.time
+        new_vals = [getattr(s, dim) for dim in dimensions]
+        accum_vals = [fn(accum, new)
+                      for fn, accum, new in zip(accum_fns, accum_vals, new_vals)]
+    return {'actual_start_time': actual_start_time,
+            'values': {dim: val
+                       for dim, (val, _) in zip(dimensions, accum_vals)}}
+
+def summary(dimensions, minutes_back=None):
     """
     Return a summary of each of the requested dimensions across the samples.
 
@@ -124,20 +153,6 @@ def reduce_stats(dimensions, samples):
         of being reset in reboots).  These are dimensions with
         accum_type==delta_type.
     """
-    actual_start_time = None
-    defs = map(name2def.get, dimensions)
-    accum_vals, accum_fns = zip(*(d.accum_type for d in defs))
-    for s in samples:
-        if actual_start_time is None:
-            actual_start_time = s.time
-        new_vals = [getattr(s, dim) for dim in dimensions]
-        accum_vals = [fn(accum, new)
-                      for fn, accum, new in zip(accum_fns, accum_vals, new_vals)]
-    return {'actual_start_time': actual_start_time,
-            'values': {dim: val
-                       for dim, (val, _) in zip(dimensions, accum_vals)}}
-
-def summary(dimensions, minutes_back=None):
     if minutes_back is None:
         start_time = datetime.fromtimestamp(0)
     else:
@@ -149,6 +164,13 @@ def summary(dimensions, minutes_back=None):
 
 
 def get_bps(minutes_back=None):
+    """
+    Estimate recent network transfer of this proxy.
+
+    If `minutes_back` is provided, samples older than that are ignored. Even if
+    no limit is provided, this module keeps a limited amount of history (as of
+    this writing, up to one week).
+    """
     s = summary(['bytes_sent', 'bytes_recv'], minutes_back)
     sent = s['values']['bytes_sent']
     recv = s['values']['bytes_recv']
