@@ -27,12 +27,16 @@
 /etc/redis/redis.conf:
   file.managed:
     - source: salt://redis_server/redis.conf
+    - template: jinja
+    - context:
+        is_master: {{ pillar.get('is_redis_master', False) }}
     - user: root
     - group: root
     - mode: 644
     - makedirs: True
 
 {% if pillar.get('is_redis_master', False) %}
+
 /etc/redis/redis_master.conf:
   file.managed:
     - source: salt://redis_server/redis_master.conf
@@ -43,17 +47,6 @@
 
 /etc/redis/redis_slave.conf:
   file.absent
-
-include-master:
-    file.append:
-      - name: /etc/redis/redis.conf
-      - text: include /etc/redis/redis_master.conf
-
-exclude-slave:
-    file.replace:
-      - name: /etc/redis/redis.conf
-      - pattern: include /etc/redis/redis_slave.conf
-      - repl:
 
 {% else %}
 
@@ -68,16 +61,6 @@ exclude-slave:
 /etc/redis/redis_master.conf:
   file.absent
 
-include-slave:
-    file.append:
-      - name: /etc/redis/redis.conf
-      - text: include /etc/redis/redis_slave.conf
-
-exclude-master:
-    file.replace:
-      - name: /etc/redis/redis.conf
-      - pattern: include /etc/redis/redis_master.conf
-      - repl:
 {% endif %}
 
 redis-ulimit:
