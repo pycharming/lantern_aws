@@ -227,7 +227,7 @@ salt-cloud -u
 
 ```
 cloudmaster_name = "cm-donyc3myname"
-cloudmaster_address = "188.166.40.244"
+cloudmaster_address = "188.166.40.244" # Must use IP address here. Lots of pillars depend on an correct IP address.
 ```
 
 - and place it in `~/git/lantern_aws/bin/config_overrides.py`.  You probably want to have it saved somewhere else too, since you'll be deleting and restoring `config_overrides.py` to alternate between the production deployment and one or more non-production ones.
@@ -244,6 +244,32 @@ Your cloudmaster should be ready now.  If it's not a production one (XXX: add in
 [1] Please double-check in [bin/config.py](https://github.com/getlantern/lantern_aws/blob/master/bin/config.py) that this version is current.  Also, the `salt-cloud -u` line is only required due to a bug in `v2015.8.8.2`.
 
 [2] You can't use `bin/hscloudmaster.bash` here because it hasn't been adapted to work as root, which is only needed during this bootstrap procedure.
+
+##### Launching a proxy
+
+First, add an request to the queue.
+```python
+from redis_util import redis_shell as r
+r.delete('donyc3myname:srvreqq') # run multiple times until it returns 0
+r.lpush('donyc3myname:srvreqq', -1) # end mark
+r.lpush('donyc3myname:srvreqq', 1) # can be any positive number not already there
+r.lrange('donyc3myname:srvreqq', 0, -1) # to verify, the result should be [1, -1]
+```
+
+Then run the refill service.
+```sh
+MAXPROCS=1 QSCOPE=CM refill_srvq.py
+```
+
+The output should be similar to below.
+```
+Serving queue donyc3myname:srvreqq , MAXPROCS: 1
+Got request 1
+Starting process to launch fp-https-donyc3myname-20160606-001
+...
+VPS up!
+...
+```
 
 ##### Launching a redis server
 For replication purposes, Redis servers can be either masters or slaves.  At any
