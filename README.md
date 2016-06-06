@@ -35,6 +35,21 @@ the [staging branch](https://github.com/getlantern/lantern_aws/tree/staging)
 and also add any preview builds of your binaries to this branch. Then, deploy
 from that branch using the usual `bin/update.py` script.
 
+### Redis
+Production and staging both have a pair of Redis servers. At any given time,
+only one member of each pair is acting as the master that serves requests
+from clients, while the other acts as a read-only slave replica.
+
+#### Production Redis
+
+* redis-donyc3-001 - Currently master
+* redis-donyc2-002 - Currently slave
+
+#### Staging Redis
+
+* redis-donyc3staging-001 - Currently master
+* redis-donyc3staging-002 - Currently slave
+
 ## Usage
 
 ### Before you start
