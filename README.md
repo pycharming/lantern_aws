@@ -1,5 +1,6 @@
 NOTE - this repo manages large files using [git lfs](https://git-lfs.github.com/).
-Please install the git lfs client in order to use this repo.
+Please install the git lfs client in order to use this repo. If you have an existing
+checkout, make sure to run `git-lfs pull origin <branch>`.
 
 # Lantern Cloud
 
