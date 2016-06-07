@@ -250,18 +250,26 @@ Your cloudmaster should be ready now.  If it's not a production one (XXX: add in
 First, add an request to the queue.
 ```python
 from redis_util import redis_shell as r
-r.delete('donyc3myname:srvreqq') # run multiple times until it returns 0
-r.lpush('donyc3myname:srvreqq', -1) # end mark
+r.lrange('donyc3myname:srvreqq', 0, -1) # should only have the sentinel value: [-1]
+# if the result of above command is [], append the sentinel manually
+r.lpush('donyc3myname:srvreqq', -1)
+
+# only below command is absolutely required
 r.lpush('donyc3myname:srvreqq', 1) # can be any positive number not already there
-r.lrange('donyc3myname:srvreqq', 0, -1) # to verify, the result should be [1, -1]
 ```
 
-Then run the refill service.
+The `refill_srvq` service should already be running on the cloudmaster. You just need to monitor the progress:
+
+```
+tail -f /var/log/syslog | grep refill
+```
+
+If something wrong executing the service, you can also run the refill process manually.
 ```sh
 MAXPROCS=1 QSCOPE=CM refill_srvq.py
 ```
 
-The output should be similar to below.
+The script runs forever. After you see output similar to below, halt the script.
 ```
 Serving queue donyc3myname:srvreqq , MAXPROCS: 1
 Got request 1
