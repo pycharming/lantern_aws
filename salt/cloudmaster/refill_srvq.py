@@ -6,6 +6,7 @@ from Queue import Empty
 import os
 import time
 import traceback
+import random
 
 import yaml
 import json
@@ -91,7 +92,20 @@ def run():
                 if isinstance(req, int):
                     # Transition: support the old format while we are updating
                     # the config server etc.
-                    req = {'id': req, 'srvq': QPREFIX + ':srvq'}
+                    # We also randomize whether it's obfs4 or not, and which
+                    # port to use.
+                    proxy_port = 443
+                    obfs4_port = 0
+                    if random.random() > 0.5:
+                        # Pick a random high port higher than salt port 4506
+                        proxy_port = random.randint(5000, 60000)
+                    if random.random() > 0.5:
+                        # Make this an obfs4 proxy
+                        obfs4_port = proxy_port
+                    req = { 'id': req,
+                            'srvq': QPREFIX + ':srvq',
+                            'proxy_port': proxy_port,
+                            'obfs4_port': obfs4_port }
                     req_string = json.dumps(req)
                 reqid = req['id']
                 if reqid in pending:

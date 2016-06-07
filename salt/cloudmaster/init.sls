@@ -66,7 +66,9 @@ refill_srvq:
     service.running:
         - enable: yes
         - require:
-              - cmd: {{ svc }}-services-registered
+          - cmd: {{ svc }}-services-registered
+        - watch:
+          - file: /usr/bin/refill_srvq.py
 
 
 {{ svc }}-services-registered:
