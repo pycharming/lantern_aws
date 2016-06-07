@@ -99,6 +99,7 @@ save-access-data:
         - user: lantern
         - group: lantern
         - cwd: /home/lantern
+        - order: last
         - require:
             - file: {{ fallback_json_file }}
             - cmd: convert-cert
