@@ -20,7 +20,7 @@ Cloudmasters listen for requests to launch, retire, an destroy proxies in a reli
 Binaries for things like our http-proxy and config servers are stored and
 versioned directly within this lantern_aws repo using git lfs. Binaries are
 hosted on the Cloudmasters and distributed from there to the servers that need
-them.
+them. 
 
 ## How can I test this stuff?
 For small local changes, you can launch your own Cloudmaster per the
@@ -69,6 +69,12 @@ After you check out this repository, and unless you passed the `--recursive` fla
     git submodule update --init
 
 Note that this downloads a private repository that is only accessible to the Lantern core development team.
+
+To deploy new binaries, you also need to actually fetch them locally via git-lfs:
+
+```
+git-lfs pull origin master
+```
 
 ### Updating the salt configuration of a cloudmaster
 
