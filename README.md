@@ -70,12 +70,6 @@ After you check out this repository, and unless you passed the `--recursive` fla
 
 Note that this downloads a private repository that is only accessible to the Lantern core development team.
 
-To deploy new binaries, you also need to actually fetch them locally via git-lfs:
-
-```
-git-lfs pull origin master
-```
-
 ### Updating the salt configuration of a cloudmaster
 
 Whether you want to change the configuration of the cloudmaster itself or the machines it manages, the first step is syncing the cloudmaster's Salt configuration with your local one.  To do this, run
