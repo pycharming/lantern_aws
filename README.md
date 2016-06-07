@@ -260,7 +260,7 @@ salt-cloud -u
 
 ```
 cloudmaster_name = "cm-donyc3myname"
-cloudmaster_address = "188.166.40.244"
+cloudmaster_address = "188.166.40.244" # Must use IP address here. Lots of pillars depend on an correct IP address.
 ```
 
 - and place it in `~/git/lantern_aws/bin/config_overrides.py`.  You probably want to have it saved somewhere else too, since you'll be deleting and restoring `config_overrides.py` to alternate between the production deployment and one or more non-production ones.
@@ -277,6 +277,40 @@ Your cloudmaster should be ready now.  If it's not a production one (XXX: add in
 [1] Please double-check in [bin/config.py](https://github.com/getlantern/lantern_aws/blob/master/bin/config.py) that this version is current.  Also, the `salt-cloud -u` line is only required due to a bug in `v2015.8.8.2`.
 
 [2] You can't use `bin/hscloudmaster.bash` here because it hasn't been adapted to work as root, which is only needed during this bootstrap procedure.
+
+##### Launching a proxy
+
+First, add an request to the queue.
+```python
+from redis_util import redis_shell as r
+r.lrange('donyc3myname:srvreqq', 0, -1) # should only have the sentinel value: [-1]
+# if the result of above command is [], append the sentinel manually
+r.lpush('donyc3myname:srvreqq', -1)
+
+# only below command is absolutely required
+r.lpush('donyc3myname:srvreqq', 1) # can be any positive number not already there
+```
+
+The `refill_srvq` service should already be running on the cloudmaster. You just need to monitor the progress:
+
+```
+tail -f /var/log/syslog | grep refill
+```
+
+If something wrong executing the service, you can also run the refill process manually.
+```sh
+MAXPROCS=1 QSCOPE=CM refill_srvq.py
+```
+
+The script runs forever. After you see output similar to below, halt the script.
+```
+Serving queue donyc3myname:srvreqq , MAXPROCS: 1
+Got request 1
+Starting process to launch fp-https-donyc3myname-20160606-001
+...
+VPS up!
+...
+```
 
 ##### Launching a redis server
 For replication purposes, Redis servers can be either masters or slaves.  At any
