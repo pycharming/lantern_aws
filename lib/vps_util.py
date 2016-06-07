@@ -23,6 +23,7 @@ auth_token: %s
 install-from: git
 instance_id: %s
 proxy_protocol: tcp
+proxy_port: %s
 obfs4_port: %s
 """
 
@@ -47,9 +48,10 @@ def random_auth_token():
                    for _ in xrange(auth_token_length))
 
 def save_pillar(name, req):
+    proxy_port = req.get('proxy_port', 443)
     obfs4_port = req.get('obfs4_port', 0)
     with file("/srv/pillar/%s.sls" % name, 'w') as f:
-        f.write(pillar_tmpl % (random_auth_token(), name, obfs4_port))
+        f.write(pillar_tmpl % (random_auth_token(), name, proxy_port, obfs4_port))
 
 def trycmd(cmd, tries=sys.maxsize):
     for x in xrange(tries):
