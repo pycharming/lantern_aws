@@ -1,7 +1,7 @@
 {% set fallback_json_file='/home/lantern/fallback.json' %}
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
 {% set auth_token=pillar.get('auth_token') %}
-{% set proxy_port=grains.get('proxy_port', 62443) %}
+{% set proxy_port=pillar.get('proxy_port', 443) %}
 {% set obfs4_port=pillar.get('obfs4_port', 0) %}
 {% set traffic_check_period_minutes=60 %}
 {% from 'ip.sls' import external_ip %}
@@ -72,6 +72,11 @@ include:
             - file: fp-dirs
 {% endfor %}
 
+allow-bind-low-port:
+  cmd.run:
+    - name: setcap 'cap_net_bind_service=+ep' /home/lantern/http-proxy
+    - watch:
+      - file: /home/lantern/http-proxy
 
 fallback-proxy-dirs-and-files:
     cmd.run:
@@ -94,6 +99,7 @@ save-access-data:
         - user: lantern
         - group: lantern
         - cwd: /home/lantern
+        - order: last
         - require:
             - file: {{ fallback_json_file }}
             - cmd: convert-cert

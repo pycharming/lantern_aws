@@ -1,6 +1,5 @@
 {"ip" : "{{ external_ip }}",
- "port" : "443",
+ "port" : "{{ proxy_port }}",
  "auth_token" : "{{ auth_token }}",
  "protocol" : "tcp"
 }
-

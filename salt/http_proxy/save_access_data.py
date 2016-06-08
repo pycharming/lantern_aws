@@ -6,6 +6,7 @@ from functools import wraps
 import subprocess
 import os.path
 import re
+import time
 
 def log_exceptions(f):
     @wraps(f)
@@ -40,12 +41,21 @@ def add_http_access_data(d_out):
 def add_obfs4_access_data(d_out):
     d_out['pluggabletransport'] = 'obfs4'
     p = re.compile('Bridge obfs4.+cert=([^ ]+) iat-mode=([0-9])')
-    with open('obfs4_bridgeline.txt') as f:
-        for line in f:
-            m = p.match(line)
-            if m:
-                d_out['cert'] = m.group(1)
-                d_out['pluggabletransportsettings'] = {'iat-mode': m.group(2)}
+    for i in range(0, 10):
+        time.sleep(2)
+        try:
+            with open('obfs4_bridgeline.txt') as f:
+                for line in f:
+                    m = p.match(line)
+                    if m:
+                        d_out['cert'] = m.group(1)
+                        d_out['pluggabletransportsettings'] = {'iat-mode': m.group(2)}
+                return
+        except:
+            if i == 9:
+                # Last pass, raise
+                raise
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
