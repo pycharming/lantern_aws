@@ -67,9 +67,6 @@ refill_srvq:
         - enable: yes
         - require:
           - cmd: {{ svc }}-services-registered
-        - watch:
-          - file: /usr/bin/refill_srvq.py
-
 
 {{ svc }}-services-registered:
     cmd.run:

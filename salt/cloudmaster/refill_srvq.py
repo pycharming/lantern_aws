@@ -135,7 +135,7 @@ def run():
         time.sleep(10)
 
 def new_proxy_name(req):
-    type_str = 'obfs4' if req.get('obfs4_port', 0) > 0 in req else 'https'
+    type_str = 'obfs4' if req.get('obfs4_port', 0) > 0 else 'https'
     return vps_util.new_vps_name('fp-' + type_str)
 
 def launch_one_server(q, reqid, name, req_string):
