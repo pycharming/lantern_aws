@@ -36,6 +36,10 @@ def run():
     qname = QPREFIX + ":srvreqq"
     print "Serving queue", qname, ", MAXPROCS:", repr(MAXPROCS)
     quarantine = CM + ":quarantined_vpss"
+    if QSCOPE != 'REGION':
+        # Prevent the cloudmaster-specific service from flushing the quarantine
+        # set of the region-bound one.
+        quarantine = 'cm-' + quarantine
     reqq = redisq.Queue(qname, redis_shell, LAUNCH_TIMEOUT)
     procq = multiprocessing.Queue()
     pending = {}
