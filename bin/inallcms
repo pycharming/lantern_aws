@@ -1,10 +1,10 @@
 #!/bin/bash
 
-DC=donyc3 $@ &
-DC=doams3 $@ &
-DC=dosfo1 $@ &
-DC=dosgp1 $@ &
-DC=lisgp1 $@ &
-DC=litok1 $@ &
+DC=donyc3 $@
+DC=doams3 $@
+DC=dosfo1 $@
+DC=dosgp1 $@
+DC=lisgp1 $@
+DC=litok1 $@
 
 wait
