@@ -135,6 +135,8 @@ def upload_pillars(as_root=False):
         # Bypass stunnel in dev environments because we're not encrypting connections to Redis
         redis_via_stunnel_url = cfgsrv_redis_url
 
+    ssh_whitelist_query_token = util.read_ssh_whitelist_query_token()
+
     util.ssh_cloudmaster((
             'echo "salt_version: %s" > salt.sls '
             # Hack so every instance will read specific pillars from a file
@@ -152,6 +154,7 @@ def upload_pillars(as_root=False):
             ' && echo "redis_domain: %s" >> global.sls'
             ' && echo "slack_webhook_url: %s" >> global.sls '
             ' && echo "cloudmaster_name: %s" >> global.sls '
+            ' && echo "ssh_whitelist_query_token: %s" >> global.sls '
             ' && echo "do_token: %s" > do_credential.sls'
             ' && echo "vultr_apikey: %s" > vultr_credential.sls'
             ' && echo "linode_password: \'%s\'" > linode_credential.sls '
@@ -177,6 +180,7 @@ def upload_pillars(as_root=False):
                  redis_domain,
                  slack_webhook_url,
                  config.cloudmaster_name,
+                 ssh_whitelist_query_token,
                  do_token,
                  vultr_apikey,
                  linode_password,

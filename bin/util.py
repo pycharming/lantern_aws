@@ -29,6 +29,10 @@ def in_dev():
     return not in_production() and not in_staging()
 
 @memoized
+def read_ssh_whitelist_query_token():
+    return secrets_from_yaml(['lantern_aws', 'ops_panel.yaml'],
+                             ['ssh_whitelist_query_token'])[0]
+@memoized
 def read_do_credential():
     return secrets_from_yaml(['lantern_aws', 'do_credential'],
                              ['client_id', 'api_key', 'rw_token'])
