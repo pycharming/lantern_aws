@@ -36,7 +36,7 @@ def run():
     qname = QPREFIX + ":srvreqq"
     print "Serving queue", qname, ", MAXPROCS:", repr(MAXPROCS)
     quarantine = CM + ":quarantined_vpss"
-    if QSCOPE != 'REGION':
+    if scope != 'REGION':
         # Prevent the cloudmaster-specific service from flushing the quarantine
         # set of the region-bound one.
         quarantine = 'cm-' + quarantine
