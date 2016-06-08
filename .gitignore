@@ -14,3 +14,5 @@ bin/status
 .#*
 venv
 .venv
+salt/checkfallbacks/fallbacks-to-check-version
+salt/checkfallbacks/fallbacks-to-check.json
