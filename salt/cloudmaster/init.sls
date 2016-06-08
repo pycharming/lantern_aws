@@ -66,8 +66,7 @@ refill_srvq:
     service.running:
         - enable: yes
         - require:
-              - cmd: {{ svc }}-services-registered
-
+          - cmd: {{ svc }}-services-registered
 
 {{ svc }}-services-registered:
     cmd.run:

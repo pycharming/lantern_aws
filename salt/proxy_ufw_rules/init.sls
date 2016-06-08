@@ -1,10 +1,12 @@
 {% set proxy_protocol=pillar.get('proxy_protocol', 'tcp') %}
+{% set proxy_port=pillar.get('proxy_port', 443) %}
 
 /etc/ufw/applications.d/lantern:
     file.managed:
         - source: salt://proxy_ufw_rules/ufw_rules
         - template: jinja
         - context:
+            proxy_port: {{ proxy_port }}
             proxy_protocol: {{ proxy_protocol }}
         - user: root
         - group: root
@@ -29,17 +31,18 @@ open-proxy-port:
 
 {% if proxy_protocol == 'tcp' %}
 /etc/ufw/before.rules:
-    file.append:
-        - text: |
-            *nat
-
-            :PREROUTING ACCEPT - [0:0]
-            # Redirect ports 80 and 443 to the Lantern proxy
-            -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 62000
-            -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 62443
-
-            COMMIT
+    file.replace:
+        - pattern: \*nat.+COMMIT
+        - flags: ['MULTILINE', 'DOTALL']
+        - repl: ''
 {% endif %}
+
+
+ufw-update-lantern:
+  cmd.run:
+    - name: ufw app update lantern_proxy
+    - watch:
+      - file: /etc/ufw/applications.d/lantern
 
 ufw-rules-ready:
     cmd.run:
@@ -48,6 +51,7 @@ ufw-rules-ready:
         - group: root
         - require:
             - cmd: open-proxy-port
+            - cmd: ufw-update-lantern
         - watch:
             - file: /etc/ufw/applications.d/lantern
             - file: /etc/default/ufw
