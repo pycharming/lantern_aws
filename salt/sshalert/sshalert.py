@@ -1,24 +1,29 @@
 #!/usr/bin/env python
 
 import sys
+import traceback
 
 try:
 
     import os
+    import requests
 
     import alert
     import misc_util
-    try:
-        from redis_util import redis_shell
-    except ImportError:
-        # sshalert is enabled on all vpss, some of which don't have redis_shell.
-        redis_shell = None
 
     ip = os.environ['SSH_CONNECTION'].split(' ')[0]
     user = os.environ['USER']
 
     try:
-        whitelisted = redis_shell is not None and redis_shell.exists('sshalert-whitelist:%s' % ip)
+        resp = requests.get('https://ops.lantern.io/is-ip-whitelisted',
+                            params={'ip': ip},
+                            headers={'ssh-whitelist-query-token': os.environ['SSH_WHITELIST_QUERY_TOKEN']})
+        if resp.ok:
+            whitelisted = resp.text == 'yes'
+        else:
+            print >> sys.stderr, 'Unable to check whitelisted status: server replied %s %s' % (resp.status_code, resp.text)
+            print >> sys.stderr, 'Assuming whitelisted'
+            whitelisted = True
     except Exception, e:
         print >> sys.stderr, "Unable to check whitelisted status, assuming whitelisted: ", e
         whitelisted = True
@@ -72,4 +77,7 @@ except SystemExit:
     raise
 
 except:
+    print >> sys.stderr, "Uncaught exception trying to check for SSH whitelisting:"
+    traceback.print_exc(sys.stderr)
+    print >> sys.stderr, "Assuming whitelisted."
     sys.exit(0)

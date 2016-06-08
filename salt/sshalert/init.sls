@@ -1,3 +1,10 @@
+ssh-whitelist-query-token-env-var:
+  file.replace:
+    - name: /etc/environment
+    - pattern: "^SSH_WHITELIST_QUERY_TOKEN=.*$"
+    - repl: SSH_WHITELIST_QUERY_TOKEN="{{ pillar['ssh_whitelist_query_token'] }}"
+    - append_if_not_found: yes
+
 /usr/bin/sshalert.py:
   file.managed:
     - source: salt://sshalert/sshalert.py
