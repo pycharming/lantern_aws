@@ -51,10 +51,10 @@ def add_obfs4_access_data(d_out):
                         d_out['cert'] = m.group(1)
                         d_out['pluggabletransportsettings'] = {'iat-mode': m.group(2)}
                 return
-        except Exception, e:
+        except:
             if i == 9:
-                # Last pass, log exception
-                logging.exception(e)
+                # Last pass, raise
+                raise
 
 
 if __name__ == '__main__':
